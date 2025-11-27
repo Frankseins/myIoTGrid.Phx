@@ -1,381 +1,571 @@
-<h1 align="center">myIoTGrid</h1>
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/images/logo-dark.png">
+    <source media="(prefers-color-scheme: light)" srcset="docs/images/logo-light.png">
+    <img src="docs/images/logo.png" alt="myIoTGrid Logo" width="280"/>
+  </picture>
+</p>
+
+<h1 align="center">
+  <br>
+  🌐 myIoTGrid
+  <br>
+</h1>
+
+<h3 align="center">
+  <em>Dein persönliches Sensornetz. Von Smart Home zu Smart World.</em>
+</h3>
 
 <p align="center">
-  <strong>Dein persönliches Sensornetz. Von Smart Home zu Smart World. Powered by AI.</strong>
+  <strong>🤖 Powered by AI</strong>
+</p>
+
+<br>
+
+<p align="center">
+  <!-- Animated Dots forming a Grid/Network -->
+  <code>
+    ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·
+    ·  🌡️ · · · 💨 · · · 🌧️ · · · ☀️  ·
+    ·  ·  ╲  ·  ·  · ╲ ·  ·  · ╱ ·  ·  ╱  ·
+    ·  ·  ·  ╲ ·  ·  · ╲·  · ╱·  · ╱ ·  ·
+    ·  ·  ·  · ╲ ·  ·  ·╲· ╱·  · ╱·  ·  ·
+    ·  ·  ·  ·  ·[🧠 AI HUB]·  ·  ·  ·  ·
+    ·  ·  ·  · ╱ ·  ·  ·╱· ╲·  · ╲·  ·  ·
+    ·  ·  ·  ╱ ·  ·  · ╱·  · ╲·  · ╲ ·  ·
+    ·  ·  ╱  ·  ·  · ╱ ·  ·  · ╲ ·  ·  ╲  ·
+    ·  🌱 · · · 💧 · · · 🏠 · · · 📊  ·
+    ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·  ·
+  </code>
+</p>
+
+<br>
+
+<p align="center">
+  <a href="https://myiotgrid.cloud"><img src="https://img.shields.io/badge/🌐_Website-myiotgrid.cloud-00A86B?style=for-the-badge" alt="Website"/></a>
+  <a href="https://mysocialcare-doku.atlassian.net/wiki/spaces/myIoTGrid"><img src="https://img.shields.io/badge/📚_Docs-Confluence-0052CC?style=for-the-badge" alt="Docs"/></a>
+  <a href="#-schnellstart-in-5-minuten-live"><img src="https://img.shields.io/badge/🚀_Start-in_5_Min-FF6B6B?style=for-the-badge" alt="Schnellstart"/></a>
 </p>
 
 <p align="center">
-  <a href="https://myiotgrid.cloud">🌐 Website</a> •
-  <a href="https://mysocialcare-doku.atlassian.net/wiki/spaces/myIoTGrid">📚 Dokumentation</a> •
-  <a href="#-schnellstart">🚀 Schnellstart</a> •
-  <a href="#-community">💬 Community</a>
+  <img src="https://img.shields.io/badge/License-MIT-success?style=flat-square" alt="License: MIT"/>
+  <img src="https://img.shields.io/badge/PRs-Welcome-brightgreen?style=flat-square" alt="PRs Welcome"/>
+  <img src="https://img.shields.io/badge/Made_with-❤️_&_🤖-red?style=flat-square" alt="Made with Love and AI"/>
 </p>
+
+<br>
+
+---
+
+<br>
+
+## 💡 Die Vision
+
+<table>
+<tr>
+<td width="60%">
+
+### Stell dir vor...
+
+> 🌡️ Dein Keller warnt dich **3 Tage bevor** Schimmel entsteht.
+>
+> 🌱 Dein Garten sagt dir **wann** du gießen sollst – und wann nicht.
+>
+> ❄️ Dein Ferienhaus meldet sich, **bevor** die Rohre einfrieren.
+>
+> 🏙️ Deine Stadt zeigt **Hitze-Inseln in Echtzeit** – für alle.
+
+**Das ist myIoTGrid.**
+
+Eine Plattform, die **Sensordaten intelligent macht**.
+
+Nicht nur Zahlen. **Wissen.**
+
+</td>
+<td width="40%">
+
+```
+    ┌─────────────────┐
+    │   VORHER 😕     │
+    │                 │
+    │  Temperatur: 18°│
+    │  Feuchte: 72%   │
+    │  CO2: 847 ppm   │
+    │                 │
+    │  "Okay... und?" │
+    └─────────────────┘
+           ↓
+    ┌─────────────────┐
+    │   NACHHER 🤖    │
+    │                 │
+    │  🟡 Lüften in   │
+    │     15 Minuten  │
+    │                 │
+    │  🟢 Keller OK   │
+    │                 │
+    │  "Verstanden!"  │
+    └─────────────────┘
+```
+
+</td>
+</tr>
+</table>
+
+<br>
+
+---
+
+<br>
+
+## 🤖 AI-Native: KI ist keine Option – sie ist der Kern
 
 <p align="center">
-  <img src="https://img.shields.io/badge/License-MIT-green.svg" alt="License: MIT"/>
-  <img src="https://img.shields.io/badge/Status-Development-orange.svg" alt="Status: Development"/>
-  <img src="https://img.shields.io/badge/.NET-8.0%20%7C%2010.0-purple.svg" alt=".NET"/>
-  <img src="https://img.shields.io/badge/Angular-18+-red.svg" alt="Angular"/>
-  <img src="https://img.shields.io/badge/AI-Native-blue.svg" alt="AI Native"/>
+  <code>
+  ╔══════════════════════════════════════════════════════════════════╗
+  ║                                                                  ║
+  ║   ·····  ANDERE IoT-PLATTFORMEN  ·····                          ║
+  ║                                                                  ║
+  ║   Sensoren → Datenbank → Dashboard → 👀 Du schaust auf Zahlen   ║
+  ║                                                                  ║
+  ╠══════════════════════════════════════════════════════════════════╣
+  ║                                                                  ║
+  ║   ·····  myIoTGrid  ·····                                       ║
+  ║                                                                  ║
+  ║   Sensoren → 🧠 KI → Insights → 💡 Du bekommst Antworten        ║
+  ║                                                                  ║
+  ╚══════════════════════════════════════════════════════════════════╝
+  </code>
 </p>
 
----
+<br>
 
-## 🌟 Was ist myIoTGrid?
+### 🎯 Die KI-Warnstufen
 
-**myIoTGrid** ist eine Open-Source-Plattform zur Erfassung, Visualisierung und gemeinsamen Nutzung von Sensordaten. Das System ermöglicht es Privatpersonen, Schulen, Kommunen und Unternehmen, eigene Sensornetzwerke aufzubauen – von der einzelnen Wetterstation bis zum stadtweiten Umweltmonitoring.
+<p align="center">
+  <table>
+    <tr>
+      <td align="center" width="25%">
+        <h1>🔴</h1>
+        <strong>KRITISCH</strong><br>
+        <small>Sofort handeln!</small><br>
+        <code>Wasserschaden</code>
+      </td>
+      <td align="center" width="25%">
+        <h1>🟡</h1>
+        <strong>WARNUNG</strong><br>
+        <small>Aufpassen</small><br>
+        <code>Schimmelrisiko</code>
+      </td>
+      <td align="center" width="25%">
+        <h1>🔵</h1>
+        <strong>HINWEIS</strong><br>
+        <small>Optimieren</small><br>
+        <code>Lüftungstipp</code>
+      </td>
+      <td align="center" width="25%">
+        <h1>🟢</h1>
+        <strong>ALLES OK</strong><br>
+        <small>Entspannen</small><br>
+        <code>Perfektes Klima</code>
+      </td>
+    </tr>
+  </table>
+</p>
 
-### ✨ Highlights
+<br>
 
-- 🏠 **Local First** – Funktioniert 100% offline, keine Cloud erforderlich
-- 🤖 **AI Native** – KI-gestützte Analysen, Warnungen und Prognosen
-- 🔐 **Privacy by Design** – Du entscheidest, wer deine Daten sieht
-- 🏘️ **Community Sharing** – Teile Daten mit Nachbarn, der Stadt oder der Welt
-- 🏡 **Smart Home Ready** – Apple Home, Google Home, Alexa via Matter
-- 💰 **Open Source** – MIT-Lizenz, keine versteckten Kosten
-
----
-
-## 🤖 Built with AI – Powered by AI
-
-myIoTGrid ist von Anfang an ein **KI-natives Projekt**:
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  🤖 KI-INSIGHTS                                   myiotgrid.cloud │
-├─────────────────────────────────────────────────────────────────┤
-│                                                                  │
-│  ⚠️ WARNUNGEN                                                   │
-│  ├─ 🔴 Keller: Schimmelrisiko in 3 Tagen (Feuchte + Temp)      │
-│  ├─ 🟡 Garten: Frostgefahr heute Nacht (Prognose: -2°C)        │
-│  └─ 🟢 Wohnzimmer: Optimales Raumklima ✓                       │
-│                                                                  │
-│  📈 ERKENNTNISSE                                                │
-│  ├─ "Deine Luftqualität ist morgens 40% schlechter als abends" │
-│  └─ "Dein Keller ist feuchter als 80% der Community"           │
-│                                                                  │
-│  🔮 PROGNOSEN                                                   │
-│  ├─ Temperatur morgen: 12°C → 18°C                             │
-│  └─ Feinstaub-Trend: ↗️ Anstieg erwartet                       │
-│                                                                  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-| KI-Feature | Beschreibung |
-|------------|--------------|
-| **🔍 Anomalie-Erkennung** | Lernt normales Verhalten, warnt bei Abweichungen |
-| **⚠️ Prädiktive Warnungen** | Frost, Schimmel, Hochwasser – Stunden vorher |
-| **🧠 Community Intelligence** | Je mehr Nutzer, desto schlauer die KI |
-| **💡 Persönliche Empfehlungen** | Individuelle Tipps für deine Situation |
-
-**KI-Warnstufen:**
-
-| 🔴 Kritisch | 🟡 Warnung | 🔵 Hinweis | 🟢 OK |
-|-------------|------------|------------|-------|
-| Sofort handeln | Aufmerksamkeit | Optimierung | Alles gut |
-
----
-
-## 🏗️ Architektur
-
-myIoTGrid besteht aus drei Komponenten:
+### 🧠 Was die KI kann
 
 ```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│  Grid.Sensor    │────▶│    Grid.Hub     │────▶│   Grid.Cloud    │
-│  (ESP32)        │MQTT │  (Raspberry Pi) │HTTPS│   (Optional)    │
-│                 │     │                 │     │                 │
-│  🌡️ Sensoren    │     │  🧠 Edge-KI     │     │  🤖 Cloud-KI    │
-│  ~10-15€        │     │  📊 Dashboard   │     │  🗺️ Community   │
-│                 │     │  🏠 Matter      │     │  🤝 Sharing     │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
+┌────────────────────────────────────────────────────────────────────────┐
+│  🤖 KI-INSIGHTS DASHBOARD                              myiotgrid.cloud │
+├────────────────────────────────────────────────────────────────────────┤
+│                                                                        │
+│  ⚠️  AKTIVE WARNUNGEN                                                 │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │ 🔴  Keller: Schimmelrisiko in 3 Tagen                            │ │
+│  │     → Feuchte steigt seit 48h · Temperatur sinkt                 │ │
+│  │     → EMPFEHLUNG: Heizung auf 18°C, Entfeuchter an               │ │
+│  ├──────────────────────────────────────────────────────────────────┤ │
+│  │ 🟡  Garten: Frostgefahr heute Nacht (-2°C erwartet)              │ │
+│  │     → Basierend auf: DWD + lokale Sensoren + Historie            │ │
+│  │     → EMPFEHLUNG: Empfindliche Pflanzen abdecken                 │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+│                                                                        │
+│  💡  ERKENNTNISSE                                                     │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │ • "CO2 im Schlafzimmer nachts >1200ppm = 23% schlechterer Schlaf"│ │
+│  │ • "Lüften um 10 Uhr spart 18% Heizenergie vs. Stoßlüften 7 Uhr" │ │
+│  │ • "Dein Keller ist feuchter als 84% der Community"               │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+│                                                                        │
+│  🔮  PROGNOSEN (nächste 24h)                                          │
+│  ┌──────────────────────────────────────────────────────────────────┐ │
+│  │  Temperatur:  ████████████░░░░  12°C → 19°C                      │ │
+│  │  Feinstaub:   ██████░░░░░░░░░░  ↗️ Anstieg (Inversionswetter)    │ │
+│  │  Regen:       ░░░░░░░░░░░░░░░░  0% Wahrscheinlichkeit            │ │
+│  └──────────────────────────────────────────────────────────────────┘ │
+│                                                                        │
+└────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Grid.Sensor – Die Augen 👁️
+<br>
 
-| Eigenschaft | Spezifikation |
-|-------------|---------------|
-| **Hardware** | ESP32 NodeMCU (~5€), ESP32-C3, ESP8266 |
-| **Protokoll** | MQTT, optional HTTPS |
-| **Sensoren** | Temperatur, Feuchte, CO2, Feinstaub, Licht, Boden, Wind |
-| **Kosten** | Ab ~10-15€ pro Sensor |
+### 🌐 Community Intelligence: Je mehr, desto schlauer
 
-### Grid.Hub – Das Gehirn 🧠
+<p align="center">
+  <code>
+       1 Sensor          100 Sensoren        10.000 Sensoren       1.000.000 Sensoren
+          ·                  · · ·              · · · · · ·          · · · · · · · · ·
+          │                  │ │ │              │ │ │ │ │ │          │ │ │ │ │ │ │ │ │
+          ▼                  ▼ ▼ ▼              ▼ ▼ ▼ ▼ ▼ ▼          ▼ ▼ ▼ ▼ ▼ ▼ ▼ ▼ ▼
+       [Deine]            [Lokale]           [Stadtweite]          [Globale KI]
+       [Daten]            [Muster]           [Prognosen]           [Klimaforschung]
+  </code>
+</p>
 
-| Eigenschaft | Spezifikation |
-|-------------|---------------|
-| **Hardware** | Raspberry Pi 4/5, alter PC, Docker |
-| **Backend** | .NET 8 (ASP.NET Core) |
-| **Frontend** | Angular 18+ (PWA) |
-| **Datenbank** | SQLite (kein Server nötig) |
-| **Smart Home** | Matter.js → Apple Home, Google, Alexa |
-| **KI** | ML.NET / ONNX Runtime (offline!) |
+> **Die KI vergleicht deine Daten mit anonymisierten Daten der Community.**
+>
+> Du erfährst, ob dein Keller feuchter ist als bei anderen.
+> Die KI erkennt Hitze-Inseln in deiner Stadt.
+> Alle profitieren – ohne dass individuelle Daten preisgegeben werden.
 
-### Grid.Cloud – Das Netzwerk 🌐 (Optional)
-
-| Eigenschaft | Spezifikation |
-|-------------|---------------|
-| **Backend** | .NET 10 (ASP.NET Core) |
-| **Datenbank** | PostgreSQL (Multi-Tenant) |
-| **Features** | Community Map, Sharing, Subscriptions |
-| **KI** | Cloud-KI, Community Intelligence |
+<br>
 
 ---
 
-## 🔐 Sharing-Modell
+<br>
 
-**Jeder Sensor ist standardmäßig PRIVAT.** Du entscheidest:
+## 🏗️ Architektur: Einfach. Modular. Erweiterbar.
 
-| Stufe | Symbol | Wer sieht's? | KI-Vorteil |
-|-------|--------|--------------|------------|
-| **Privat** | 🔒 | Nur du | Nur deine Daten |
-| **Geteilt** | 👥 | Ausgewählte Personen | Gruppen-Insights |
-| **Community** | 🏘️ | Alle myIoTGrid-Nutzer | KI lernt von allen |
-| **Öffentlich** | 🌍 | Jeder (Open Data) | Wissenschaft |
+<p align="center">
+  <code>
+┌──────────────────────────────────────────────────────────────────────────────┐
+│                                                                              │
+│     🌡️ GRID.SENSOR           🧠 GRID.HUB              ☁️ GRID.CLOUD         │
+│     ══════════════           ═══════════              ═════════════         │
+│                                                                              │
+│     ┌──────────┐            ┌──────────────┐         ┌──────────────┐       │
+│     │  ESP32   │───MQTT────▶│ Raspberry Pi │──HTTPS─▶│   Optional   │       │
+│     │  ~10€    │            │    ~50€      │         │    Cloud     │       │
+│     └──────────┘            └──────────────┘         └──────────────┘       │
+│                                                                              │
+│     • Temperatur            • 🤖 Edge-KI              • 🤖 Cloud-KI         │
+│     • Feuchte               • 📊 Dashboard            • 🗺️ Community Map    │
+│     • CO2, Feinstaub        • 🏠 Matter/HomeKit       • 🤝 Sharing          │
+│     • Licht, Boden          • 💾 SQLite (lokal)       • 📡 Public API       │
+│     • Wind, Regen           • 🔌 100% Offline OK      • 🌍 Open Data        │
+│                                                                              │
+│     DIY: ~10-20€            Einmal kaufen,            Kostenlos oder        │
+│     pro Sensor              für immer nutzen          Self-Hosted           │
+│                                                                              │
+└──────────────────────────────────────────────────────────────────────────────┘
+  </code>
+</p>
+
+<br>
+
+### 🔑 Das Besondere: **3 Betriebsmodi**
+
+| Modus | Beschreibung | Internet? | KI? |
+|-------|--------------|-----------|-----|
+| **🏠 Standalone** | Nur dein Hub, 100% lokal | ❌ Nein | 🧠 Edge-KI |
+| **🔗 Connected** | Hub + Cloud, aber privat | ✅ Ja | 🧠 Edge + ☁️ Cloud |
+| **🌍 Community** | Teilen & profitieren | ✅ Ja | 🧠🧠🧠 Volle Power |
+
+<br>
 
 ---
 
-## 📡 Unterstützte Sensoren
+<br>
 
-| Kategorie | Sensoren | Messgrößen |
-|-----------|----------|------------|
-| **Temperatur** | DHT22, BME280, BME680, DS18B20, SHT31 | °C |
-| **Luftfeuchte** | DHT22, BME280, BME680, SHT31 | % |
-| **Luftdruck** | BME280, BME680, BMP280 | hPa |
-| **CO2** | MH-Z19B, SCD30, SCD40 | ppm |
-| **Feinstaub** | SDS011, PMS5003, SPS30 | µg/m³ |
-| **VOC** | BME680, SGP30, SGP40 | ppb |
-| **Licht** | BH1750, TSL2561 | Lux |
-| **Bodenfeuchte** | Capacitive Soil Sensor | % |
-| **Wind** | Anemometer | km/h |
+## 🔐 Privacy First: Du hast die Kontrolle
+
+<p align="center">
+  <code>
+    ╔═══════════════════════════════════════════════════════════════╗
+    ║                                                               ║
+    ║   🔒 PRIVAT        Nur du siehst deine Daten                 ║
+    ║      ║                                                        ║
+    ║      ▼                                                        ║
+    ║   👥 GETEILT       Familie, Freunde, Handwerker              ║
+    ║      ║                                                        ║
+    ║      ▼                                                        ║
+    ║   🏘️ COMMUNITY    Alle myIoTGrid-Nutzer (anonymisiert)       ║
+    ║      ║                                                        ║
+    ║      ▼                                                        ║
+    ║   🌍 ÖFFENTLICH   Open Data für Wissenschaft                 ║
+    ║                                                               ║
+    ╚═══════════════════════════════════════════════════════════════╝
+  </code>
+</p>
+
+> **Jeder Sensor ist standardmäßig PRIVAT.**
+>
+> Kein automatisches Teilen. Keine versteckten Uploads. Keine Überraschungen.
+>
+> **Du entscheidest. Immer.**
+
+<br>
 
 ---
 
-## 🌐 Externe Datenquellen
+<br>
 
-myIoTGrid integriert automatisch:
+## 🚀 Schnellstart: In 5 Minuten live
 
-| Quelle | Daten | Sensoren |
-|--------|-------|----------|
-| **Sensor.Community** | Feinstaub, Temperatur | 34.000+ weltweit |
-| **OpenWeatherMap** | Wetter, Vorhersagen | Global |
-| **DWD Open Data** | Wetterwarnungen | 2.000+ (Deutschland) |
-| **OpenAQ** | Luftqualität | 10.000+ weltweit |
-
----
-
-## 🚀 Schnellstart
-
-### Voraussetzungen
-
-- Raspberry Pi 4/5 (oder Docker auf beliebigem System)
-- ESP32 NodeMCU + Sensor (z.B. BME280)
-- WiFi-Netzwerk
-
-### 1. Grid.Hub installieren
+### 1️⃣ Hub starten
 
 ```bash
-# Option A: Docker (empfohlen)
-docker run -d \
-  --name myiotgrid-hub \
-  -p 5000:5000 \
-  -p 1883:1883 \
-  -v myiotgrid-data:/app/data \
+# Docker (empfohlen)
+docker run -d --name myiotgrid \
+  -p 5000:5000 -p 1883:1883 \
   ghcr.io/myiotgrid/hub:latest
 
-# Option B: Direkt auf Raspberry Pi
+# Oder auf Raspberry Pi
 curl -sSL https://get.myiotgrid.cloud | bash
 ```
 
-### 2. Grid.Sensor flashen
+### 2️⃣ Sensor flashen
 
 ```bash
-# PlatformIO
 cd grid-sensor
-cp config.example.h config.h
-# WiFi und Hub-IP in config.h eintragen
-pio run --target upload
+cp config.example.h config.h   # WiFi + Hub-IP eintragen
+pio run --target upload        # Flashen!
 ```
 
-### 3. Dashboard öffnen
+### 3️⃣ Dashboard öffnen
 
 ```
-http://raspberry-pi-ip:5000
+🌐 http://dein-raspberry-pi:5000
 ```
+
+**Fertig.** Deine Daten gehören dir. Für immer.
+
+<br>
 
 ---
 
-## 📁 Projektstruktur
+<br>
 
-```
-myIoTGrid/
-├── grid-sensor/              # ESP32 Firmware (C++/PlatformIO)
-│   ├── src/
-│   ├── lib/
-│   └── platformio.ini
-│
-├── grid-hub/                 # Lokaler Hub
-│   ├── src/
-│   │   ├── Grid.Hub.Api/           # .NET 8 Backend
-│   │   ├── Grid.Hub.Domain/        # Entities
-│   │   ├── Grid.Hub.Infrastructure/# EF Core, SQLite
-│   │   ├── Grid.Hub.Service/       # Business Logic
-│   │   └── Grid.Hub.Shared/        # DTOs
-│   ├── web/                        # Angular Frontend
-│   └── matter/                     # Matter.js Bridge
-│
-├── grid-cloud/               # Cloud Platform (optional)
-│   ├── src/
-│   │   ├── Grid.Cloud.Api/         # .NET 10 Backend
-│   │   └── ...
-│   └── web/                        # Angular Frontend
-│
-├── docs/                     # Dokumentation
-└── docker/                   # Docker Compose Files
-```
+## 📡 Unterstützte Sensoren
 
----
+<table>
+<tr>
+<td>
 
-## 🎯 Zielgruppen
+**🌡️ Klima**
+- Temperatur
+- Luftfeuchte
+- Luftdruck
+- CO2
 
-| Zielgruppe | Use Case | KI-Benefit |
-|------------|----------|------------|
-| **🔧 Maker & DIY** | Eigene Sensoren bauen | KI-APIs zum Experimentieren |
-| **🏠 Smart-Home-Nutzer** | Apple/Google/Alexa Integration | Proaktive Warnungen |
-| **👨‍👩‍👧‍👦 Familien** | Ferienhaus, Oma's Haus überwachen | KI für alle Standorte |
-| **🏫 Schulen** | MINT-Projekte | KI-Projekte mit echten Daten |
-| **🌾 Landwirte** | Felder, Gewächshäuser | Bewässerungs- & Frost-Vorhersage |
-| **🏙️ Kommunen** | Stadtweites Monitoring | Hitze-Karten, Frühwarnung |
-| **🔬 Forscher** | Bürgerwissenschaft | KI-Modelle auf Community-Daten |
+</td>
+<td>
 
----
+**💨 Luft**
+- Feinstaub PM2.5/PM10
+- VOC
+- Ozon
 
-## 🛠️ Technologie-Stack
+</td>
+<td>
 
-| Komponente | Technologie |
-|------------|-------------|
-| **Sensor Firmware** | C++, PlatformIO, Arduino |
-| **Hub Backend** | .NET 8, ASP.NET Core, SignalR |
-| **Hub Frontend** | Angular 18+, TypeScript, Tailwind |
-| **Hub Datenbank** | SQLite |
-| **Hub KI** | ML.NET, ONNX Runtime |
-| **Hub Smart Home** | Matter.js (Node.js) |
-| **Cloud Backend** | .NET 10, ASP.NET Core |
-| **Cloud Datenbank** | PostgreSQL |
-| **Cloud KI** | ML.NET, Python ML Services |
-| **Container** | Docker, Docker Compose |
+**🌱 Outdoor**
+- Bodenfeuchte
+- Licht/UV
+- Wind
+- Niederschlag
+
+</td>
+<td>
+
+**🏠 Indoor**
+- Bewegung
+- Schall
+- Tür/Fenster
+
+</td>
+</tr>
+</table>
+
+**+ Integration von 34.000+ externen Sensoren** via Sensor.Community, OpenWeather, DWD
+
+<br>
 
 ---
 
-## 📜 Leitprinzipien
+<br>
 
-| Prinzip | Umsetzung |
-|---------|-----------|
-| **Local First** | Hub funktioniert 100% offline |
-| **Privacy by Design** | Sensoren sind standardmäßig privat |
-| **Open Source** | MIT-Lizenz, keine Einschränkungen |
-| **Community Driven** | Entwicklung durch die Community |
-| **AI Native** | KI von Tag 1 integriert |
+## 🎯 Für wen ist das?
+
+<table>
+<tr>
+<td align="center" width="14%">
+  <h2>🔧</h2>
+  <strong>Maker</strong><br>
+  <small>Volle Kontrolle, offene APIs</small>
+</td>
+<td align="center" width="14%">
+  <h2>🏠</h2>
+  <strong>Smart Home</strong><br>
+  <small>Apple, Google, Alexa</small>
+</td>
+<td align="center" width="14%">
+  <h2>👨‍👩‍👧</h2>
+  <strong>Familien</strong><br>
+  <small>Alle Standorte im Blick</small>
+</td>
+<td align="center" width="14%">
+  <h2>🏫</h2>
+  <strong>Schulen</strong><br>
+  <small>MINT + KI lernen</small>
+</td>
+<td align="center" width="14%">
+  <h2>🌾</h2>
+  <strong>Landwirte</strong><br>
+  <small>Frost- & Bewässerungs-KI</small>
+</td>
+<td align="center" width="14%">
+  <h2>🏙️</h2>
+  <strong>Kommunen</strong><br>
+  <small>Stadtweites Monitoring</small>
+</td>
+<td align="center" width="14%">
+  <h2>🔬</h2>
+  <strong>Forscher</strong><br>
+  <small>Open Data & KI-Modelle</small>
+</td>
+</tr>
+</table>
+
+<br>
 
 ---
+
+<br>
+
+## 📜 Unsere Prinzipien
+
+<p align="center">
+  <code>
+    ┌─────────────────────────────────────────────────────────────┐
+    │                                                             │
+    │   🏠 LOCAL FIRST      Funktioniert 100% offline            │
+    │                                                             │
+    │   🔐 PRIVACY          Deine Daten. Deine Regeln.           │
+    │                                                             │
+    │   📖 OPEN SOURCE      MIT-Lizenz. Für immer frei.          │
+    │                                                             │
+    │   🤝 COMMUNITY        Von der Community. Für alle.         │
+    │                                                             │
+    │   🤖 AI NATIVE        KI von Tag 1. Nicht nachträglich.    │
+    │                                                             │
+    └─────────────────────────────────────────────────────────────┘
+  </code>
+</p>
+
+<br>
+
+---
+
+<br>
 
 ## 🗺️ Roadmap
 
-| Phase | Beschreibung | Status |
-|-------|--------------|--------|
-| **1** | Hub Standalone + Matter MVP | 🎯 Hackathon |
-| **2** | Sensor Plugin-System | 📋 Geplant |
-| **3** | Grid.Cloud MVP | 📋 Geplant |
-| **4** | Community (Sharing, Map) | 📋 Geplant |
-| **5** | Externe Quellen | 📋 Geplant |
-| **6** | Prädiktive Warnungen | 📋 Geplant |
-| **7** | Smart Home Cloud APIs | 📋 Geplant |
-| **8** | Mobile App | 📋 Geplant |
+```
+2025                                                           2026
+  │                                                              │
+  ▼                                                              ▼
+  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐
+  │Phase 1 │→│Phase 2 │→│Phase 3 │→│Phase 4 │→│Phase 5 │→│Phase 6 │
+  │        │ │        │ │        │ │        │ │        │ │        │
+  │Hub MVP │ │Sensor  │ │Cloud   │ │Commu-  │ │Externe │ │Mobile  │
+  │Matter  │ │Plugins │ │MVP     │ │nity    │ │Quellen │ │App     │
+  │Edge-KI │ │        │ │Cloud-KI│ │Sharing │ │        │ │        │
+  └────────┘ └────────┘ └────────┘ └────────┘ └────────┘ └────────┘
+      🎯
+   Hackathon
+```
+
+<br>
 
 ---
+
+<br>
 
 ## 🤝 Mitmachen
 
-Wir freuen uns über Beiträge! 
-
-### So kannst du helfen:
-
-- 🐛 **Bug Reports** – Issues erstellen
-- 💡 **Feature Requests** – Ideen einbringen
-- 🔧 **Code** – Pull Requests willkommen
-- 📚 **Dokumentation** – Anleitungen verbessern
-- 🌍 **Übersetzungen** – Sprachen hinzufügen
-- 🤖 **KI/ML** – Modelle entwickeln
-
-### Development Setup
+<table>
+<tr>
+<td align="center">🐛<br><strong>Bugs melden</strong></td>
+<td align="center">💡<br><strong>Features vorschlagen</strong></td>
+<td align="center">🔧<br><strong>Code beitragen</strong></td>
+<td align="center">📚<br><strong>Docs verbessern</strong></td>
+<td align="center">🌍<br><strong>Übersetzen</strong></td>
+<td align="center">🤖<br><strong>KI-Modelle</strong></td>
+</tr>
+</table>
 
 ```bash
-# Repository klonen
 git clone https://github.com/myiotgrid/myiotgrid.git
 cd myiotgrid
-
-# Hub Backend
-cd grid-hub/src
-dotnet restore
-dotnet build
-
-# Hub Frontend
-cd ../web
-npm install
-ng serve
-
-# Sensor Firmware
-cd ../../grid-sensor
-pio run
+# Los geht's! 🚀
 ```
 
+<br>
+
 ---
+
+<br>
 
 ## 📄 Lizenz
 
-MIT License – **Keine Einschränkungen. Für immer frei.**
+<p align="center">
+  <strong>MIT License – Keine Einschränkungen. Für immer frei.</strong>
+</p>
 
-```
-MIT License
+> **Warum MIT?**
+>
+> 🌍 Weil **Umweltdaten** allen gehören sollten.
+>
+> 🤖 Weil **KI** für alle da sein sollte – nicht nur für Big Tech.
+>
+> 🤝 Weil eine **Community** mehr erreicht als ein Unternehmen.
 
-Copyright (c) 2025 myIoTGrid Contributors
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software...
-```
-
-**Warum MIT?**
-- Weil Umweltdaten allen gehören sollten
-- Weil KI für alle da sein sollte – nicht nur für Big Tech
-- Weil eine Community mehr erreicht als ein Unternehmen
+<br>
 
 ---
 
-## 💬 Community
-
-- 🌐 **Website:** [myiotgrid.cloud](https://myiotgrid.cloud)
-- 📚 **Docs:** [Confluence](https://mysocialcare-doku.atlassian.net/wiki/spaces/myIoTGrid)
-- 💬 **Discord:** [Bald verfügbar]
-- 🐦 **Twitter:** [@myiotgrid](https://twitter.com/myiotgrid)
-
----
-
-## 🙏 Danksagungen
-
-- [Sensor.Community](https://sensor.community) – Inspiration & Datenquelle
-- [Matter.js](https://github.com/project-chip/matter.js) – Smart Home Bridge
-- [Anthropic Claude](https://claude.ai) – KI-unterstützte Entwicklung
-
----
+<br>
 
 <p align="center">
-  <strong>myIoTGrid – Dein persönliches Sensornetz.</strong><br/>
-  <em>Open Source. Community Driven. Privacy First. AI Native.</em>
+  <a href="https://myiotgrid.cloud"><img src="https://img.shields.io/badge/🌐-myiotgrid.cloud-00A86B?style=for-the-badge" alt="Website"/></a>
+  <a href="https://mysocialcare-doku.atlassian.net/wiki/spaces/myIoTGrid"><img src="https://img.shields.io/badge/📚-Dokumentation-0052CC?style=for-the-badge" alt="Docs"/></a>
+</p>
+
+<br>
+
+<p align="center">
+  <code>
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+    ·                                                           ·
+    ·      m y I o T G r i d                                   ·
+    ·                                                           ·
+    ·      Open Source · Community Driven · Privacy First      ·
+    ·                                                           ·
+    ·                    🤖 AI Native 🤖                        ·
+    ·                                                           ·
+    · · · · · · · · · · · · · · · · · · · · · · · · · · · · · · ·
+  </code>
+</p>
+
+<br>
+
+<p align="center">
+  <strong>⭐ Star uns auf GitHub – und werde Teil der Bewegung!</strong>
 </p>
 
 <p align="center">
-  ⭐ Star uns auf GitHub, wenn dir das Projekt gefällt!
+  <sub>Made with ❤️ and 🤖 in Germany</sub>
 </p>
