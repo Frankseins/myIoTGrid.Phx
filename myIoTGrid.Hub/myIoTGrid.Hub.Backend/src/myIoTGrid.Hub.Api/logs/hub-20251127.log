@@ -652,3 +652,25 @@ MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unsp
 2025-11-27 23:17:04.873 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensordata/latest responded 200 in 7.4708 ms
 2025-11-27 23:17:04.874 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/alerts responded 200 in 7.6006 ms
 2025-11-27 23:17:04.879 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4/sensors responded 200 in 1.4215 ms
+2025-11-27 23:18:14.296 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 1.9144 ms
+2025-11-27 23:18:14.305 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4/sensors responded 200 in 2.3460 ms
+2025-11-27 23:18:14.310 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensordata/latest responded 200 in 1.9122 ms
+2025-11-27 23:18:15.445 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 4.7356 ms
+2025-11-27 23:18:16.266 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/alerts responded 200 in 4.1331 ms
+2025-11-27 23:18:21.924 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /health responded 200 in 0.9939 ms
+2025-11-27 23:18:21.926 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensortypes responded 200 in 2.4022 ms
+2025-11-27 23:18:40.505 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 1.9097 ms
+2025-11-27 23:18:46.271 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 3.4231 ms
+2025-11-27 23:18:46.279 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4/sensors responded 200 in 2.6218 ms
+2025-11-27 23:18:46.285 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensordata/latest responded 200 in 2.9111 ms
+2025-11-27 23:18:48.107 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 6.9740 ms
+2025-11-27 23:18:48.107 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/alerts responded 200 in 6.4490 ms
+2025-11-27 23:18:48.108 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensordata/latest responded 200 in 6.2525 ms
+2025-11-27 23:18:48.114 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4/sensors responded 200 in 1.9518 ms
+2025-11-27 23:18:51.662 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensors/c25235e4-9628-4575-a98f-cbe0dc5339f3 responded 200 in 14.7778 ms
+2025-11-27 23:18:51.705 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/sensordata responded 200 in 39.0475 ms
+2025-11-27 23:19:07.629 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs responded 200 in 3.7892 ms
+2025-11-27 23:19:11.079 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4 responded 200 in 4.7650 ms
+2025-11-27 23:19:11.079 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /api/hubs/bb5ac498-530e-4b2b-8a80-1b7142bc78a4/sensors responded 200 in 3.5019 ms
+2025-11-27 23:19:45.786 +01:00 [INF] [myIoTGrid.Hub.Interface.Hubs.SensorHub] Client getrennt: dxj4OlfzaGXrkUdGsvHE-g
+2025-11-27 23:19:45.786 +01:00 [WRN] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /hubs/sensors responded 101 in 182670.7732 ms
