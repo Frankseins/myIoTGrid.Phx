@@ -1,0 +1,54 @@
+.connection-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: default;
+  transition: all 0.2s ease;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  &.status-connected {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+
+    mat-icon {
+      color: #2e7d32;
+    }
+  }
+
+  &.status-connecting {
+    background-color: #fff3e0;
+    color: #f57c00;
+
+    mat-icon {
+      color: #f57c00;
+      animation: pulse 1.5s infinite;
+    }
+  }
+
+  &.status-disconnected {
+    background-color: #ffebee;
+    color: #c62828;
+
+    mat-icon {
+      color: #c62828;
+    }
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

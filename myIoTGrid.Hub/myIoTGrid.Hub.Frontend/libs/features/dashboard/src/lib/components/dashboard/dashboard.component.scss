@@ -1,0 +1,118 @@
+.dashboard {
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+// Header
+.dashboard-header {
+  margin-bottom: 24px;
+
+  .header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+
+  .page-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 500;
+    color: #212121;
+  }
+}
+
+// Alerts Section
+.alerts-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+// Stats Section
+.stats-section {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  mat-card-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 20px !important;
+  }
+
+  .stat-icon {
+    font-size: 40px;
+    width: 40px;
+    height: 40px;
+
+    &.online {
+      color: #2e7d32;
+    }
+
+    &.offline {
+      color: #9e9e9e;
+    }
+
+    &.warning {
+      color: #f57c00;
+    }
+  }
+
+  .stat-info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-value {
+    font-size: 32px;
+    font-weight: 600;
+    color: #212121;
+    line-height: 1;
+  }
+
+  .stat-label {
+    font-size: 14px;
+    color: #757575;
+    margin-top: 4px;
+  }
+}
+
+// Sensors Section
+.sensors-section {
+  .section-title {
+    font-size: 20px;
+    font-weight: 500;
+    color: #212121;
+    margin: 0 0 16px 0;
+  }
+}
+
+.sensors-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+// Responsive
+@media (max-width: 600px) {
+  .dashboard-header {
+    .page-title {
+      font-size: 24px;
+    }
+  }
+
+  .stats-section {
+    grid-template-columns: 1fr;
+  }
+
+  .sensors-grid {
+    grid-template-columns: 1fr;
+  }
+}

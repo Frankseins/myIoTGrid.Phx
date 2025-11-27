@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  hub-frontend:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: myiotgrid-hub-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - hub-api
+    networks:
+      - myiotgrid-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+
+  hub-api:
+    image: ghcr.io/myiotgrid/hub-api:latest
+    container_name: myiotgrid-hub-api
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__HubDb=Data Source=/data/hub.db
+    volumes:
+      - hub-data:/data
+    networks:
+      - myiotgrid-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: myiotgrid-mosquitto
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    networks:
+      - myiotgrid-network
+    restart: unless-stopped
+
+networks:
+  myiotgrid-network:
+    driver: bridge
+
+volumes:
+  hub-data:
+  mosquitto-data:
+  mosquitto-log:

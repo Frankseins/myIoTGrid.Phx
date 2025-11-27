@@ -1,0 +1,84 @@
+<div class="hub-list-page">
+  <header class="page-header">
+    <h1 class="page-title">Hubs</h1>
+    <p class="page-subtitle">Raspberry Pi Gateways verwalten</p>
+  </header>
+
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Hubs werden geladen..."></myiotgrid-loading-spinner>
+  } @else if (hubs().length === 0) {
+    <myiotgrid-empty-state
+      icon="hub"
+      title="Keine Hubs"
+      message="Es wurden noch keine Hubs registriert. Verbinden Sie einen Raspberry Pi mit dem Netzwerk.">
+    </myiotgrid-empty-state>
+  } @else {
+    <mat-card>
+      <table mat-table [dataSource]="hubs()" class="hub-table">
+        <!-- Status Column -->
+        <ng-container matColumnDef="status">
+          <th mat-header-cell *matHeaderCellDef>Status</th>
+          <td mat-cell *matCellDef="let hub">
+            <mat-icon [class.online]="hub.isOnline" [class.offline]="!hub.isOnline">
+              {{ hub.isOnline ? 'check_circle' : 'cancel' }}
+            </mat-icon>
+          </td>
+        </ng-container>
+
+        <!-- Name Column -->
+        <ng-container matColumnDef="name">
+          <th mat-header-cell *matHeaderCellDef>Name</th>
+          <td mat-cell *matCellDef="let hub">
+            <div class="hub-name">
+              <span class="name">{{ hub.name }}</span>
+              @if (hub.defaultLocation?.name) {
+                <span class="location">{{ hub.defaultLocation.name }}</span>
+              }
+            </div>
+          </td>
+        </ng-container>
+
+        <!-- Hub ID Column -->
+        <ng-container matColumnDef="hubId">
+          <th mat-header-cell *matHeaderCellDef>Hub ID</th>
+          <td mat-cell *matCellDef="let hub">
+            <code class="hub-id">{{ hub.hubId }}</code>
+          </td>
+        </ng-container>
+
+        <!-- Protocol Column -->
+        <ng-container matColumnDef="protocol">
+          <th mat-header-cell *matHeaderCellDef>Protokoll</th>
+          <td mat-cell *matCellDef="let hub">
+            {{ hub.protocol | protocol }}
+          </td>
+        </ng-container>
+
+        <!-- Last Seen Column -->
+        <ng-container matColumnDef="lastSeen">
+          <th mat-header-cell *matHeaderCellDef>Zuletzt gesehen</th>
+          <td mat-cell *matCellDef="let hub">
+            @if (hub.lastSeen) {
+              {{ hub.lastSeen | relativeTime }}
+            } @else {
+              <span class="no-data">–</span>
+            }
+          </td>
+        </ng-container>
+
+        <!-- Actions Column -->
+        <ng-container matColumnDef="actions">
+          <th mat-header-cell *matHeaderCellDef></th>
+          <td mat-cell *matCellDef="let hub">
+            <button mat-icon-button [routerLink]="['/hubs', hub.id]" matTooltip="Details">
+              <mat-icon>arrow_forward</mat-icon>
+            </button>
+          </td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns;" [routerLink]="['/hubs', row.id]"></tr>
+      </table>
+    </mat-card>
+  }
+</div>

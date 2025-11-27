@@ -1,0 +1,105 @@
+<div class="settings-page">
+  <header class="page-header">
+    <h1 class="page-title">Einstellungen</h1>
+    <p class="page-subtitle">Hub-Konfiguration und System-Informationen</p>
+  </header>
+
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Einstellungen werden geladen..."></myiotgrid-loading-spinner>
+  } @else {
+    <div class="settings-grid">
+      <!-- System Info Card -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>info</mat-icon>
+          <mat-card-title>System-Informationen</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item>
+              <mat-icon matListItemIcon>check_circle</mat-icon>
+              <span matListItemTitle>Status</span>
+              <span matListItemLine class="status-value" [class.healthy]="healthStatus()?.status === 'Healthy'">
+                {{ healthStatus()?.status || 'Unbekannt' }}
+              </span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <mat-icon matListItemIcon>tag</mat-icon>
+              <span matListItemTitle>Version</span>
+              <span matListItemLine>{{ healthStatus()?.version || '1.0.0' }}</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <mat-icon matListItemIcon>schedule</mat-icon>
+              <span matListItemTitle>Uptime</span>
+              <span matListItemLine>{{ healthStatus()?.uptime || '–' }}</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Sensor Types Card -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>category</mat-icon>
+          <mat-card-title>Sensor-Typen</mat-card-title>
+          <mat-card-subtitle>{{ sensorTypes().length }} Typen verfügbar</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list class="sensor-types-list">
+            @for (type of sensorTypes(); track type.id) {
+              <mat-list-item>
+                <mat-icon matListItemIcon>{{ getSensorTypeIcon(type.code) }}</mat-icon>
+                <span matListItemTitle>{{ type.name }}</span>
+                <span matListItemLine>{{ type.unit }} · {{ type.code }}</span>
+              </mat-list-item>
+            }
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Cloud Connection Card -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>cloud</mat-icon>
+          <mat-card-title>Cloud-Verbindung</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item>
+              <mat-icon matListItemIcon>sync</mat-icon>
+              <span matListItemTitle>Synchronisation</span>
+              <span matListItemLine>Konfiguriert</span>
+            </mat-list-item>
+            <mat-divider></mat-divider>
+            <mat-list-item>
+              <mat-icon matListItemIcon>smart_toy</mat-icon>
+              <span matListItemTitle>KI-Analyse</span>
+              <span matListItemLine>Cloud-basiert</span>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Smart Home Card -->
+      <mat-card class="settings-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar>home</mat-icon>
+          <mat-card-title>Smart Home</mat-card-title>
+          <mat-card-subtitle>Matter-Integration</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="matter-info">
+            <mat-icon class="matter-icon">qr_code_2</mat-icon>
+            <p>Matter-Pairing ist bereit. Scannen Sie den QR-Code in Ihrer Smart Home App.</p>
+            <button mat-stroked-button color="primary">
+              <mat-icon>qr_code</mat-icon>
+              QR-Code anzeigen
+            </button>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  }
+</div>

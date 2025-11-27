@@ -1,0 +1,18 @@
+<div class="alert-banner" [class]="alertClass()">
+  <mat-icon class="alert-icon">{{ alertIcon() }}</mat-icon>
+
+  <div class="alert-content">
+    <div class="alert-header">
+      <span class="alert-type">{{ alert().alertTypeName }}</span>
+      <span class="alert-time">{{ alert().createdAt | relativeTime }}</span>
+    </div>
+    <p class="alert-message">{{ alert().message }}</p>
+    @if (alert().recommendation) {
+      <p class="alert-recommendation">{{ alert().recommendation }}</p>
+    }
+  </div>
+
+  <button mat-icon-button class="acknowledge-btn" (click)="onAcknowledge()" matTooltip="Quittieren">
+    <mat-icon>check</mat-icon>
+  </button>
+</div>

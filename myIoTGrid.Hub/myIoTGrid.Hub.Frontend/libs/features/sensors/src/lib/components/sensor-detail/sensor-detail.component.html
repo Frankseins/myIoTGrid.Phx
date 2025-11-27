@@ -1,0 +1,123 @@
+<div class="sensor-detail-page">
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Sensor wird geladen..."></myiotgrid-loading-spinner>
+  } @else if (!sensor()) {
+    <myiotgrid-empty-state
+      icon="error"
+      title="Sensor nicht gefunden"
+      message="Der angeforderte Sensor konnte nicht gefunden werden."
+      actionLabel="Zurück zur Liste"
+      (actionClicked)="goBack()">
+    </myiotgrid-empty-state>
+  } @else {
+    <!-- Header -->
+    <header class="page-header">
+      <button mat-icon-button (click)="goBack()" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-content">
+        <div class="title-row">
+          <mat-icon class="sensor-icon">{{ sensorIcon() }}</mat-icon>
+          <h1 class="page-title">{{ sensor()!.defaultLocation?.name || 'Unbekannt' }}</h1>
+        </div>
+        <div class="header-meta">
+          <mat-chip [class.online]="sensor()!.isOnline" [class.offline]="!sensor()!.isOnline">
+            <mat-icon matChipAvatar>{{ sensor()!.isOnline ? 'check_circle' : 'cancel' }}</mat-icon>
+            {{ sensor()!.isOnline ? 'Online' : 'Offline' }}
+          </mat-chip>
+          <span class="sensor-name">{{ sensor()!.name }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Current Value Card -->
+    <mat-card class="value-card">
+      <mat-card-content>
+        <div class="current-value">
+          @if (latestValue()) {
+            <span class="value">{{ latestValue()!.value | sensorUnit:latestValue()!.unit }}</span>
+            <span class="timestamp">Aktualisiert {{ latestValue()!.timestamp | relativeTime }}</span>
+          } @else {
+            <span class="value no-data">–</span>
+            <span class="timestamp">Keine Daten verfügbar</span>
+          }
+        </div>
+        <div class="sensor-type-info">
+          <mat-icon>{{ sensorIcon() }}</mat-icon>
+          <span>{{ sensor()!.sensorTypeName }}</span>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Info Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>Sensor-Informationen</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Sensor ID</span>
+            <code class="value">{{ sensor()!.sensorId }}</code>
+          </div>
+          <div class="info-item">
+            <span class="label">Sensor-Typ</span>
+            <span class="value">{{ sensor()!.sensorTypeName }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Standort</span>
+            <span class="value">{{ sensor()!.defaultLocation?.name || '–' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Zuletzt gesehen</span>
+            <span class="value">{{ sensor()!.lastSeen | relativeTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Erstellt</span>
+            <span class="value">{{ sensor()!.createdAt | relativeTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Aktiv</span>
+            <span class="value">{{ sensor()!.isActive ? 'Ja' : 'Nein' }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- History Section -->
+    <section class="history-section">
+      <div class="section-header">
+        <h2 class="section-title">Verlauf</h2>
+        <mat-form-field appearance="outline">
+          <mat-label>Zeitraum</mat-label>
+          <mat-select [(ngModel)]="timeRange" (selectionChange)="onTimeRangeChange()">
+            <mat-option value="24h">Letzte 24 Stunden</mat-option>
+            <mat-option value="7d">Letzte 7 Tage</mat-option>
+            <mat-option value="30d">Letzte 30 Tage</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+
+      @if (sensorData().length === 0) {
+        <myiotgrid-empty-state
+          icon="timeline"
+          title="Keine Daten"
+          message="Im ausgewählten Zeitraum sind keine Messwerte vorhanden.">
+        </myiotgrid-empty-state>
+      } @else {
+        <mat-card class="history-card">
+          <mat-card-content>
+            <div class="history-list">
+              @for (data of sensorData(); track data.id) {
+                <div class="history-item">
+                  <span class="history-value">{{ data.value | sensorUnit:data.unit }}</span>
+                  <span class="history-time">{{ data.timestamp | relativeTime }}</span>
+                </div>
+              }
+            </div>
+          </mat-card-content>
+        </mat-card>
+      }
+    </section>
+  }
+</div>

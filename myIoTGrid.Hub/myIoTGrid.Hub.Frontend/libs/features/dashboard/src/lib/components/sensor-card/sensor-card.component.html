@@ -1,0 +1,40 @@
+<mat-card class="sensor-card" [class.offline]="!sensor().isOnline" [routerLink]="['/sensors', sensor().id]">
+  <mat-card-header>
+    <mat-icon mat-card-avatar class="sensor-icon">{{ sensorIcon() }}</mat-icon>
+    <mat-card-title>{{ locationName() }}</mat-card-title>
+    <mat-card-subtitle>{{ sensor().name }}</mat-card-subtitle>
+  </mat-card-header>
+
+  <mat-card-content>
+    @if (latestData()) {
+      <div class="sensor-value">
+        <span class="value">{{ latestData()!.value | sensorUnit:latestData()!.unit }}</span>
+      </div>
+      <div class="sensor-meta">
+        <span class="timestamp" [matTooltip]="latestData()!.timestamp">
+          {{ latestData()!.timestamp | relativeTime }}
+        </span>
+      </div>
+    } @else {
+      <div class="sensor-value no-data">
+        <span class="value">–</span>
+      </div>
+      <div class="sensor-meta">
+        <span class="timestamp">Keine Daten</span>
+      </div>
+    }
+  </mat-card-content>
+
+  <mat-card-footer>
+    <div class="status-row">
+      <mat-chip-set>
+        <mat-chip [class.online]="sensor().isOnline" [class.offline]="!sensor().isOnline">
+          <mat-icon matChipAvatar>{{ sensor().isOnline ? 'check_circle' : 'cancel' }}</mat-icon>
+          {{ sensor().isOnline ? 'Online' : 'Offline' }}
+        </mat-chip>
+      </mat-chip-set>
+
+      <span class="sensor-type">{{ sensor().sensorTypeName }}</span>
+    </div>
+  </mat-card-footer>
+</mat-card>

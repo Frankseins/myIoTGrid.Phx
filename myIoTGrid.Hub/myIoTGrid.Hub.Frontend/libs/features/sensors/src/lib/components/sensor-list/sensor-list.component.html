@@ -1,0 +1,71 @@
+<div class="sensor-list-page">
+  <header class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">Sensoren</h1>
+      <p class="page-subtitle">Alle registrierten Sensoren verwalten</p>
+    </div>
+
+    <div class="header-filters">
+      <mat-form-field appearance="outline">
+        <mat-label>Status</mat-label>
+        <mat-select [(ngModel)]="filterStatus">
+          <mat-option value="all">Alle</mat-option>
+          <mat-option value="online">Online</mat-option>
+          <mat-option value="offline">Offline</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Sensoren werden geladen..."></myiotgrid-loading-spinner>
+  } @else if (filteredSensors.length === 0) {
+    <myiotgrid-empty-state
+      icon="sensors"
+      title="Keine Sensoren"
+      [message]="filterStatus === 'all' ? 'Es wurden noch keine Sensoren registriert.' : 'Keine Sensoren mit diesem Status gefunden.'">
+    </myiotgrid-empty-state>
+  } @else {
+    <div class="sensors-grid">
+      @for (sensor of filteredSensors; track sensor.id) {
+        <mat-card class="sensor-card" [class.offline]="!sensor.isOnline" [routerLink]="['/sensors', sensor.id]">
+          <mat-card-header>
+            <mat-icon mat-card-avatar class="sensor-icon" [class.offline]="!sensor.isOnline">
+              {{ getSensorIcon(sensor.sensorTypeCode) }}
+            </mat-icon>
+            <mat-card-title>{{ sensor.defaultLocation?.name || 'Unbekannt' }}</mat-card-title>
+            <mat-card-subtitle>{{ sensor.name }}</mat-card-subtitle>
+          </mat-card-header>
+
+          <mat-card-content>
+            @if (getLatestData(sensor.id); as data) {
+              <div class="sensor-value">
+                <span class="value">{{ data.value | sensorUnit:data.unit }}</span>
+              </div>
+              <div class="sensor-meta">
+                <span class="timestamp">{{ data.timestamp | relativeTime }}</span>
+              </div>
+            } @else {
+              <div class="sensor-value no-data">
+                <span class="value">–</span>
+              </div>
+              <div class="sensor-meta">
+                <span class="timestamp">Keine Daten</span>
+              </div>
+            }
+          </mat-card-content>
+
+          <mat-card-footer>
+            <div class="status-row">
+              <mat-chip [class.online]="sensor.isOnline" [class.offline]="!sensor.isOnline">
+                <mat-icon matChipAvatar>{{ sensor.isOnline ? 'check_circle' : 'cancel' }}</mat-icon>
+                {{ sensor.isOnline ? 'Online' : 'Offline' }}
+              </mat-chip>
+              <span class="sensor-type">{{ sensor.sensorTypeName }}</span>
+            </div>
+          </mat-card-footer>
+        </mat-card>
+      }
+    </div>
+  }
+</div>

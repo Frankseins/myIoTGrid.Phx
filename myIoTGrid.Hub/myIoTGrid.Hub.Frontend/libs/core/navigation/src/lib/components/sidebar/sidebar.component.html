@@ -1,0 +1,109 @@
+<nav class="sidebar" [class.collapsed]="isCollapsed()">
+  <!-- Header -->
+  <div class="sidebar-header">
+    <div class="logo-container">
+      <mat-icon class="logo-icon">grid_view</mat-icon>
+      @if (!isCollapsed()) {
+        <span class="logo-text">myIoTGrid</span>
+      }
+    </div>
+    <button
+      mat-icon-button
+      class="toggle-btn"
+      (click)="toggleCollapsed()"
+      [matTooltip]="isCollapsed() ? 'Erweitern' : 'Minimieren'"
+      matTooltipPosition="right">
+      <mat-icon>{{ isCollapsed() ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    </button>
+  </div>
+
+  <!-- Main Navigation -->
+  <div class="sidebar-content">
+    <div class="nav-section">
+      @for (item of mainNavItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          class="nav-item"
+          [class.active]="isActive(item.route)"
+          [class.disabled]="item.disabled"
+          [matTooltip]="isCollapsed() ? item.label : ''"
+          matTooltipPosition="right">
+          <div class="active-indicator"></div>
+          <div class="icon-container">
+            <mat-icon
+              [matBadge]="item.badge || null"
+              [matBadgeHidden]="!item.badge"
+              matBadgeColor="warn"
+              matBadgeSize="small">
+              {{ item.icon }}
+            </mat-icon>
+          </div>
+          @if (!isCollapsed()) {
+            <span class="nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </div>
+  </div>
+
+  <!-- Bottom Section -->
+  <div class="sidebar-footer">
+    <mat-divider></mat-divider>
+
+    <!-- Bottom Nav Items -->
+    <div class="nav-section">
+      @for (item of bottomNavItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          class="nav-item"
+          [class.active]="isActive(item.route)"
+          [matTooltip]="isCollapsed() ? item.label : ''"
+          matTooltipPosition="right">
+          <div class="active-indicator"></div>
+          <div class="icon-container">
+            <mat-icon>{{ item.icon }}</mat-icon>
+          </div>
+          @if (!isCollapsed()) {
+            <span class="nav-label">{{ item.label }}</span>
+          }
+        </a>
+      }
+    </div>
+
+    <!-- User Profile -->
+    <div class="user-section">
+      <button
+        mat-icon-button
+        [matMenuTriggerFor]="profileMenu"
+        class="profile-btn"
+        [matTooltip]="isCollapsed() ? userName() : ''"
+        matTooltipPosition="right">
+        <div class="user-avatar">{{ userInitials() }}</div>
+      </button>
+
+      @if (!isCollapsed()) {
+        <div class="user-info">
+          <span class="user-name">{{ userName() }}</span>
+        </div>
+      }
+
+      <mat-menu #profileMenu="matMenu" xPosition="after">
+        <div class="profile-menu-header">
+          <div class="user-avatar-large">{{ userInitials() }}</div>
+          <div class="profile-user-info">
+            <span class="profile-user-name">{{ userName() }}</span>
+          </div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="openProfile()">
+          <mat-icon>person</mat-icon>
+          <span>Profil</span>
+        </button>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>logout</mat-icon>
+          <span>Abmelden</span>
+        </button>
+      </mat-menu>
+    </div>
+  </div>
+</nav>

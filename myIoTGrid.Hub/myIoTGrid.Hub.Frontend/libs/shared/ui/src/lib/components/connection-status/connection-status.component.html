@@ -1,0 +1,19 @@
+<div class="connection-status" [class]="statusClass()" [matTooltip]="tooltip()">
+  <mat-icon>{{ statusIcon() }}</mat-icon>
+  <span class="status-text">
+    @switch (connectionState()) {
+      @case ('connected') {
+        Online
+      }
+      @case ('connecting') {
+        Verbinden...
+      }
+      @case ('reconnecting') {
+        Wiederverbinden...
+      }
+      @default {
+        Offline
+      }
+    }
+  </span>
+</div>

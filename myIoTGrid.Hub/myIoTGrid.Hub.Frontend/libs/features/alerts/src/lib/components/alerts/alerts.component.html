@@ -1,0 +1,109 @@
+<div class="alerts-page">
+  <header class="page-header">
+    <h1 class="page-title">Warnungen</h1>
+    <div class="alert-stats">
+      @if (criticalCount() > 0) {
+        <mat-chip class="critical">
+          <mat-icon matChipAvatar>error</mat-icon>
+          {{ criticalCount() }} Kritisch
+        </mat-chip>
+      }
+      @if (warningCount() > 0) {
+        <mat-chip class="warning">
+          <mat-icon matChipAvatar>warning</mat-icon>
+          {{ warningCount() }} Warnungen
+        </mat-chip>
+      }
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Warnungen werden geladen..."></myiotgrid-loading-spinner>
+  } @else {
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          Aktiv ({{ activeAlerts().length }})
+        </ng-template>
+
+        @if (activeAlerts().length === 0) {
+          <div class="tab-content">
+            <myiotgrid-empty-state
+              icon="check_circle"
+              title="Keine aktiven Warnungen"
+              message="Alle Systeme arbeiten normal.">
+            </myiotgrid-empty-state>
+          </div>
+        } @else {
+          <div class="tab-content alerts-list">
+            @for (alert of activeAlerts(); track alert.id) {
+              <mat-card class="alert-card" [class]="getAlertClass(alert.level)">
+                <mat-card-content>
+                  <div class="alert-row">
+                    <mat-icon class="alert-icon">{{ getAlertIcon(alert.level) }}</mat-icon>
+                    <div class="alert-content">
+                      <div class="alert-header">
+                        <span class="alert-type">{{ alert.alertTypeName }}</span>
+                        <span class="alert-level">{{ alert.level | alertLevel }}</span>
+                      </div>
+                      <p class="alert-message">{{ alert.message }}</p>
+                      @if (alert.recommendation) {
+                        <p class="alert-recommendation">{{ alert.recommendation }}</p>
+                      }
+                      <div class="alert-meta">
+                        <span class="alert-time">{{ alert.createdAt | relativeTime }}</span>
+                        <span class="alert-source">{{ alert.source === 0 ? 'Lokal' : 'Cloud' }}</span>
+                      </div>
+                    </div>
+                    <button mat-icon-button (click)="acknowledgeAlert(alert.id)" matTooltip="Quittieren">
+                      <mat-icon>check</mat-icon>
+                    </button>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        }
+      </mat-tab>
+
+      <mat-tab>
+        <ng-template mat-tab-label>
+          Verlauf ({{ acknowledgedAlerts().length }})
+        </ng-template>
+
+        @if (acknowledgedAlerts().length === 0) {
+          <div class="tab-content">
+            <myiotgrid-empty-state
+              icon="history"
+              title="Kein Verlauf"
+              message="Es wurden noch keine Warnungen quittiert.">
+            </myiotgrid-empty-state>
+          </div>
+        } @else {
+          <div class="tab-content alerts-list acknowledged">
+            @for (alert of acknowledgedAlerts(); track alert.id) {
+              <mat-card class="alert-card acknowledged" [class]="getAlertClass(alert.level)">
+                <mat-card-content>
+                  <div class="alert-row">
+                    <mat-icon class="alert-icon">{{ getAlertIcon(alert.level) }}</mat-icon>
+                    <div class="alert-content">
+                      <div class="alert-header">
+                        <span class="alert-type">{{ alert.alertTypeName }}</span>
+                        <span class="alert-level">{{ alert.level | alertLevel }}</span>
+                      </div>
+                      <p class="alert-message">{{ alert.message }}</p>
+                      <div class="alert-meta">
+                        <span class="alert-time">{{ alert.createdAt | relativeTime }}</span>
+                        <span class="acknowledged-time">Quittiert {{ alert.acknowledgedAt | relativeTime }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </mat-card-content>
+              </mat-card>
+            }
+          </div>
+        }
+      </mat-tab>
+    </mat-tab-group>
+  }
+</div>

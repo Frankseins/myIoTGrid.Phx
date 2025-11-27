@@ -1,0 +1,44 @@
+{
+  "compilerOptions": {
+    "moduleResolution": "bundler",
+    "emitDecoratorMetadata": false,
+    "target": "es2022",
+    "module": "preserve",
+    "lib": ["es2020", "dom"],
+    "baseUrl": ".",
+    "paths": {
+      "@myiotgrid/shared/models": ["libs/shared/models/src/index.ts"],
+      "@myiotgrid/shared/data-access": ["libs/shared/data-access/src/index.ts"],
+      "@myiotgrid/shared/ui": ["libs/shared/ui/src/index.ts"],
+      "@myiotgrid/shared/utils": ["libs/shared/utils/src/index.ts"],
+      "@myiotgrid/core/shell": ["libs/core/shell/src/index.ts"],
+      "@myiotgrid/core/auth": ["libs/core/auth/src/index.ts"],
+      "@myiotgrid/core/navigation": ["libs/core/navigation/src/index.ts"],
+      "@myiotgrid/dashboard/feature": ["libs/features/dashboard/src/index.ts"],
+      "@myiotgrid/hubs/feature": ["libs/features/hubs/src/index.ts"],
+      "@myiotgrid/sensors/feature": ["libs/features/sensors/src/index.ts"],
+      "@myiotgrid/alerts/feature": ["libs/features/alerts/src/index.ts"],
+      "@myiotgrid/settings/feature": ["libs/features/settings/src/index.ts"]
+    },
+    "isolatedModules": true
+  },
+  "angularCompilerOptions": {
+    "enableI18nLegacyMessageIdFormat": false,
+    "strictInjectionParameters": true,
+    "strictInputAccessModifiers": true,
+    "typeCheckHostBindings": true,
+    "strictTemplates": true
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ],
+  "compileOnSave": false,
+  "exclude": ["node_modules", "tmp"]
+}

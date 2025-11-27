@@ -1,0 +1,9 @@
+<div class="app-shell">
+  @if (showNavigation()) {
+    <myiotgrid-sidebar></myiotgrid-sidebar>
+  }
+
+  <main class="main-content" [class.no-nav]="!showNavigation()">
+    <ng-content></ng-content>
+  </main>
+</div>

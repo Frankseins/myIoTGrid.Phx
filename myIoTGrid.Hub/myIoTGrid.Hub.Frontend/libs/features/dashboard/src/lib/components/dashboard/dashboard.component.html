@@ -1,0 +1,87 @@
+<div class="dashboard">
+  <!-- Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1 class="page-title">Dashboard</h1>
+      <myiotgrid-connection-status></myiotgrid-connection-status>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Dashboard wird geladen..."></myiotgrid-loading-spinner>
+  } @else {
+    <!-- Alerts Banner -->
+    @if (criticalAlerts().length > 0 || warningAlerts().length > 0) {
+      <section class="alerts-section">
+        @for (alert of criticalAlerts(); track alert.id) {
+          <myiotgrid-alert-banner
+            [alert]="alert"
+            (acknowledge)="acknowledgeAlert($event)">
+          </myiotgrid-alert-banner>
+        }
+        @for (alert of warningAlerts(); track alert.id) {
+          <myiotgrid-alert-banner
+            [alert]="alert"
+            (acknowledge)="acknowledgeAlert($event)">
+          </myiotgrid-alert-banner>
+        }
+      </section>
+    }
+
+    <!-- Stats Overview -->
+    <section class="stats-section">
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon online">sensors</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ onlineSensors().length }}</span>
+            <span class="stat-label">Online</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon offline">sensors_off</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ offlineSensors().length }}</span>
+            <span class="stat-label">Offline</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <mat-card class="stat-card">
+        <mat-card-content>
+          <mat-icon class="stat-icon warning">warning</mat-icon>
+          <div class="stat-info">
+            <span class="stat-value">{{ activeAlerts().length }}</span>
+            <span class="stat-label">Warnungen</span>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </section>
+
+    <!-- Sensors Grid -->
+    <section class="sensors-section">
+      <h2 class="section-title">Sensoren</h2>
+
+      @if (sensors().length === 0) {
+        <myiotgrid-empty-state
+          icon="sensors"
+          title="Keine Sensoren"
+          message="Es wurden noch keine Sensoren registriert. Verbinden Sie einen Sensor mit dem Hub."
+          actionLabel="Mehr erfahren">
+        </myiotgrid-empty-state>
+      } @else {
+        <div class="sensors-grid">
+          @for (sensor of sensors(); track sensor.id) {
+            <myiotgrid-sensor-card
+              [sensor]="sensor"
+              [latestData]="getLatestDataForSensor(sensor.id)">
+            </myiotgrid-sensor-card>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>

@@ -1,0 +1,66 @@
+.hub-list-page {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 24px;
+
+  .page-title {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 500;
+    color: #212121;
+  }
+
+  .page-subtitle {
+    margin: 8px 0 0 0;
+    font-size: 14px;
+    color: #757575;
+  }
+}
+
+.hub-table {
+  width: 100%;
+
+  tr.mat-mdc-row {
+    cursor: pointer;
+
+    &:hover {
+      background-color: rgba(0, 0, 0, 0.04);
+    }
+  }
+
+  .online {
+    color: #2e7d32;
+  }
+
+  .offline {
+    color: #c62828;
+  }
+
+  .hub-name {
+    display: flex;
+    flex-direction: column;
+
+    .name {
+      font-weight: 500;
+    }
+
+    .location {
+      font-size: 12px;
+      color: #757575;
+    }
+  }
+
+  .hub-id {
+    font-size: 12px;
+    background-color: #f5f5f5;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .no-data {
+    color: #bdbdbd;
+  }
+}

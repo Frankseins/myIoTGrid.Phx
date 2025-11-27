@@ -1,0 +1,17 @@
+@if (isInitializing()) {
+  <div class="loading-container">
+    <div class="loading-spinner">
+      <div class="spinner"></div>
+      <p>myIoTGrid wird gestartet...</p>
+    </div>
+  </div>
+} @else {
+  <div class="app-shell">
+    @if (showNavigation()) {
+      <myiotgrid-sidebar></myiotgrid-sidebar>
+    }
+    <main class="main-content" [class.no-nav]="!showNavigation()">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+}

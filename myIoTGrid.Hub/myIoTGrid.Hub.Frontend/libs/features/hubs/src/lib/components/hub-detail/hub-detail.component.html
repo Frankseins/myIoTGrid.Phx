@@ -1,0 +1,91 @@
+<div class="hub-detail-page">
+  @if (isLoading()) {
+    <myiotgrid-loading-spinner message="Hub wird geladen..."></myiotgrid-loading-spinner>
+  } @else if (!hub()) {
+    <myiotgrid-empty-state
+      icon="error"
+      title="Hub nicht gefunden"
+      message="Der angeforderte Hub konnte nicht gefunden werden."
+      actionLabel="Zurück zur Liste"
+      (actionClicked)="router.navigate(['/hubs'])">
+    </myiotgrid-empty-state>
+  } @else {
+    <!-- Header -->
+    <header class="page-header">
+      <button mat-icon-button routerLink="/hubs" class="back-btn">
+        <mat-icon>arrow_back</mat-icon>
+      </button>
+      <div class="header-content">
+        <h1 class="page-title">{{ hub()!.name }}</h1>
+        <div class="header-meta">
+          <mat-chip [class.online]="hub()!.isOnline" [class.offline]="!hub()!.isOnline">
+            <mat-icon matChipAvatar>{{ hub()!.isOnline ? 'check_circle' : 'cancel' }}</mat-icon>
+            {{ hub()!.isOnline ? 'Online' : 'Offline' }}
+          </mat-chip>
+          <span class="hub-id">{{ hub()!.hubId }}</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Info Card -->
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-icon mat-card-avatar>hub</mat-icon>
+        <mat-card-title>Hub-Informationen</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="info-grid">
+          <div class="info-item">
+            <span class="label">Protokoll</span>
+            <span class="value">{{ hub()!.protocol | protocol }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Standort</span>
+            <span class="value">{{ hub()!.defaultLocation?.name || '–' }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Zuletzt gesehen</span>
+            <span class="value">{{ hub()!.lastSeen | relativeTime }}</span>
+          </div>
+          <div class="info-item">
+            <span class="label">Erstellt</span>
+            <span class="value">{{ hub()!.createdAt | relativeTime }}</span>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Sensors -->
+    <section class="sensors-section">
+      <h2 class="section-title">Verbundene Sensoren ({{ sensors().length }})</h2>
+
+      @if (sensors().length === 0) {
+        <myiotgrid-empty-state
+          icon="sensors"
+          title="Keine Sensoren"
+          message="Diesem Hub sind noch keine Sensoren zugeordnet.">
+        </myiotgrid-empty-state>
+      } @else {
+        <div class="sensors-grid">
+          @for (sensor of sensors(); track sensor.id) {
+            <mat-card class="sensor-card" [routerLink]="['/sensors', sensor.id]">
+              <mat-card-header>
+                <mat-icon mat-card-avatar [class.online]="sensor.isOnline" [class.offline]="!sensor.isOnline">
+                  sensors
+                </mat-icon>
+                <mat-card-title>{{ sensor.name }}</mat-card-title>
+                <mat-card-subtitle>{{ sensor.sensorTypeName }}</mat-card-subtitle>
+              </mat-card-header>
+              <mat-card-content>
+                <div class="sensor-info">
+                  <span class="location">{{ sensor.defaultLocation?.name || 'Unbekannt' }}</span>
+                  <span class="last-seen">{{ sensor.lastSeen | relativeTime }}</span>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          }
+        </div>
+      }
+    </section>
+  }
+</div>
