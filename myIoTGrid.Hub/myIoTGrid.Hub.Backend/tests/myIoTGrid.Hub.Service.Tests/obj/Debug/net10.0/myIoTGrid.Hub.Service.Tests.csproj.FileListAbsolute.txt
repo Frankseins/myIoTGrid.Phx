@@ -1,5 +1,11 @@
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/.msCoverageSourceRootsMapping_myIoTGrid.Hub.Service.Tests
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/CoverletSourceRootsMapping_myIoTGrid.Hub.Service.Tests
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.csproj.AssemblyReference.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.GeneratedMSBuildEditorConfig.editorconfig
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.AssemblyInfoInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.AssemblyInfo.cs
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.csproj.CoreCompileInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.sourcelink.json
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/BuildHost-net472/Microsoft.Build.Locator.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/BuildHost-net472/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/BuildHost-net472/Microsoft.CodeAnalysis.Workspaces.MSBuild.BuildHost.exe.config
@@ -66,6 +72,7 @@
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.EntityFrameworkCore.Sqlite.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.Caching.Abstractions.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.Caching.Memory.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.Configuration.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.Configuration.Abstractions.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.DependencyInjection.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/Microsoft.Extensions.DependencyInjection.Abstractions.dll
@@ -206,12 +213,6 @@
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/myIoTGrid.Hub.Infrastructure.pdb
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/myIoTGrid.Hub.Domain.pdb
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/bin/Debug/net10.0/myIoTGrid.Hub.Shared.pdb
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.csproj.AssemblyReference.cache
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.GeneratedMSBuildEditorConfig.editorconfig
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.AssemblyInfoInputs.cache
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.AssemblyInfo.cs
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.csproj.CoreCompileInputs.cache
-/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.sourcelink.json
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGri.FB4994FC.Up2Date
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/myIoTGrid.Hub.Service.Tests.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/tests/myIoTGrid.Hub.Service.Tests/obj/Debug/net10.0/refint/myIoTGrid.Hub.Service.Tests.dll
