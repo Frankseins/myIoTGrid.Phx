@@ -1,0 +1,16 @@
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/bin/Debug/net10.0/myIoTGrid.Hub.Domain.deps.json
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/bin/Debug/net10.0/myIoTGrid.Hub.Domain.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/bin/Debug/net10.0/myIoTGrid.Hub.Domain.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/bin/Debug/net10.0/myIoTGrid.Hub.Shared.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/bin/Debug/net10.0/myIoTGrid.Hub.Shared.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.csproj.AssemblyReference.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.GeneratedMSBuildEditorConfig.editorconfig
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.AssemblyInfoInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.AssemblyInfo.cs
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.csproj.CoreCompileInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.sourcelink.json
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGri.41ED2A2D.Up2Date
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/refint/myIoTGrid.Hub.Domain.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/myIoTGrid.Hub.Domain.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Domain/obj/Debug/net10.0/ref/myIoTGrid.Hub.Domain.dll

@@ -1,0 +1,116 @@
+version: '3.8'
+
+services:
+  # =====================================================
+  # myIoTGrid Hub API
+  # =====================================================
+  hub-api:
+    build:
+      context: ..
+      dockerfile: src/myIoTGrid.Hub.Api/Dockerfile
+    container_name: myiotgrid-hub-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5000
+      - ConnectionStrings__HubDb=Data Source=/app/data/hub.db
+      - Mqtt__Host=mosquitto
+      - Mqtt__Port=1883
+      - MatterBridge__Enabled=true
+      - MatterBridge__BaseUrl=http://matter-bridge:3000
+    volumes:
+      - hub-data:/app/data
+      - hub-logs:/app/logs
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+      matter-bridge:
+        condition: service_healthy
+    networks:
+      - myiotgrid-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # =====================================================
+  # MQTT Broker (Mosquitto)
+  # =====================================================
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: myiotgrid-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT
+      - "9001:9001"   # WebSocket
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-logs:/mosquitto/log
+    networks:
+      - myiotgrid-network
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
+
+  # =====================================================
+  # Matter Bridge (Apple Home, Google Home, Alexa)
+  # =====================================================
+  matter-bridge:
+    build:
+      context: ../../../../myIoTGrid.MatterBridge
+      dockerfile: Dockerfile
+    container_name: myiotgrid-matter-bridge
+    restart: unless-stopped
+    # network_mode: host is required for Matter mDNS discovery
+    # If using host mode, remove ports and networks sections
+    network_mode: host
+    volumes:
+      - matter-data:/app/data
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - MATTER_PORT=5540
+      - STORAGE_PATH=/app/data
+      - LOG_LEVEL=info
+      - VENDOR_ID=0xFFF1
+      - VENDOR_NAME=myIoTGrid
+      - PRODUCT_NAME=myIoTGrid Hub
+      - PRODUCT_ID=0x8001
+      - DISCRIMINATOR=3840
+      - PASSCODE=20202021
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+# =====================================================
+# Volumes
+# =====================================================
+volumes:
+  hub-data:
+    driver: local
+  hub-logs:
+    driver: local
+  mosquitto-data:
+    driver: local
+  mosquitto-logs:
+    driver: local
+  matter-data:
+    driver: local
+
+# =====================================================
+# Networks
+# =====================================================
+networks:
+  myiotgrid-network:
+    driver: bridge

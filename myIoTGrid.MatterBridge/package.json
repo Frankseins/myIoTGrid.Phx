@@ -1,0 +1,44 @@
+{
+  "name": "myiotgrid-matter-bridge",
+  "version": "1.0.0",
+  "description": "Matter Bridge for myIoTGrid - Apple Home, Google Home, Alexa Integration",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "ts-node src/index.ts",
+    "lint": "eslint src/**/*.ts",
+    "clean": "rm -rf dist"
+  },
+  "keywords": [
+    "matter",
+    "smart-home",
+    "iot",
+    "apple-home",
+    "google-home",
+    "alexa"
+  ],
+  "author": "myIoTGrid",
+  "license": "MIT",
+  "dependencies": {
+    "@matter/main": "^0.11.0",
+    "@matter/nodejs": "^0.11.0",
+    "express": "^4.21.0",
+    "qrcode": "^1.5.4",
+    "winston": "^3.15.0",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "typescript": "^5.6.0",
+    "ts-node": "^10.9.2",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}

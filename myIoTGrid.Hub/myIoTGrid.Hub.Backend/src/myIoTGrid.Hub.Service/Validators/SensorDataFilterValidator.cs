@@ -1,0 +1,42 @@
+using FluentValidation;
+using myIoTGrid.Hub.Shared.DTOs;
+
+namespace myIoTGrid.Hub.Service.Validators;
+
+/// <summary>
+/// Validator for SensorDataFilterDto
+/// </summary>
+public class SensorDataFilterValidator : AbstractValidator<SensorDataFilterDto>
+{
+    public SensorDataFilterValidator()
+    {
+        RuleFor(x => x.Page)
+            .GreaterThanOrEqualTo(1)
+            .WithMessage("Page must be at least 1");
+
+        RuleFor(x => x.PageSize)
+            .InclusiveBetween(1, 1000)
+            .WithMessage("PageSize must be between 1 and 1000");
+
+        When(x => x.SensorIdentifier != null, () =>
+        {
+            RuleFor(x => x.SensorIdentifier)
+                .MaximumLength(100)
+                .WithMessage("SensorIdentifier must not exceed 100 characters");
+        });
+
+        When(x => x.SensorTypeCode != null, () =>
+        {
+            RuleFor(x => x.SensorTypeCode)
+                .MaximumLength(50)
+                .WithMessage("SensorTypeCode must not exceed 50 characters");
+        });
+
+        When(x => x.From.HasValue && x.To.HasValue, () =>
+        {
+            RuleFor(x => x)
+                .Must(x => x.From!.Value <= x.To!.Value)
+                .WithMessage("From date must be before or equal to To date");
+        });
+    }
+}
