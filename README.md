@@ -231,7 +231,7 @@ Du musst nichts teilen. Du kannst myIoTGrid komplett offline nutzen, nur für di
 flowchart LR
     subgraph ALLEIN ["DU ALLEIN"]
         A1["🌡️"] --> A2["Dein Wert"]
-        A2 --> A3["„Es ist 21°C""]
+        A2 --> A3["Es ist 21 Grad"]
     end
     
     subgraph COMMUNITY ["DU + COMMUNITY + KI"]
