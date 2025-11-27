@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "ygTThp5pMKA=",
+  "dgSpecHash": "2wCQgYqgpLg=",
   "success": true,
   "projectFilePath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/myIoTGrid.Hub.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -46,6 +46,7 @@
     "/Users/frankbersch/.nuget/packages/sqlitepclraw.lib.e_sqlite3/2.1.11/sqlitepclraw.lib.e_sqlite3.2.1.11.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/sqlitepclraw.provider.e_sqlite3/2.1.11/sqlitepclraw.provider.e_sqlite3.2.1.11.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.codedom/9.0.0/system.codedom.9.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.collections.immutable/9.0.0/system.collections.immutable.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.composition/9.0.0/system.composition.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.composition.attributedmodel/9.0.0/system.composition.attributedmodel.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.composition.convention/9.0.0/system.composition.convention.9.0.0.nupkg.sha512",
@@ -55,12 +56,18 @@
     "/Users/frankbersch/.nuget/packages/system.configuration.configurationmanager/9.0.0/system.configuration.configurationmanager.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.diagnostics.eventlog/9.0.0/system.diagnostics.eventlog.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.formats.nrbf/9.0.0/system.formats.nrbf.9.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.io.pipelines/9.0.0/system.io.pipelines.9.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.memory/4.5.3/system.memory.4.5.3.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.reflection.metadata/9.0.0/system.reflection.metadata.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.reflection.metadataloadcontext/7.0.0/system.reflection.metadataloadcontext.7.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.resources.extensions/9.0.0/system.resources.extensions.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.security.cryptography.pkcs/9.0.0/system.security.cryptography.pkcs.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.security.cryptography.protecteddata/9.0.0/system.security.cryptography.protecteddata.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.security.cryptography.xml/9.0.0/system.security.cryptography.xml.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.security.permissions/9.0.0/system.security.permissions.9.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.text.json/9.0.0/system.text.json.9.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.threading.channels/7.0.0/system.threading.channels.7.0.0.nupkg.sha512",
+    "/Users/frankbersch/.nuget/packages/system.threading.tasks.dataflow/9.0.0/system.threading.tasks.dataflow.9.0.0.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/system.windows.extensions/9.0.0/system.windows.extensions.9.0.0.nupkg.sha512"
   ],
   "logs": []

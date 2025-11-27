@@ -234,3 +234,4 @@
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Api/bin/Debug/net10.0/Serilog.Sinks.Console.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Api/bin/Debug/net10.0/Serilog.Sinks.Debug.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Api/bin/Debug/net10.0/Serilog.Sinks.File.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Api/bin/Debug/net10.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.Messages.dll

@@ -1,0 +1,513 @@
+2025-11-27 19:35:15.365 +01:00 [INF] [] myIoTGrid Hub API wurde erfolgreich gestartet
+2025-11-27 19:35:15.384 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT Client Service wird gestartet...
+2025-11-27 19:35:15.395 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService starting...
+2025-11-27 19:35:15.408 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:15.595 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 1/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:15.596 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:15.610 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:35:15.618 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Starting seed data process...
+2025-11-27 19:35:15.954 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The property 'Sensor.SensorTypes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2025-11-27 19:35:15.969 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The entity type 'Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-11-27 19:35:16.203 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default tenant ensured
+2025-11-27 19:35:16.211 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default sensor types seeded
+2025-11-27 19:35:16.299 +01:00 [INF] [myIoTGrid.Hub.Service.Services.AlertTypeService] 1 Default-AlertTypes erstellt
+2025-11-27 19:35:16.299 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default alert types seeded
+2025-11-27 19:35:16.299 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Seed data process completed
+2025-11-27 19:35:16.299 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService completed successfully
+2025-11-27 19:35:16.327 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SensorMonitorService] SensorMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:35:16.327 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-11-27 19:35:16.327 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.HubMonitorService] HubMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:35:16.328 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.MatterBridgeService] Matter Bridge integration is disabled
+2025-11-27 19:35:16.407 +01:00 [WRN] [myIoTGrid.Hub.Interface.BackgroundServices.HubMonitorService] Hub detected as offline: test-hub-01 (Test Hub), LastSeen: "2025-11-27T16:29:00.5992410"
+2025-11-27 19:35:16.430 +01:00 [WRN] [myIoTGrid.Hub.Interface.BackgroundServices.SensorMonitorService] Sensor detected as offline: sensor-wohnzimmer-01 (Wohnzimmer Sensor), LastSeen: "2025-11-27T16:29:00.6083310"
+2025-11-27 19:35:16.433 +01:00 [WRN] [myIoTGrid.Hub.Service.Services.HubService] Hub offline: test-hub-01 (Test Hub)
+2025-11-27 19:35:16.435 +01:00 [WRN] [myIoTGrid.Hub.Service.Services.SensorService] Sensor offline: sensor-wohnzimmer-01 (Wohnzimmer Sensor)
+2025-11-27 19:35:16.447 +01:00 [INF] [myIoTGrid.Hub.Interface.Services.SignalRNotificationService] SignalR HubStatusChanged gesendet: test-hub-01 - Online: false (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-11-27 19:35:16.483 +01:00 [INF] [myIoTGrid.Hub.Service.Services.AlertService] Alert created: hub_offline - "Critical" - Hub 'Test Hub' (test-hub-01) is offline. Last seen: 2025-11-27 16:29:00Z (Source: "Local")
+2025-11-27 19:35:16.485 +01:00 [INF] [myIoTGrid.Hub.Interface.Services.SignalRNotificationService] SignalR AlertReceived gesendet: hub_offline - "Critical" (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-11-27 19:35:16.489 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.HubMonitorService] Hub monitoring cycle completed. Offline: 1, Back online: 0
+2025-11-27 19:35:16.612 +01:00 [INF] [myIoTGrid.Hub.Service.Services.AlertService] Alert created: sensor_offline - "Warning" - Sensor 'Wohnzimmer Sensor' (sensor-wohnzimmer-01) is offline. Last seen: 2025-11-27 16:29:00Z (Source: "Local")
+2025-11-27 19:35:16.612 +01:00 [INF] [myIoTGrid.Hub.Interface.Services.SignalRNotificationService] SignalR AlertReceived gesendet: sensor_offline - "Warning" (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-11-27 19:35:16.617 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SensorMonitorService] Sensor monitoring cycle completed. Offline: 1, Back online: 0
+2025-11-27 19:35:20.610 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:20.610 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:20.621 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 2/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:20.627 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:20.633 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 3/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:20.634 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:35:25.623 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:25.626 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:25.637 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:25.645 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:25.645 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 4/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:25.698 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 5/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:25.646 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:35:25.700 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:25.711 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 6/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:25.711 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:35:30.701 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:30.701 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:30.701 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:30.737 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 7/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.766 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:30.766 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:35:30.766 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 8/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.824 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 10/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.859 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.859 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 11/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.860 +01:00 [ERR] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Maximale Anzahl an Reconnect-Versuchen erreicht. MQTT-Verbindung aufgegeben.
+2025-11-27 19:35:30.859 +01:00 [ERR] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Maximale Anzahl an Reconnect-Versuchen erreicht. MQTT-Verbindung aufgegeben.
+2025-11-27 19:35:30.821 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 9/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:35:30.860 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:35:30.861 +01:00 [ERR] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Maximale Anzahl an Reconnect-Versuchen erreicht. MQTT-Verbindung aufgegeben.
+2025-11-27 19:35:30.861 +01:00 [ERR] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Maximale Anzahl an Reconnect-Versuchen erreicht. MQTT-Verbindung aufgegeben.
+2025-11-27 19:36:59.267 +01:00 [INF] [] myIoTGrid Hub API wurde erfolgreich gestartet
+2025-11-27 19:36:59.286 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT Client Service wird gestartet...
+2025-11-27 19:36:59.292 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService starting...
+2025-11-27 19:36:59.311 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:36:59.513 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 1/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:36:59.514 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:36:59.527 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:36:59.536 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Starting seed data process...
+2025-11-27 19:36:59.841 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The property 'Sensor.SensorTypes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2025-11-27 19:36:59.854 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The entity type 'Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-11-27 19:37:00.105 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default tenant ensured
+2025-11-27 19:37:00.114 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default sensor types seeded
+2025-11-27 19:37:00.116 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default alert types seeded
+2025-11-27 19:37:00.116 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Seed data process completed
+2025-11-27 19:37:00.116 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService completed successfully
+2025-11-27 19:37:00.120 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SensorMonitorService] SensorMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:37:00.120 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.HubMonitorService] HubMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:37:00.120 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.MatterBridgeService] Matter Bridge integration is disabled
+2025-11-27 19:37:00.120 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-11-27 19:37:04.528 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:04.528 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:04.542 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 2/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:04.556 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:04.556 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 3/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:04.557 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:37:09.544 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:09.546 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:09.559 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:09.559 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 4/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:09.559 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:09.560 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:37:09.619 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 5/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:09.621 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:09.633 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 6/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:09.633 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:37:14.564 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:14.564 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:14.570 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 7/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.570 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.583 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 8/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.584 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:37:14.634 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:14.634 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:14.634 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Verbinde zu MQTT Broker localhost:1883...
+2025-11-27 19:37:14.645 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 9/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.645 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 9/10). Nächster Versuch in 5s...
+System.InvalidOperationException: Not allowed to connect while connect/disconnect is pending.
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.646 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung unterbrochen
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.655 +01:00 [WRN] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] MQTT-Verbindung fehlgeschlagen (Versuch 10/10). Nächster Versuch in 5s...
+MQTTnet.Exceptions.MqttCommunicationException: Error while connecting host 'Unspecified/localhost:1883'.
+ ---> System.Net.Sockets.SocketException (61): Connection refused
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.ThrowException(SocketError error, CancellationToken cancellationToken)
+   at System.Net.Sockets.Socket.AwaitableSocketAsyncEventArgs.System.Threading.Tasks.Sources.IValueTaskSource.GetResult(Int16 token)
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at MQTTnet.Implementations.CrossPlatformSocket.ConnectAsync(EndPoint endPoint, CancellationToken cancellationToken)
+   at MQTTnet.Implementations.MqttTcpChannel.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Adapter.MqttChannelAdapter.<>c__DisplayClass30_0.<<ConnectAsync>b__1>d.MoveNext()
+--- End of stack trace from previous location ---
+   at MQTTnet.Adapter.MqttChannelAdapter.ConnectAsync(CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectInternal(IMqttChannelAdapter channelAdapter, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at MQTTnet.Client.MqttClient.ConnectAsync(MqttClientOptions options, CancellationToken cancellationToken)
+   at myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService.ConnectWithRetryAsync(MqttClientOptions options, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Hub/myIoTGrid.Hub.Backend/src/myIoTGrid.Hub.Infrastructure/Mqtt/MqttClientService.cs:line 108
+2025-11-27 19:37:14.655 +01:00 [INF] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Reconnecting in 5s...
+2025-11-27 19:37:14.656 +01:00 [ERR] [myIoTGrid.Hub.Infrastructure.Mqtt.MqttClientService] Maximale Anzahl an Reconnect-Versuchen erreicht. MQTT-Verbindung aufgegeben.
+2025-11-27 19:40:17.625 +01:00 [INF] [] myIoTGrid Hub API wurde erfolgreich gestartet
+2025-11-27 19:40:17.645 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService starting...
+2025-11-27 19:40:17.677 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] Applying database migrations...
+2025-11-27 19:40:17.923 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The property 'Sensor.SensorTypes' is a collection or enumeration type with a value converter but with no value comparer. Set a value comparer to ensure the collection/enumeration elements are compared correctly.
+2025-11-27 19:40:17.937 +01:00 [WRN] [Microsoft.EntityFrameworkCore.Model.Validation] The entity type 'Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-11-27 19:40:18.065 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] Database migrations applied successfully
+2025-11-27 19:40:18.065 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Starting seed data process...
+2025-11-27 19:40:18.150 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default tenant ensured
+2025-11-27 19:40:18.156 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default sensor types seeded
+2025-11-27 19:40:18.158 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Default alert types seeded
+2025-11-27 19:40:18.158 +01:00 [INF] [myIoTGrid.Hub.Service.Services.SeedDataService] Seed data process completed
+2025-11-27 19:40:18.158 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SeedDataHostedService] SeedDataHostedService completed successfully
+2025-11-27 19:40:18.159 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.SensorMonitorService] SensorMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:40:18.159 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.HubMonitorService] HubMonitorService started. Check interval: 60s, Offline timeout: 5min
+2025-11-27 19:40:18.159 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.MatterBridgeService] Matter Bridge integration is disabled
+2025-11-27 19:40:18.160 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-11-27 19:41:25.127 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET / responded 200 in 22.2697 ms
+2025-11-27 19:41:25.137 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /favicon.ico responded 404 in 0.7003 ms
+2025-11-27 19:41:30.724 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger responded 301 in 0.5384 ms
+2025-11-27 19:41:30.758 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/index.html responded 200 in 29.1751 ms
+2025-11-27 19:41:31.066 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/index.js responded 200 in 0.3636 ms
+2025-11-27 19:41:31.069 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/swagger-ui.css responded 200 in 7.0488 ms
+2025-11-27 19:41:31.069 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/index.css responded 200 in 3.0291 ms
+2025-11-27 19:41:31.070 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/swagger-ui-standalone-preset.js responded 200 in 4.4505 ms
+2025-11-27 19:41:31.074 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/swagger-ui-bundle.js responded 200 in 8.5561 ms
+2025-11-27 19:41:31.148 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/favicon-32x32.png responded 200 in 0.3990 ms
+2025-11-27 19:41:31.148 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/favicon-16x16.png responded 200 in 0.1379 ms
+2025-11-27 19:41:31.209 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /swagger/v1/swagger.json responded 200 in 55.4535 ms
+2025-11-27 19:41:40.829 +01:00 [INF] [Serilog.AspNetCore.RequestLoggingMiddleware] HTTP GET /Health responded 200 in 12.1386 ms
+2025-11-27 19:45:18.164 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Starting data retention cleanup. Removing data older than 2025-10-28 18:45:18Z
+2025-11-27 19:45:18.169 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 synced sensor data records older than 30 days
+2025-11-27 19:45:18.171 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 acknowledged alerts older than 30 days
+2025-11-27 19:45:18.172 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 2025-11-27 19:45:41.640 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Starting data retention cleanup. Removing data older than 2025-10-28 18:45:41Z
+2025-11-27 19:45:41.654 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 synced sensor data records older than 30 days
+2025-11-27 19:45:41.656 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 acknowledged alerts older than 30 days
+2025-11-27 19:45:41.657 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Deleted 0 inactive alerts older than 30 days
+2025-11-27 19:45:41.669 +01:00 [INF] [myIoTGrid.Hub.Interface.BackgroundServices.DataRetentionService] Data retention cleanup completed. Total deleted: SensorData=0, Alerts=0

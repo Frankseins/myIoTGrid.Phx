@@ -81,11 +81,19 @@ try
     // SignalR
     builder.Services.AddSignalR();
 
-    // MQTT Client
-    builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection(MqttOptions.SectionName));
-    builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.SensorDataMqttHandler>();
-    builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.HubStatusMqttHandler>();
-    builder.Services.AddHostedService<MqttClientService>();
+    // ===========================================
+    // MQTT Client (DEAKTIVIERT - wird später implementiert)
+    // ===========================================
+    // TODO: MQTT-Support aktivieren wenn Mosquitto Broker verfügbar ist
+    // Für lokale Entwicklung nutzen wir erstmal nur REST API.
+    // Um MQTT zu aktivieren:
+    // 1. Mosquitto starten: docker run -d -p 1883:1883 eclipse-mosquitto:2
+    // 2. Die folgenden Zeilen einkommentieren:
+    //
+    // builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection(MqttOptions.SectionName));
+    // builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.SensorDataMqttHandler>();
+    // builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.HubStatusMqttHandler>();
+    // builder.Services.AddHostedService<MqttClientService>();
 
     // Matter Bridge Client
     builder.Services.Configure<MatterBridgeOptions>(
