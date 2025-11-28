@@ -10,7 +10,8 @@ using myIoTGrid.Hub.Shared.Options;
 namespace myIoTGrid.Hub.Interface.BackgroundServices;
 
 /// <summary>
-/// Background service that initializes Matter Bridge with existing sensors
+/// Background service that initializes Matter Bridge with existing nodes and sensors.
+/// Matter-konform: Registriert Matter Nodes und Endpoints.
 /// </summary>
 public class MatterBridgeService : BackgroundService
 {
@@ -46,20 +47,20 @@ public class MatterBridgeService : BackgroundService
 
         if (stoppingToken.IsCancellationRequested) return;
 
-        // Register existing sensors with Matter Bridge
-        await RegisterExistingSensorsAsync(stoppingToken);
+        // Register existing nodes with Matter Bridge
+        await RegisterExistingNodesAsync(stoppingToken);
 
         _logger.LogInformation("Matter Bridge Service initialized");
 
-        // Keep service running and periodically check for new sensors
+        // Keep service running and periodically check for new nodes
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
                 await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
 
-                // Periodically sync sensors (in case any were missed)
-                await SyncSensorsAsync(stoppingToken);
+                // Periodically sync nodes (in case any were missed)
+                await SyncNodesAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -97,65 +98,66 @@ public class MatterBridgeService : BackgroundService
         }
     }
 
-    private async Task RegisterExistingSensorsAsync(CancellationToken ct)
+    private async Task RegisterExistingNodesAsync(CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var context = scope.ServiceProvider.GetRequiredService<HubDbContext>();
 
         try
         {
-            // Get all sensors with their Hub
-            var sensors = await context.Sensors
-                .Include(s => s.Hub)
+            // Get all nodes with their Hub and Sensors
+            var nodes = await context.Nodes
+                .Include(n => n.Hub)
+                .Include(n => n.Sensors)
                 .AsNoTracking()
                 .ToListAsync(ct);
 
-            _logger.LogInformation("Registering {Count} sensors with Matter Bridge", sensors.Count);
+            _logger.LogInformation("Registering {Count} nodes with Matter Bridge", nodes.Count);
 
-            foreach (var sensor in sensors)
+            foreach (var node in nodes)
             {
-                // SensorTypes is a List<string> with sensor type codes like "temperature", "humidity"
-                foreach (var sensorTypeCode in sensor.SensorTypes)
+                // Each sensor on the node represents a Matter Endpoint
+                foreach (var sensor in node.Sensors)
                 {
-                    if (!MatterDeviceMapping.IsSupportedSensorType(sensorTypeCode))
+                    if (!MatterDeviceMapping.IsSupportedSensorType(sensor.SensorTypeId))
                     {
                         continue;
                     }
 
-                    if (!_options.EnabledSensorTypes.Contains(sensorTypeCode, StringComparer.OrdinalIgnoreCase))
+                    if (!_options.EnabledSensorTypes.Contains(sensor.SensorTypeId, StringComparer.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
-                    var matterType = MatterDeviceMapping.GetMatterDeviceType(sensorTypeCode);
+                    var matterType = MatterDeviceMapping.GetMatterDeviceType(sensor.SensorTypeId);
                     if (matterType == null) continue;
 
-                    var deviceId = MatterDeviceMapping.GenerateMatterDeviceId(sensor.SensorId, sensorTypeCode);
+                    var deviceId = MatterDeviceMapping.GenerateMatterDeviceId(node.NodeId, sensor.SensorTypeId);
                     var displayName = MatterDeviceMapping.CreateDeviceDisplayName(
-                        sensor.Name,
-                        sensor.Location?.Name,
-                        sensorTypeCode
+                        node.Name,
+                        node.Location?.Name,
+                        sensor.SensorTypeId
                     );
 
                     await _matterBridgeClient.RegisterDeviceAsync(
                         deviceId,
                         displayName,
                         matterType,
-                        sensor.Location?.Name,
+                        node.Location?.Name,
                         ct
                     );
                 }
             }
 
-            _logger.LogInformation("Sensor registration completed");
+            _logger.LogInformation("Node registration completed");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error registering existing sensors with Matter Bridge");
+            _logger.LogError(ex, "Error registering existing nodes with Matter Bridge");
         }
     }
 
-    private async Task SyncSensorsAsync(CancellationToken ct)
+    private async Task SyncNodesAsync(CancellationToken ct)
     {
         if (!await _matterBridgeClient.IsAvailableAsync(ct))
         {

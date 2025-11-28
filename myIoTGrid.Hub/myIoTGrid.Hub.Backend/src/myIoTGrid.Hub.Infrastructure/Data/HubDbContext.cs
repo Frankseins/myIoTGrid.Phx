@@ -18,14 +18,23 @@ public class HubDbContext : DbContext
     /// <summary>Hubs (Raspberry Pi Gateways)</summary>
     public DbSet<Domain.Entities.Hub> Hubs => Set<Domain.Entities.Hub>();
 
-    /// <summary>Sensors (ESP32/LoRa32 Devices)</summary>
+    /// <summary>Nodes (ESP32/LoRa32 Devices) - Matter Nodes</summary>
+    public DbSet<Node> Nodes => Set<Node>();
+
+    /// <summary>Sensors (Physical sensor chips: DHT22, BME280) - Matter Endpoints</summary>
     public DbSet<Sensor> Sensors => Set<Sensor>();
 
-    /// <summary>Sensor Types</summary>
+    /// <summary>Sensor Types - Matter Clusters</summary>
     public DbSet<SensorType> SensorTypes => Set<SensorType>();
 
-    /// <summary>Measurement Data</summary>
-    public DbSet<SensorData> SensorData => Set<SensorData>();
+    /// <summary>Readings (Measurement Data) - Matter Attribute Reports</summary>
+    public DbSet<Reading> Readings => Set<Reading>();
+
+    /// <summary>Synced Nodes (from Cloud)</summary>
+    public DbSet<SyncedNode> SyncedNodes => Set<SyncedNode>();
+
+    /// <summary>Synced Readings (from Cloud)</summary>
+    public DbSet<SyncedReading> SyncedReadings => Set<SyncedReading>();
 
     /// <summary>Alert Types</summary>
     public DbSet<AlertType> AlertTypes => Set<AlertType>();

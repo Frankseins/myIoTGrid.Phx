@@ -31,11 +31,11 @@ public class CreateAlertValidator : AbstractValidator<CreateAlertDto>
                 .WithMessage("HubId must not exceed 100 characters");
         });
 
-        When(x => x.SensorId != null, () =>
+        When(x => x.NodeId != null, () =>
         {
-            RuleFor(x => x.SensorId)
+            RuleFor(x => x.NodeId)
                 .MaximumLength(100)
-                .WithMessage("SensorId must not exceed 100 characters");
+                .WithMessage("NodeId must not exceed 100 characters");
         });
 
         When(x => x.Recommendation != null, () =>

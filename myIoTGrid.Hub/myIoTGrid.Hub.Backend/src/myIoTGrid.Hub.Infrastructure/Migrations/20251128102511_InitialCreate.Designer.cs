@@ -11,8 +11,8 @@ using myIoTGrid.Hub.Infrastructure.Data;
 namespace myIoTGrid.Hub.Infrastructure.Migrations
 {
     [DbContext(typeof(HubDbContext))]
-    [Migration("20251127162647_Sprint31_SensorEntityRefactoring")]
-    partial class Sprint31_SensorEntityRefactoring
+    [Migration("20251128102511_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -54,11 +54,11 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Recommendation")
-                        .HasMaxLength(1000)
+                    b.Property<Guid?>("NodeId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid?>("SensorId")
+                    b.Property<string>("Recommendation")
+                        .HasMaxLength(1000)
                         .HasColumnType("TEXT");
 
                     b.Property<int>("Source")
@@ -79,7 +79,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.HasIndex("Level");
 
-                    b.HasIndex("SensorId");
+                    b.HasIndex("NodeId");
 
                     b.HasIndex("Source");
 
@@ -187,7 +187,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.ToTable("Hubs", (string)null);
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Sensor", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Node", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
@@ -219,21 +219,15 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Protocol")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("TEXT");
-
-                    b.Property<string>("SensorId")
+                    b.Property<string>("NodeId")
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("SensorTypes")
+                    b.Property<string>("Protocol")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("TEXT")
-                        .HasColumnName("SensorTypes");
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
 
                     b.HasKey("Id");
 
@@ -243,29 +237,31 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.HasIndex("LastSeen");
 
-                    b.HasIndex("SensorId");
+                    b.HasIndex("NodeId");
 
-                    b.HasIndex("HubId", "SensorId")
+                    b.HasIndex("HubId", "NodeId")
                         .IsUnique();
 
-                    b.ToTable("Sensors", (string)null);
+                    b.ToTable("Nodes", (string)null);
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SensorData", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Reading", b =>
                 {
-                    b.Property<Guid>("Id")
+                    b.Property<long>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
+                        .HasColumnType("INTEGER");
 
                     b.Property<bool>("IsSyncedToCloud")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
-                    b.Property<Guid>("SensorId")
+                    b.Property<Guid>("NodeId")
                         .HasColumnType("TEXT");
 
-                    b.Property<Guid>("SensorTypeId")
+                    b.Property<string>("SensorTypeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
                         .HasColumnType("TEXT");
 
                     b.Property<Guid>("TenantId")
@@ -281,7 +277,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.HasIndex("IsSyncedToCloud");
 
-                    b.HasIndex("SensorId");
+                    b.HasIndex("NodeId");
 
                     b.HasIndex("SensorTypeId");
 
@@ -289,24 +285,76 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.HasIndex("Timestamp");
 
-                    b.HasIndex("SensorId", "Timestamp");
+                    b.HasIndex("NodeId", "Timestamp");
 
                     b.HasIndex("TenantId", "Timestamp");
 
-                    b.HasIndex("SensorId", "SensorTypeId", "Timestamp");
+                    b.HasIndex("NodeId", "SensorTypeId", "Timestamp");
 
-                    b.ToTable("SensorData", (string)null);
+                    b.ToTable("Readings", (string)null);
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SensorType", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Sensor", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("Code")
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("EndpointId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<bool>("IsActive")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(true);
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("NodeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SensorTypeId")
                         .IsRequired()
                         .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsActive");
+
+                    b.HasIndex("NodeId");
+
+                    b.HasIndex("SensorTypeId");
+
+                    b.HasIndex("NodeId", "EndpointId")
+                        .IsUnique();
+
+                    b.ToTable("Sensors", (string)null);
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SensorType", b =>
+                {
+                    b.Property<string>("TypeId")
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("other");
+
+                    b.Property<uint>("ClusterId")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Color")
+                        .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
                     b.Property<DateTime>("CreatedAt")
@@ -316,33 +364,151 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("TEXT");
 
-                    b.Property<string>("IconName")
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Icon")
                         .HasMaxLength(50)
                         .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsCustom")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
 
                     b.Property<bool>("IsGlobal")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER")
                         .HasDefaultValue(false);
 
-                    b.Property<string>("Name")
-                        .IsRequired()
+                    b.Property<string>("MatterClusterName")
                         .HasMaxLength(100)
                         .HasColumnType("TEXT");
+
+                    b.Property<double?>("MaxValue")
+                        .HasColumnType("REAL");
+
+                    b.Property<double?>("MinValue")
+                        .HasColumnType("REAL");
+
+                    b.Property<double>("Resolution")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("REAL")
+                        .HasDefaultValue(0.10000000000000001);
 
                     b.Property<string>("Unit")
                         .IsRequired()
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
-                    b.HasKey("Id");
+                    b.HasKey("TypeId");
 
-                    b.HasIndex("Code")
-                        .IsUnique();
+                    b.HasIndex("Category");
+
+                    b.HasIndex("ClusterId");
+
+                    b.HasIndex("IsCustom");
 
                     b.HasIndex("IsGlobal");
 
                     b.ToTable("SensorTypes", (string)null);
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SyncedNode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("CloudNodeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<bool>("IsOnline")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER")
+                        .HasDefaultValue(false);
+
+                    b.Property<DateTime>("LastSyncAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("NodeId")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("SourceDetails")
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CloudNodeId")
+                        .IsUnique();
+
+                    b.HasIndex("IsOnline");
+
+                    b.HasIndex("LastSyncAt");
+
+                    b.HasIndex("NodeId");
+
+                    b.HasIndex("Source");
+
+                    b.ToTable("SyncedNodes", (string)null);
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SyncedReading", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("SensorTypeId")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("SyncedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("SyncedNodeId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("Timestamp")
+                        .HasColumnType("TEXT");
+
+                    b.Property<double>("Value")
+                        .HasColumnType("REAL");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SensorTypeId");
+
+                    b.HasIndex("SyncedAt");
+
+                    b.HasIndex("SyncedNodeId");
+
+                    b.HasIndex("Timestamp");
+
+                    b.HasIndex("SyncedNodeId", "Timestamp");
+
+                    b.HasIndex("SyncedNodeId", "SensorTypeId", "Timestamp");
+
+                    b.ToTable("SyncedReadings", (string)null);
                 });
 
             modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Tenant", b =>
@@ -394,9 +560,9 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasForeignKey("HubId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("myIoTGrid.Hub.Domain.Entities.Sensor", "Sensor")
-                        .WithMany()
-                        .HasForeignKey("SensorId")
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.Node", "Node")
+                        .WithMany("Alerts")
+                        .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("myIoTGrid.Hub.Domain.Entities.Tenant", "Tenant")
@@ -409,7 +575,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.Navigation("Hub");
 
-                    b.Navigation("Sensor");
+                    b.Navigation("Node");
 
                     b.Navigation("Tenant");
                 });
@@ -425,17 +591,17 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Sensor", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Node", b =>
                 {
                     b.HasOne("myIoTGrid.Hub.Domain.Entities.Hub", "Hub")
-                        .WithMany("Sensors")
+                        .WithMany("Nodes")
                         .HasForeignKey("HubId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.OwnsOne("myIoTGrid.Hub.Domain.ValueObjects.Location", "Location", b1 =>
                         {
-                            b1.Property<Guid>("SensorId")
+                            b1.Property<Guid>("NodeId")
                                 .HasColumnType("TEXT");
 
                             b1.Property<double?>("Latitude")
@@ -451,12 +617,12 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                                 .HasColumnType("TEXT")
                                 .HasColumnName("Location_Name");
 
-                            b1.HasKey("SensorId");
+                            b1.HasKey("NodeId");
 
-                            b1.ToTable("Sensors");
+                            b1.ToTable("Nodes");
 
                             b1.WithOwner()
-                                .HasForeignKey("SensorId");
+                                .HasForeignKey("NodeId");
                         });
 
                     b.Navigation("Hub");
@@ -464,23 +630,92 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Navigation("Location");
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SensorData", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Reading", b =>
                 {
-                    b.HasOne("myIoTGrid.Hub.Domain.Entities.Sensor", "Sensor")
-                        .WithMany("SensorData")
-                        .HasForeignKey("SensorId")
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.Node", "Node")
+                        .WithMany("Readings")
+                        .HasForeignKey("NodeId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("myIoTGrid.Hub.Domain.Entities.SensorType", "SensorType")
-                        .WithMany("SensorData")
+                        .WithMany("Readings")
                         .HasForeignKey("SensorTypeId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Sensor");
+                    b.Navigation("Node");
 
                     b.Navigation("SensorType");
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Sensor", b =>
+                {
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.Node", "Node")
+                        .WithMany("Sensors")
+                        .HasForeignKey("NodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.SensorType", "SensorType")
+                        .WithMany("Sensors")
+                        .HasForeignKey("SensorTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Node");
+
+                    b.Navigation("SensorType");
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SyncedNode", b =>
+                {
+                    b.OwnsOne("myIoTGrid.Hub.Domain.ValueObjects.Location", "Location", b1 =>
+                        {
+                            b1.Property<Guid>("SyncedNodeId")
+                                .HasColumnType("TEXT");
+
+                            b1.Property<double?>("Latitude")
+                                .HasColumnType("REAL")
+                                .HasColumnName("Location_Latitude");
+
+                            b1.Property<double?>("Longitude")
+                                .HasColumnType("REAL")
+                                .HasColumnName("Location_Longitude");
+
+                            b1.Property<string>("Name")
+                                .HasMaxLength(200)
+                                .HasColumnType("TEXT")
+                                .HasColumnName("Location_Name");
+
+                            b1.HasKey("SyncedNodeId");
+
+                            b1.ToTable("SyncedNodes");
+
+                            b1.WithOwner()
+                                .HasForeignKey("SyncedNodeId");
+                        });
+
+                    b.Navigation("Location");
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SyncedReading", b =>
+                {
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.SensorType", "SensorType")
+                        .WithMany("SyncedReadings")
+                        .HasForeignKey("SensorTypeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("myIoTGrid.Hub.Domain.Entities.SyncedNode", "SyncedNode")
+                        .WithMany("SyncedReadings")
+                        .HasForeignKey("SyncedNodeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SensorType");
+
+                    b.Navigation("SyncedNode");
                 });
 
             modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.AlertType", b =>
@@ -492,17 +727,30 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                 {
                     b.Navigation("Alerts");
 
-                    b.Navigation("Sensors");
+                    b.Navigation("Nodes");
                 });
 
-            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Sensor", b =>
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Node", b =>
                 {
-                    b.Navigation("SensorData");
+                    b.Navigation("Alerts");
+
+                    b.Navigation("Readings");
+
+                    b.Navigation("Sensors");
                 });
 
             modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SensorType", b =>
                 {
-                    b.Navigation("SensorData");
+                    b.Navigation("Readings");
+
+                    b.Navigation("Sensors");
+
+                    b.Navigation("SyncedReadings");
+                });
+
+            modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.SyncedNode", b =>
+                {
+                    b.Navigation("SyncedReadings");
                 });
 
             modelBuilder.Entity("myIoTGrid.Hub.Domain.Entities.Tenant", b =>

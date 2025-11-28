@@ -61,7 +61,7 @@ public class AlertService : IAlertService
             .AsNoTracking()
             .Include(a => a.AlertType)
             .Include(a => a.Hub)
-            .Include(a => a.Sensor)
+            .Include(a => a.Node)
             .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenantId, ct);
 
         return alert?.ToDto();
@@ -76,7 +76,7 @@ public class AlertService : IAlertService
             .AsNoTracking()
             .Include(a => a.AlertType)
             .Include(a => a.Hub)
-            .Include(a => a.Sensor)
+            .Include(a => a.Node)
             .Where(a => a.TenantId == tenantId && a.IsActive)
             .OrderByDescending(a => a.Level)
             .ThenByDescending(a => a.CreatedAt)
@@ -94,15 +94,15 @@ public class AlertService : IAlertService
             .AsNoTracking()
             .Include(a => a.AlertType)
             .Include(a => a.Hub)
-            .Include(a => a.Sensor)
+            .Include(a => a.Node)
             .Where(a => a.TenantId == tenantId);
 
         // Apply filters
         if (filter.HubId.HasValue)
             query = query.Where(a => a.HubId == filter.HubId.Value);
 
-        if (filter.SensorId.HasValue)
-            query = query.Where(a => a.SensorId == filter.SensorId.Value);
+        if (filter.NodeId.HasValue)
+            query = query.Where(a => a.NodeId == filter.NodeId.Value);
 
         if (!string.IsNullOrWhiteSpace(filter.AlertTypeCode))
             query = query.Where(a => a.AlertType!.Code == filter.AlertTypeCode.ToLowerInvariant());
@@ -158,7 +158,7 @@ public class AlertService : IAlertService
         var alert = await _context.Alerts
             .Include(a => a.AlertType)
             .Include(a => a.Hub)
-            .Include(a => a.Sensor)
+            .Include(a => a.Node)
             .FirstOrDefaultAsync(a => a.Id == id && a.TenantId == tenantId, ct);
 
         if (alert == null)
@@ -181,31 +181,67 @@ public class AlertService : IAlertService
         // Update Matter Bridge Contact Sensor to CLOSED (fire and forget)
         if (alert.AlertType != null)
         {
-            _ = UpdateMatterContactSensorAsync(alert.AlertType.Code, alert.Sensor?.SensorId, false, ct);
+            _ = UpdateMatterContactSensorAsync(alert.AlertType.Code, alert.Node?.NodeId, false, ct);
         }
 
         return alertDto;
     }
 
     /// <inheritdoc />
-    public async Task CreateHubOfflineAlertAsync(Guid sensorId, CancellationToken ct = default)
+    public async Task CreateNodeOfflineAlertAsync(Guid nodeId, CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();
 
-        // Get Sensor information
-        var sensor = await _context.Sensors
+        // Get Node information
+        var node = await _context.Nodes
             .AsNoTracking()
-            .Include(s => s.Hub)
-            .FirstOrDefaultAsync(s => s.Id == sensorId, ct);
+            .Include(n => n.Hub)
+            .FirstOrDefaultAsync(n => n.Id == nodeId, ct);
 
-        if (sensor == null) return;
+        if (node == null) return;
 
-        // Check if an active hub_offline alert already exists for this sensor
+        // Check if an active node_offline alert already exists for this node
         var existingAlert = await _context.Alerts
             .AsNoTracking()
             .Include(a => a.AlertType)
             .AnyAsync(a =>
-                a.SensorId == sensorId &&
+                a.NodeId == nodeId &&
+                a.TenantId == tenantId &&
+                a.AlertType!.Code == "node_offline" &&
+                a.IsActive, ct);
+
+        if (existingAlert) return;
+
+        var dto = new CreateAlertDto(
+            AlertTypeCode: "node_offline",
+            NodeId: node.NodeId,
+            HubId: node.Hub?.HubId,
+            Level: AlertLevelDto.Critical,
+            Message: $"Node device '{node.Name}' is offline.",
+            Recommendation: "Please check the power supply and network connection of the device."
+        );
+
+        await CreateLocalAlertAsync(dto, ct);
+    }
+
+    /// <inheritdoc />
+    public async Task CreateHubOfflineAlertAsync(Guid hubId, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        // Get Hub information
+        var hub = await _context.Hubs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(h => h.Id == hubId, ct);
+
+        if (hub == null) return;
+
+        // Check if an active hub_offline alert already exists for this hub
+        var existingAlert = await _context.Alerts
+            .AsNoTracking()
+            .Include(a => a.AlertType)
+            .AnyAsync(a =>
+                a.HubId == hubId &&
                 a.TenantId == tenantId &&
                 a.AlertType!.Code == "hub_offline" &&
                 a.IsActive, ct);
@@ -214,25 +250,25 @@ public class AlertService : IAlertService
 
         var dto = new CreateAlertDto(
             AlertTypeCode: "hub_offline",
-            SensorId: sensor.SensorId,
-            HubId: sensor.Hub?.HubId,
+            HubId: hub.HubId,
+            NodeId: null,
             Level: AlertLevelDto.Critical,
-            Message: $"Sensor device '{sensor.Name}' is offline.",
-            Recommendation: "Please check the power supply and network connection of the device."
+            Message: $"Hub '{hub.Name}' is offline.",
+            Recommendation: "Please check the power supply and network connection of the hub."
         );
 
         await CreateLocalAlertAsync(dto, ct);
     }
 
     /// <inheritdoc />
-    public async Task DeactivateAlertsAsync(Guid sensorId, string alertTypeCode, CancellationToken ct = default)
+    public async Task DeactivateNodeAlertsAsync(Guid nodeId, string alertTypeCode, CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();
 
         await _context.Alerts
             .Where(a =>
                 a.TenantId == tenantId &&
-                a.SensorId == sensorId &&
+                a.NodeId == nodeId &&
                 a.AlertType!.Code == alertTypeCode.ToLowerInvariant() &&
                 a.IsActive)
             .ExecuteUpdateAsync(setters => setters.SetProperty(a => a.IsActive, false), ct);
@@ -282,21 +318,21 @@ public class AlertService : IAlertService
             hubName = hub?.Name;
         }
 
-        // Determine Sensor (if specified)
-        Guid? sensorId = null;
-        string? sensorName = null;
-        if (!string.IsNullOrWhiteSpace(dto.SensorId))
+        // Determine Node (if specified)
+        Guid? nodeId = null;
+        string? nodeName = null;
+        if (!string.IsNullOrWhiteSpace(dto.NodeId))
         {
-            var sensor = await _context.Sensors
+            var node = await _context.Nodes
                 .AsNoTracking()
-                .FirstOrDefaultAsync(s => s.SensorId == dto.SensorId, ct);
+                .FirstOrDefaultAsync(n => n.NodeId == dto.NodeId, ct);
 
-            sensorId = sensor?.Id;
-            sensorName = sensor?.Name;
+            nodeId = node?.Id;
+            nodeName = node?.Name;
         }
 
         // Create Alert
-        var alert = dto.ToEntity(tenantId, alertType.Id, hubId, sensorId, source);
+        var alert = dto.ToEntity(tenantId, alertType.Id, hubId, nodeId, source);
 
         _context.Alerts.Add(alert);
         await _unitOfWork.SaveChangesAsync(ct);
@@ -308,13 +344,13 @@ public class AlertService : IAlertService
             alert.Message,
             source);
 
-        var alertDto = alert.ToDto(alertType, hubName, sensorName);
+        var alertDto = alert.ToDto(alertType, hubName, nodeName);
 
         // SignalR Broadcast to all clients in Tenant
         await _signalRNotificationService.NotifyAlertReceivedAsync(tenantId, alertDto, ct);
 
         // Update Matter Bridge Contact Sensor (fire and forget)
-        _ = UpdateMatterContactSensorAsync(alertType.Code, dto.SensorId, true, ct);
+        _ = UpdateMatterContactSensorAsync(alertType.Code, dto.NodeId, true, ct);
 
         return alertDto;
     }
@@ -323,11 +359,11 @@ public class AlertService : IAlertService
     /// Updates the Matter Bridge Contact Sensor state.
     /// Contact Sensor is OPEN when alert is active, CLOSED when resolved.
     /// </summary>
-    private async Task UpdateMatterContactSensorAsync(string alertTypeCode, string? sensorId, bool isOpen, CancellationToken ct)
+    private async Task UpdateMatterContactSensorAsync(string alertTypeCode, string? nodeId, bool isOpen, CancellationToken ct)
     {
         try
         {
-            var deviceId = MatterDeviceMapping.GenerateAlertDeviceId(alertTypeCode, sensorId);
+            var deviceId = MatterDeviceMapping.GenerateAlertDeviceId(alertTypeCode, nodeId);
 
             // First ensure the device is registered
             var displayName = MatterDeviceMapping.CreateAlertDisplayName(alertTypeCode, null);

@@ -23,7 +23,7 @@ public class AlertServiceTests : IDisposable
     private readonly ITenantService _tenantService;
     private readonly Guid _tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
     private readonly Guid _hubId;
-    private readonly Guid _sensorId;
+    private readonly Guid _nodeId;
     private readonly Guid _alertTypeId;
 
     public AlertServiceTests()
@@ -52,7 +52,7 @@ public class AlertServiceTests : IDisposable
                 It.IsAny<string>(), It.IsAny<bool>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
 
-        // Create a Hub and Sensor for tests
+        // Create a Hub and Node for tests
         _hubId = Guid.NewGuid();
         _context.Hubs.Add(new myIoTGrid.Hub.Domain.Entities.Hub
         {
@@ -63,13 +63,13 @@ public class AlertServiceTests : IDisposable
             CreatedAt = DateTime.UtcNow
         });
 
-        _sensorId = Guid.NewGuid();
-        _context.Sensors.Add(new Sensor
+        _nodeId = Guid.NewGuid();
+        _context.Nodes.Add(new Node
         {
-            Id = _sensorId,
+            Id = _nodeId,
             HubId = _hubId,
-            SensorId = "test-sensor",
-            Name = "Test Sensor",
+            NodeId = "test-node",
+            Name = "Test Node",
             CreatedAt = DateTime.UtcNow
         });
 
@@ -95,6 +95,16 @@ public class AlertServiceTests : IDisposable
             CreatedAt = DateTime.UtcNow
         });
 
+        _context.AlertTypes.Add(new AlertType
+        {
+            Id = Guid.NewGuid(),
+            Code = "node_offline",
+            Name = "Node Offline",
+            DefaultLevel = AlertLevel.Critical,
+            IsGlobal = true,
+            CreatedAt = DateTime.UtcNow
+        });
+
         _context.SaveChanges();
 
         _sut = new AlertService(_context, unitOfWork, _tenantService, _signalRMock.Object, _matterBridgeMock.Object, _loggerMock.Object);
@@ -112,7 +122,7 @@ public class AlertServiceTests : IDisposable
         var dto = new CreateAlertDto(
             AlertTypeCode: "mold_risk",
             HubId: "test-hub",
-            SensorId: "test-sensor",
+            NodeId: "test-node",
             Level: AlertLevelDto.Warning,
             Message: "High humidity detected",
             Recommendation: "Open windows"
@@ -338,6 +348,46 @@ public class AlertServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task GetFilteredAsync_WithNodeFilter_FiltersCorrectly()
+    {
+        // Arrange
+        _context.Alerts.Add(new Alert
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantId,
+            NodeId = _nodeId,
+            AlertTypeId = _alertTypeId,
+            Level = AlertLevel.Warning,
+            Source = AlertSource.Cloud,
+            Message = "Node alert",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        });
+        _context.Alerts.Add(new Alert
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantId,
+            NodeId = Guid.NewGuid(), // Different node
+            AlertTypeId = _alertTypeId,
+            Level = AlertLevel.Warning,
+            Source = AlertSource.Cloud,
+            Message = "Other node alert",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
+        });
+        await _context.SaveChangesAsync();
+
+        var filter = new AlertFilterDto(NodeId: _nodeId);
+
+        // Act
+        var result = await _sut.GetFilteredAsync(filter);
+
+        // Assert
+        result.Items.Should().ContainSingle();
+        result.Items.First().NodeId.Should().Be(_nodeId);
+    }
+
+    [Fact]
     public async Task GetFilteredAsync_WithLevelFilter_FiltersCorrectly()
     {
         // Arrange
@@ -515,10 +565,43 @@ public class AlertServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateHubOfflineAlertAsync_WithValidSensor_CreatesAlert()
+    public async Task CreateNodeOfflineAlertAsync_WithValidNode_CreatesAlert()
     {
         // Act
-        await _sut.CreateHubOfflineAlertAsync(_sensorId);
+        await _sut.CreateNodeOfflineAlertAsync(_nodeId);
+
+        // Assert
+        var alerts = await _sut.GetActiveAsync();
+        alerts.Should().ContainSingle(a => a.AlertTypeCode == "node_offline");
+    }
+
+    [Fact]
+    public async Task CreateNodeOfflineAlertAsync_WithNonExistingNode_DoesNotThrow()
+    {
+        // Act & Assert
+        var act = () => _sut.CreateNodeOfflineAlertAsync(Guid.NewGuid());
+        await act.Should().NotThrowAsync();
+    }
+
+    [Fact]
+    public async Task CreateNodeOfflineAlertAsync_WithExistingActiveAlert_DoesNotDuplicate()
+    {
+        // Arrange
+        await _sut.CreateNodeOfflineAlertAsync(_nodeId);
+
+        // Act
+        await _sut.CreateNodeOfflineAlertAsync(_nodeId);
+
+        // Assert
+        var alerts = await _sut.GetActiveAsync();
+        alerts.Count(a => a.AlertTypeCode == "node_offline").Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CreateHubOfflineAlertAsync_WithValidHub_CreatesAlert()
+    {
+        // Act
+        await _sut.CreateHubOfflineAlertAsync(_hubId);
 
         // Assert
         var alerts = await _sut.GetActiveAsync();
@@ -526,7 +609,7 @@ public class AlertServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task CreateHubOfflineAlertAsync_WithNonExistingSensor_DoesNotThrow()
+    public async Task CreateHubOfflineAlertAsync_WithNonExistingHub_DoesNotThrow()
     {
         // Act & Assert
         var act = () => _sut.CreateHubOfflineAlertAsync(Guid.NewGuid());
@@ -537,10 +620,10 @@ public class AlertServiceTests : IDisposable
     public async Task CreateHubOfflineAlertAsync_WithExistingActiveAlert_DoesNotDuplicate()
     {
         // Arrange
-        await _sut.CreateHubOfflineAlertAsync(_sensorId);
+        await _sut.CreateHubOfflineAlertAsync(_hubId);
 
         // Act
-        await _sut.CreateHubOfflineAlertAsync(_sensorId);
+        await _sut.CreateHubOfflineAlertAsync(_hubId);
 
         // Assert
         var alerts = await _sut.GetActiveAsync();
@@ -548,14 +631,14 @@ public class AlertServiceTests : IDisposable
     }
 
     [Fact(Skip = "ExecuteUpdateAsync is not supported by InMemory provider")]
-    public async Task DeactivateAlertsAsync_DeactivatesMatchingAlerts()
+    public async Task DeactivateNodeAlertsAsync_DeactivatesMatchingAlerts()
     {
         // Arrange
         _context.Alerts.Add(new Alert
         {
             Id = Guid.NewGuid(),
             TenantId = _tenantId,
-            SensorId = _sensorId,
+            NodeId = _nodeId,
             AlertTypeId = _alertTypeId,
             Level = AlertLevel.Warning,
             Source = AlertSource.Local,
@@ -566,7 +649,7 @@ public class AlertServiceTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Act
-        await _sut.DeactivateAlertsAsync(_sensorId, "mold_risk");
+        await _sut.DeactivateNodeAlertsAsync(_nodeId, "mold_risk");
 
         // Assert
         var alerts = await _sut.GetActiveAsync();
@@ -667,7 +750,7 @@ public class AlertServiceTests : IDisposable
         // Arrange
         var dto = new CreateAlertDto(
             AlertTypeCode: "mold_risk",
-            SensorId: "test-sensor",
+            NodeId: "test-node",
             Message: "Test"
         );
 

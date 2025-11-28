@@ -13,12 +13,12 @@ namespace myIoTGrid.Hub.Interface.Controllers;
 public class HubsController : ControllerBase
 {
     private readonly IHubService _hubService;
-    private readonly ISensorService _sensorService;
+    private readonly INodeService _nodeService;
 
-    public HubsController(IHubService hubService, ISensorService sensorService)
+    public HubsController(IHubService hubService, INodeService nodeService)
     {
         _hubService = hubService;
-        _sensorService = sensorService;
+        _nodeService = nodeService;
     }
 
     /// <summary>
@@ -56,17 +56,17 @@ public class HubsController : ControllerBase
     }
 
     /// <summary>
-    /// Returns all Sensors for a Hub
+    /// Returns all Nodes for a Hub
     /// </summary>
     /// <param name="id">Hub-ID</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>List of Sensors</returns>
-    [HttpGet("{id:guid}/sensors")]
-    [ProducesResponseType(typeof(IEnumerable<SensorDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetSensors(Guid id, CancellationToken ct)
+    /// <returns>List of Nodes</returns>
+    [HttpGet("{id:guid}/nodes")]
+    [ProducesResponseType(typeof(IEnumerable<NodeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetNodes(Guid id, CancellationToken ct)
     {
-        var sensors = await _sensorService.GetByHubAsync(id, ct);
-        return Ok(sensors);
+        var nodes = await _nodeService.GetByHubAsync(id, ct);
+        return Ok(nodes);
     }
 
     /// <summary>

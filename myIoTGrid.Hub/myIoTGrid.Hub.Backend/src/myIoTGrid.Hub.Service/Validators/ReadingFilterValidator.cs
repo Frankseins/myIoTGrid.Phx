@@ -4,11 +4,11 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Validators;
 
 /// <summary>
-/// Validator for SensorDataFilterDto
+/// Validator for ReadingFilterDto
 /// </summary>
-public class SensorDataFilterValidator : AbstractValidator<SensorDataFilterDto>
+public class ReadingFilterValidator : AbstractValidator<ReadingFilterDto>
 {
-    public SensorDataFilterValidator()
+    public ReadingFilterValidator()
     {
         RuleFor(x => x.Page)
             .GreaterThanOrEqualTo(1)
@@ -18,18 +18,18 @@ public class SensorDataFilterValidator : AbstractValidator<SensorDataFilterDto>
             .InclusiveBetween(1, 1000)
             .WithMessage("PageSize must be between 1 and 1000");
 
-        When(x => x.SensorIdentifier != null, () =>
+        When(x => x.NodeIdentifier != null, () =>
         {
-            RuleFor(x => x.SensorIdentifier)
+            RuleFor(x => x.NodeIdentifier)
                 .MaximumLength(100)
-                .WithMessage("SensorIdentifier must not exceed 100 characters");
+                .WithMessage("NodeIdentifier must not exceed 100 characters");
         });
 
-        When(x => x.SensorTypeCode != null, () =>
+        When(x => x.SensorTypeId != null, () =>
         {
-            RuleFor(x => x.SensorTypeCode)
+            RuleFor(x => x.SensorTypeId)
                 .MaximumLength(50)
-                .WithMessage("SensorTypeCode must not exceed 50 characters");
+                .WithMessage("SensorTypeId must not exceed 50 characters");
         });
 
         When(x => x.From.HasValue && x.To.HasValue, () =>

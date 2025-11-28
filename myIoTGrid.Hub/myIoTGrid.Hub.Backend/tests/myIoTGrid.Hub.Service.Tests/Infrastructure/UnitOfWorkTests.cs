@@ -1,10 +1,15 @@
 using FluentAssertions;
 using myIoTGrid.Hub.Domain.Entities;
+using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Infrastructure.Repositories;
 
 namespace myIoTGrid.Hub.Service.Tests.Repositories;
 
+/// <summary>
+/// Tests for UnitOfWork using AlertType entity
+/// (SensorType uses TypeId as primary key, AlertType uses standard Guid Id)
+/// </summary>
 public class UnitOfWorkTests : IDisposable
 {
     private readonly HubDbContext _context;
@@ -27,12 +32,12 @@ public class UnitOfWorkTests : IDisposable
     public async Task SaveChangesAsync_WithChanges_ReturnsNumberOfChanges()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType
+        _context.AlertTypes.Add(new AlertType
         {
             Id = Guid.NewGuid(),
             Code = "test",
             Name = "Test",
-            Unit = "t",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         });
 
@@ -57,9 +62,9 @@ public class UnitOfWorkTests : IDisposable
     public async Task SaveChangesAsync_WithMultipleChanges_ReturnsCorrectCount()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "c", Name = "C", Unit = "c", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "c", Name = "C", DefaultLevel = AlertLevel.Critical, CreatedAt = DateTime.UtcNow });
 
         // Act
         var result = await _sut.SaveChangesAsync();
@@ -73,7 +78,7 @@ public class UnitOfWorkTests : IDisposable
     {
         // Arrange
         using var cts = new CancellationTokenSource();
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "ct", Name = "CancellationToken", Unit = "ct", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "ct", Name = "CancellationToken", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
 
         // Act
         var result = await _sut.SaveChangesAsync(cts.Token);
@@ -122,7 +127,7 @@ public class UnitOfWorkTests : IDisposable
     {
         // Arrange
         await _sut.BeginTransactionAsync();
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "trans", Name = "Transaction", Unit = "t", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "trans", Name = "Transaction", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
         await _sut.SaveChangesAsync();
 
         // Act
@@ -136,7 +141,7 @@ public class UnitOfWorkTests : IDisposable
     {
         // Arrange
         await _sut.BeginTransactionAsync();
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "rollback", Name = "Rollback", Unit = "r", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "rollback", Name = "Rollback", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
         await _sut.SaveChangesAsync();
 
         // Act
@@ -173,7 +178,7 @@ public class UnitOfWorkTests : IDisposable
         unitOfWork.Dispose();
 
         // Assert - Context should be disposed
-        var act = () => context.SensorTypes.ToList();
+        var act = () => context.AlertTypes.ToList();
         act.Should().Throw<ObjectDisposedException>();
     }
 

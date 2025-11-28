@@ -6,6 +6,13 @@ using HubEntity = myIoTGrid.Hub.Domain.Entities.Hub;
 
 namespace myIoTGrid.Hub.Service.Tests.Domain;
 
+/// <summary>
+/// Tests for Domain Entities (Matter-konform).
+/// Hub → Raspberry Pi Gateway
+/// Node → ESP32/LoRa32 Device (= Matter Node)
+/// Sensor → Physical sensor chip DHT22, BME280 (= Matter Endpoint)
+/// Reading → Sensor measurement (= Matter Attribute Report)
+/// </summary>
 public class EntityTests
 {
     #region Tenant Entity Tests
@@ -94,8 +101,8 @@ public class EntityTests
         hub.IsOnline.Should().BeFalse();
         hub.CreatedAt.Should().Be(default);
         hub.Tenant.Should().BeNull();
-        hub.Sensors.Should().NotBeNull();
-        hub.Sensors.Should().BeEmpty();
+        hub.Nodes.Should().NotBeNull();
+        hub.Nodes.Should().BeEmpty();
         hub.Alerts.Should().NotBeNull();
         hub.Alerts.Should().BeEmpty();
     }
@@ -138,15 +145,15 @@ public class EntityTests
     {
         // Arrange
         var hub = new HubEntity();
-        var sensor = new Sensor { Id = Guid.NewGuid() };
+        var node = new Node { Id = Guid.NewGuid() };
         var alert = new Alert { Id = Guid.NewGuid() };
 
         // Act
-        hub.Sensors.Add(sensor);
+        hub.Nodes.Add(node);
         hub.Alerts.Add(alert);
 
         // Assert
-        hub.Sensors.Should().HaveCount(1);
+        hub.Nodes.Should().HaveCount(1);
         hub.Alerts.Should().HaveCount(1);
     }
 
@@ -164,35 +171,35 @@ public class EntityTests
 
     #endregion
 
-    #region Sensor Entity Tests
+    #region Node Entity Tests (ESP32/LoRa32 = Matter Node)
 
     [Fact]
-    public void Sensor_DefaultValues_ShouldBeCorrect()
+    public void Node_DefaultValues_ShouldBeCorrect()
     {
         // Arrange & Act
-        var sensor = new Sensor();
+        var node = new Node();
 
         // Assert
-        sensor.Id.Should().Be(Guid.Empty);
-        sensor.HubId.Should().Be(Guid.Empty);
-        sensor.SensorId.Should().BeEmpty();
-        sensor.Name.Should().BeEmpty();
-        sensor.Protocol.Should().Be(Protocol.WLAN);
-        sensor.Location.Should().BeNull();
-        sensor.SensorTypes.Should().NotBeNull();
-        sensor.SensorTypes.Should().BeEmpty();
-        sensor.LastSeen.Should().BeNull();
-        sensor.IsOnline.Should().BeFalse();
-        sensor.FirmwareVersion.Should().BeNull();
-        sensor.BatteryLevel.Should().BeNull();
-        sensor.CreatedAt.Should().Be(default);
-        sensor.Hub.Should().BeNull();
-        sensor.SensorData.Should().NotBeNull();
-        sensor.SensorData.Should().BeEmpty();
+        node.Id.Should().Be(Guid.Empty);
+        node.HubId.Should().Be(Guid.Empty);
+        node.NodeId.Should().BeEmpty();
+        node.Name.Should().BeEmpty();
+        node.Protocol.Should().Be(Protocol.WLAN);
+        node.Location.Should().BeNull();
+        node.LastSeen.Should().BeNull();
+        node.IsOnline.Should().BeFalse();
+        node.FirmwareVersion.Should().BeNull();
+        node.BatteryLevel.Should().BeNull();
+        node.CreatedAt.Should().Be(default);
+        node.Hub.Should().BeNull();
+        node.Sensors.Should().NotBeNull();
+        node.Sensors.Should().BeEmpty();
+        node.Readings.Should().NotBeNull();
+        node.Readings.Should().BeEmpty();
     }
 
     [Fact]
-    public void Sensor_ShouldSetAllProperties()
+    public void Node_ShouldSetAllProperties()
     {
         // Arrange
         var id = Guid.NewGuid();
@@ -202,15 +209,14 @@ public class EntityTests
         var location = new Location("Wohnzimmer", 50.0, 6.0);
 
         // Act
-        var sensor = new Sensor
+        var node = new Node
         {
             Id = id,
             HubId = hubId,
-            SensorId = "sensor-01",
-            Name = "Living Room Sensor",
+            NodeId = "node-wohnzimmer-01",
+            Name = "Living Room Node",
             Protocol = Protocol.LoRaWAN,
             Location = location,
-            SensorTypes = ["temperature", "humidity"],
             LastSeen = lastSeen,
             IsOnline = true,
             FirmwareVersion = "2.0.1",
@@ -219,141 +225,201 @@ public class EntityTests
         };
 
         // Assert
-        sensor.Id.Should().Be(id);
-        sensor.HubId.Should().Be(hubId);
-        sensor.SensorId.Should().Be("sensor-01");
-        sensor.Name.Should().Be("Living Room Sensor");
-        sensor.Protocol.Should().Be(Protocol.LoRaWAN);
-        sensor.Location.Should().Be(location);
-        sensor.SensorTypes.Should().Contain("temperature");
-        sensor.SensorTypes.Should().Contain("humidity");
-        sensor.LastSeen.Should().Be(lastSeen);
-        sensor.IsOnline.Should().BeTrue();
-        sensor.FirmwareVersion.Should().Be("2.0.1");
-        sensor.BatteryLevel.Should().Be(85);
-        sensor.CreatedAt.Should().Be(createdAt);
+        node.Id.Should().Be(id);
+        node.HubId.Should().Be(hubId);
+        node.NodeId.Should().Be("node-wohnzimmer-01");
+        node.Name.Should().Be("Living Room Node");
+        node.Protocol.Should().Be(Protocol.LoRaWAN);
+        node.Location.Should().Be(location);
+        node.LastSeen.Should().Be(lastSeen);
+        node.IsOnline.Should().BeTrue();
+        node.FirmwareVersion.Should().Be("2.0.1");
+        node.BatteryLevel.Should().Be(85);
+        node.CreatedAt.Should().Be(createdAt);
     }
 
     [Fact]
-    public void Sensor_NavigationProperties_ShouldAllowAddingItems()
+    public void Node_NavigationProperties_ShouldAllowAddingItems()
     {
         // Arrange
-        var sensor = new Sensor();
-        var sensorData = new SensorData { Id = Guid.NewGuid() };
+        var node = new Node();
+        var sensor = new Sensor { Id = Guid.NewGuid() };
+        var reading = new Reading { Id = 1 };
 
         // Act
-        sensor.SensorData.Add(sensorData);
+        node.Sensors.Add(sensor);
+        node.Readings.Add(reading);
 
         // Assert
-        sensor.SensorData.Should().HaveCount(1);
+        node.Sensors.Should().HaveCount(1);
+        node.Readings.Should().HaveCount(1);
     }
 
     [Fact]
-    public void Sensor_SensorTypes_ShouldBeModifiable()
-    {
-        // Arrange
-        var sensor = new Sensor();
-
-        // Act
-        sensor.SensorTypes.Add("temperature");
-        sensor.SensorTypes.Add("humidity");
-
-        // Assert
-        sensor.SensorTypes.Should().HaveCount(2);
-        sensor.SensorTypes.Should().Contain("temperature");
-    }
-
-    [Fact]
-    public void Sensor_BatteryLevel_ShouldAcceptZeroToHundred()
+    public void Node_BatteryLevel_ShouldAcceptZeroToHundred()
     {
         // Arrange & Act
-        var sensorZero = new Sensor { BatteryLevel = 0 };
-        var sensorFull = new Sensor { BatteryLevel = 100 };
-        var sensorMid = new Sensor { BatteryLevel = 50 };
+        var nodeZero = new Node { BatteryLevel = 0 };
+        var nodeFull = new Node { BatteryLevel = 100 };
+        var nodeMid = new Node { BatteryLevel = 50 };
 
         // Assert
-        sensorZero.BatteryLevel.Should().Be(0);
-        sensorFull.BatteryLevel.Should().Be(100);
-        sensorMid.BatteryLevel.Should().Be(50);
+        nodeZero.BatteryLevel.Should().Be(0);
+        nodeFull.BatteryLevel.Should().Be(100);
+        nodeMid.BatteryLevel.Should().Be(50);
     }
 
     #endregion
 
-    #region SensorData Entity Tests
+    #region Sensor Entity Tests (Physical sensor chip = Matter Endpoint)
 
     [Fact]
-    public void SensorData_DefaultValues_ShouldBeCorrect()
+    public void Sensor_DefaultValues_ShouldBeCorrect()
     {
         // Arrange & Act
-        var sensorData = new SensorData();
+        var sensor = new Sensor();
 
         // Assert
-        sensorData.Id.Should().Be(Guid.Empty);
-        sensorData.TenantId.Should().Be(Guid.Empty);
-        sensorData.SensorId.Should().Be(Guid.Empty);
-        sensorData.SensorTypeId.Should().Be(Guid.Empty);
-        sensorData.Value.Should().Be(0);
-        sensorData.Timestamp.Should().Be(default);
-        sensorData.IsSyncedToCloud.Should().BeFalse();
-        sensorData.Sensor.Should().BeNull();
-        sensorData.SensorType.Should().BeNull();
+        sensor.Id.Should().Be(Guid.Empty);
+        sensor.NodeId.Should().Be(Guid.Empty);
+        sensor.SensorTypeId.Should().BeEmpty();
+        sensor.EndpointId.Should().Be(0);
+        sensor.Name.Should().BeNull();
+        sensor.IsActive.Should().BeTrue();
+        sensor.CreatedAt.Should().Be(default);
+        sensor.Node.Should().BeNull();
+        sensor.SensorType.Should().BeNull();
     }
 
     [Fact]
-    public void SensorData_ShouldSetAllProperties()
+    public void Sensor_ShouldSetAllProperties()
     {
         // Arrange
         var id = Guid.NewGuid();
+        var nodeId = Guid.NewGuid();
+        var createdAt = DateTime.UtcNow;
+
+        // Act
+        var sensor = new Sensor
+        {
+            Id = id,
+            NodeId = nodeId,
+            SensorTypeId = "temperature",
+            EndpointId = 1,
+            Name = "Living Room Temperature",
+            IsActive = true,
+            CreatedAt = createdAt
+        };
+
+        // Assert
+        sensor.Id.Should().Be(id);
+        sensor.NodeId.Should().Be(nodeId);
+        sensor.SensorTypeId.Should().Be("temperature");
+        sensor.EndpointId.Should().Be(1);
+        sensor.Name.Should().Be("Living Room Temperature");
+        sensor.IsActive.Should().BeTrue();
+        sensor.CreatedAt.Should().Be(createdAt);
+    }
+
+    [Fact]
+    public void Sensor_EndpointId_ShouldSupportMultipleEndpoints()
+    {
+        // Arrange & Act - Multiple sensors on same node with different EndpointIds
+        var sensor1 = new Sensor { EndpointId = 1, SensorTypeId = "temperature" };
+        var sensor2 = new Sensor { EndpointId = 2, SensorTypeId = "humidity" };
+        var sensor3 = new Sensor { EndpointId = 3, SensorTypeId = "pressure" };
+
+        // Assert
+        sensor1.EndpointId.Should().Be(1);
+        sensor2.EndpointId.Should().Be(2);
+        sensor3.EndpointId.Should().Be(3);
+    }
+
+    #endregion
+
+    #region Reading Entity Tests (= Matter Attribute Report)
+
+    [Fact]
+    public void Reading_DefaultValues_ShouldBeCorrect()
+    {
+        // Arrange & Act
+        var reading = new Reading();
+
+        // Assert
+        reading.Id.Should().Be(0);  // long type, default is 0
+        reading.TenantId.Should().Be(Guid.Empty);
+        reading.NodeId.Should().Be(Guid.Empty);
+        reading.SensorTypeId.Should().BeEmpty();
+        reading.Value.Should().Be(0);
+        reading.Timestamp.Should().Be(default);
+        reading.IsSyncedToCloud.Should().BeFalse();
+        reading.Node.Should().BeNull();
+        reading.SensorType.Should().BeNull();
+    }
+
+    [Fact]
+    public void Reading_ShouldSetAllProperties()
+    {
+        // Arrange
         var tenantId = Guid.NewGuid();
-        var sensorId = Guid.NewGuid();
-        var sensorTypeId = Guid.NewGuid();
+        var nodeId = Guid.NewGuid();
         var timestamp = DateTime.UtcNow;
 
         // Act
-        var sensorData = new SensorData
+        var reading = new Reading
         {
-            Id = id,
+            Id = 12345,
             TenantId = tenantId,
-            SensorId = sensorId,
-            SensorTypeId = sensorTypeId,
+            NodeId = nodeId,
+            SensorTypeId = "temperature",
             Value = 23.5,
             Timestamp = timestamp,
             IsSyncedToCloud = true
         };
 
         // Assert
-        sensorData.Id.Should().Be(id);
-        sensorData.TenantId.Should().Be(tenantId);
-        sensorData.SensorId.Should().Be(sensorId);
-        sensorData.SensorTypeId.Should().Be(sensorTypeId);
-        sensorData.Value.Should().Be(23.5);
-        sensorData.Timestamp.Should().Be(timestamp);
-        sensorData.IsSyncedToCloud.Should().BeTrue();
+        reading.Id.Should().Be(12345);
+        reading.TenantId.Should().Be(tenantId);
+        reading.NodeId.Should().Be(nodeId);
+        reading.SensorTypeId.Should().Be("temperature");
+        reading.Value.Should().Be(23.5);
+        reading.Timestamp.Should().Be(timestamp);
+        reading.IsSyncedToCloud.Should().BeTrue();
     }
 
     [Fact]
-    public void SensorData_Value_ShouldAcceptNegativeValues()
+    public void Reading_Value_ShouldAcceptNegativeValues()
     {
         // Arrange & Act
-        var sensorData = new SensorData { Value = -40.0 };
+        var reading = new Reading { Value = -40.0 };
 
         // Assert
-        sensorData.Value.Should().Be(-40.0);
+        reading.Value.Should().Be(-40.0);
     }
 
     [Fact]
-    public void SensorData_Value_ShouldAcceptDecimalValues()
+    public void Reading_Value_ShouldAcceptDecimalValues()
     {
         // Arrange & Act
-        var sensorData = new SensorData { Value = 21.123456789 };
+        var reading = new Reading { Value = 21.123456789 };
 
         // Assert
-        sensorData.Value.Should().BeApproximately(21.123456789, 0.0000001);
+        reading.Value.Should().BeApproximately(21.123456789, 0.0000001);
+    }
+
+    [Fact]
+    public void Reading_Id_ShouldBeLongForPerformance()
+    {
+        // Arrange & Act
+        var reading = new Reading { Id = long.MaxValue };
+
+        // Assert
+        reading.Id.Should().Be(long.MaxValue);
     }
 
     #endregion
 
-    #region SensorType Entity Tests
+    #region SensorType Entity Tests (with Matter Cluster IDs)
 
     [Fact]
     public void SensorType_DefaultValues_ShouldBeCorrect()
@@ -362,45 +428,67 @@ public class EntityTests
         var sensorType = new SensorType();
 
         // Assert
-        sensorType.Id.Should().Be(Guid.Empty);
-        sensorType.Code.Should().BeEmpty();
-        sensorType.Name.Should().BeEmpty();
+        sensorType.TypeId.Should().BeEmpty();
+        sensorType.DisplayName.Should().BeEmpty();
         sensorType.Unit.Should().BeEmpty();
+        sensorType.ClusterId.Should().Be(0);
+        sensorType.MatterClusterName.Should().BeNull();
+        sensorType.Resolution.Should().Be(0.1);
+        sensorType.MinValue.Should().BeNull();
+        sensorType.MaxValue.Should().BeNull();
         sensorType.Description.Should().BeNull();
-        sensorType.IconName.Should().BeNull();
+        sensorType.IsCustom.Should().BeFalse();
+        sensorType.Category.Should().Be("other");
+        sensorType.Icon.Should().BeNull();
+        sensorType.Color.Should().BeNull();
         sensorType.IsGlobal.Should().BeFalse();
         sensorType.CreatedAt.Should().Be(default);
-        sensorType.SensorData.Should().NotBeNull();
-        sensorType.SensorData.Should().BeEmpty();
+        sensorType.Sensors.Should().NotBeNull();
+        sensorType.Sensors.Should().BeEmpty();
+        sensorType.Readings.Should().NotBeNull();
+        sensorType.Readings.Should().BeEmpty();
     }
 
     [Fact]
     public void SensorType_ShouldSetAllProperties()
     {
         // Arrange
-        var id = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
 
         // Act
         var sensorType = new SensorType
         {
-            Id = id,
-            Code = "temperature",
-            Name = "Temperatur",
+            TypeId = "temperature",
+            DisplayName = "Temperatur",
             Unit = "°C",
+            ClusterId = 0x0402, // TemperatureMeasurement cluster
+            MatterClusterName = "TemperatureMeasurement",
+            Resolution = 0.1,
+            MinValue = -40,
+            MaxValue = 125,
             Description = "Temperatur-Messung",
-            IconName = "thermostat",
+            IsCustom = false,
+            Category = "weather",
+            Icon = "thermostat",
+            Color = "#FF5722",
             IsGlobal = true,
             CreatedAt = createdAt
         };
 
         // Assert
-        sensorType.Id.Should().Be(id);
-        sensorType.Code.Should().Be("temperature");
-        sensorType.Name.Should().Be("Temperatur");
+        sensorType.TypeId.Should().Be("temperature");
+        sensorType.DisplayName.Should().Be("Temperatur");
         sensorType.Unit.Should().Be("°C");
+        sensorType.ClusterId.Should().Be(0x0402);
+        sensorType.MatterClusterName.Should().Be("TemperatureMeasurement");
+        sensorType.Resolution.Should().Be(0.1);
+        sensorType.MinValue.Should().Be(-40);
+        sensorType.MaxValue.Should().Be(125);
         sensorType.Description.Should().Be("Temperatur-Messung");
-        sensorType.IconName.Should().Be("thermostat");
+        sensorType.IsCustom.Should().BeFalse();
+        sensorType.Category.Should().Be("weather");
+        sensorType.Icon.Should().Be("thermostat");
+        sensorType.Color.Should().Be("#FF5722");
         sensorType.IsGlobal.Should().BeTrue();
         sensorType.CreatedAt.Should().Be(createdAt);
     }
@@ -410,18 +498,52 @@ public class EntityTests
     {
         // Arrange
         var sensorType = new SensorType();
-        var sensorData = new SensorData { Id = Guid.NewGuid() };
+        var sensor = new Sensor { Id = Guid.NewGuid() };
+        var reading = new Reading { Id = 1 };
 
         // Act
-        sensorType.SensorData.Add(sensorData);
+        sensorType.Sensors.Add(sensor);
+        sensorType.Readings.Add(reading);
 
         // Assert
-        sensorType.SensorData.Should().HaveCount(1);
+        sensorType.Sensors.Should().HaveCount(1);
+        sensorType.Readings.Should().HaveCount(1);
+    }
+
+    [Theory]
+    [InlineData("temperature", 0x0402u)]
+    [InlineData("humidity", 0x0405u)]
+    [InlineData("pressure", 0x0403u)]
+    [InlineData("occupancy", 0x0406u)]
+    public void SensorType_ClusterId_ShouldSupportKnownClusters(string typeId, uint clusterId)
+    {
+        // Arrange & Act
+        var sensorType = new SensorType
+        {
+            TypeId = typeId,
+            ClusterId = clusterId
+        };
+
+        // Assert
+        sensorType.ClusterId.Should().Be(clusterId);
+    }
+
+    [Fact]
+    public void SensorType_TypeId_IsPrimaryKey()
+    {
+        // Arrange & Act
+        var sensorType = new SensorType
+        {
+            TypeId = "temperature"
+        };
+
+        // Assert - TypeId is the primary key, not a Guid Id
+        sensorType.TypeId.Should().Be("temperature");
     }
 
     #endregion
 
-    #region Alert Entity Tests
+    #region Alert Entity Tests (with NodeId instead of SensorId)
 
     [Fact]
     public void Alert_DefaultValues_ShouldBeCorrect()
@@ -433,7 +555,7 @@ public class EntityTests
         alert.Id.Should().Be(Guid.Empty);
         alert.TenantId.Should().Be(Guid.Empty);
         alert.HubId.Should().BeNull();
-        alert.SensorId.Should().BeNull();
+        alert.NodeId.Should().BeNull();
         alert.AlertTypeId.Should().Be(Guid.Empty);
         alert.Level.Should().Be(AlertLevel.Ok);
         alert.Message.Should().BeEmpty();
@@ -445,7 +567,7 @@ public class EntityTests
         alert.IsActive.Should().BeTrue();
         alert.Tenant.Should().BeNull();
         alert.Hub.Should().BeNull();
-        alert.Sensor.Should().BeNull();
+        alert.Node.Should().BeNull();
         alert.AlertType.Should().BeNull();
     }
 
@@ -456,7 +578,7 @@ public class EntityTests
         var id = Guid.NewGuid();
         var tenantId = Guid.NewGuid();
         var hubId = Guid.NewGuid();
-        var sensorId = Guid.NewGuid();
+        var nodeId = Guid.NewGuid();
         var alertTypeId = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
         var expiresAt = DateTime.UtcNow.AddHours(24);
@@ -468,7 +590,7 @@ public class EntityTests
             Id = id,
             TenantId = tenantId,
             HubId = hubId,
-            SensorId = sensorId,
+            NodeId = nodeId,
             AlertTypeId = alertTypeId,
             Level = AlertLevel.Critical,
             Message = "Critical alert!",
@@ -484,7 +606,7 @@ public class EntityTests
         alert.Id.Should().Be(id);
         alert.TenantId.Should().Be(tenantId);
         alert.HubId.Should().Be(hubId);
-        alert.SensorId.Should().Be(sensorId);
+        alert.NodeId.Should().Be(nodeId);
         alert.AlertTypeId.Should().Be(alertTypeId);
         alert.Level.Should().Be(AlertLevel.Critical);
         alert.Message.Should().Be("Critical alert!");
@@ -641,48 +763,78 @@ public class EntityTests
     }
 
     [Fact]
-    public void Hub_Sensor_Relationship_ShouldWork()
+    public void Hub_Node_Relationship_ShouldWork()
     {
         // Arrange
         var hub = new HubEntity { Id = Guid.NewGuid(), Name = "Test Hub" };
-        var sensor = new Sensor { Id = Guid.NewGuid(), HubId = hub.Id, Hub = hub };
+        var node = new Node { Id = Guid.NewGuid(), HubId = hub.Id, Hub = hub };
 
         // Act
-        hub.Sensors.Add(sensor);
+        hub.Nodes.Add(node);
 
         // Assert
-        hub.Sensors.Should().Contain(sensor);
-        sensor.Hub.Should().Be(hub);
+        hub.Nodes.Should().Contain(node);
+        node.Hub.Should().Be(hub);
     }
 
     [Fact]
-    public void Sensor_SensorData_Relationship_ShouldWork()
+    public void Node_Sensor_Relationship_ShouldWork()
     {
         // Arrange
-        var sensor = new Sensor { Id = Guid.NewGuid() };
-        var data = new SensorData { Id = Guid.NewGuid(), SensorId = sensor.Id, Sensor = sensor };
+        var node = new Node { Id = Guid.NewGuid(), NodeId = "test-node" };
+        var sensor = new Sensor { Id = Guid.NewGuid(), NodeId = node.Id, Node = node };
 
         // Act
-        sensor.SensorData.Add(data);
+        node.Sensors.Add(sensor);
 
         // Assert
-        sensor.SensorData.Should().Contain(data);
-        data.Sensor.Should().Be(sensor);
+        node.Sensors.Should().Contain(sensor);
+        sensor.Node.Should().Be(node);
     }
 
     [Fact]
-    public void SensorType_SensorData_Relationship_ShouldWork()
+    public void Node_Reading_Relationship_ShouldWork()
     {
         // Arrange
-        var sensorType = new SensorType { Id = Guid.NewGuid(), Code = "temperature" };
-        var data = new SensorData { Id = Guid.NewGuid(), SensorTypeId = sensorType.Id, SensorType = sensorType };
+        var node = new Node { Id = Guid.NewGuid() };
+        var reading = new Reading { Id = 1, NodeId = node.Id, Node = node };
 
         // Act
-        sensorType.SensorData.Add(data);
+        node.Readings.Add(reading);
 
         // Assert
-        sensorType.SensorData.Should().Contain(data);
-        data.SensorType.Should().Be(sensorType);
+        node.Readings.Should().Contain(reading);
+        reading.Node.Should().Be(node);
+    }
+
+    [Fact]
+    public void SensorType_Sensor_Relationship_ShouldWork()
+    {
+        // Arrange
+        var sensorType = new SensorType { TypeId = "temperature" };
+        var sensor = new Sensor { Id = Guid.NewGuid(), SensorTypeId = sensorType.TypeId, SensorType = sensorType };
+
+        // Act
+        sensorType.Sensors.Add(sensor);
+
+        // Assert
+        sensorType.Sensors.Should().Contain(sensor);
+        sensor.SensorType.Should().Be(sensorType);
+    }
+
+    [Fact]
+    public void SensorType_Reading_Relationship_ShouldWork()
+    {
+        // Arrange
+        var sensorType = new SensorType { TypeId = "temperature" };
+        var reading = new Reading { Id = 1, SensorTypeId = sensorType.TypeId, SensorType = sensorType };
+
+        // Act
+        sensorType.Readings.Add(reading);
+
+        // Assert
+        sensorType.Readings.Should().Contain(reading);
+        reading.SensorType.Should().Be(sensorType);
     }
 
     [Fact]
@@ -698,6 +850,58 @@ public class EntityTests
         // Assert
         alertType.Alerts.Should().Contain(alert);
         alert.AlertType.Should().Be(alertType);
+    }
+
+    [Fact]
+    public void Alert_Node_Relationship_ShouldWork()
+    {
+        // Arrange
+        var node = new Node { Id = Guid.NewGuid(), NodeId = "test-node" };
+        var alert = new Alert { Id = Guid.NewGuid(), NodeId = node.Id, Node = node };
+
+        // Assert
+        alert.Node.Should().Be(node);
+        alert.NodeId.Should().Be(node.Id);
+    }
+
+    #endregion
+
+    #region Location Value Object Tests
+
+    [Fact]
+    public void Location_ShouldSetAllProperties()
+    {
+        // Arrange & Act
+        var location = new Location("Wohnzimmer", 50.9375, 6.9603);
+
+        // Assert
+        location.Name.Should().Be("Wohnzimmer");
+        location.Latitude.Should().Be(50.9375);
+        location.Longitude.Should().Be(6.9603);
+    }
+
+    [Fact]
+    public void Location_ShouldAllowNullCoordinates()
+    {
+        // Arrange & Act
+        var location = new Location("Wohnzimmer", null, null);
+
+        // Assert
+        location.Name.Should().Be("Wohnzimmer");
+        location.Latitude.Should().BeNull();
+        location.Longitude.Should().BeNull();
+    }
+
+    [Fact]
+    public void Location_ShouldAllowNullName()
+    {
+        // Arrange & Act
+        var location = new Location(null, 50.9375, 6.9603);
+
+        // Assert
+        location.Name.Should().BeNull();
+        location.Latitude.Should().Be(50.9375);
+        location.Longitude.Should().Be(6.9603);
     }
 
     #endregion

@@ -4,27 +4,27 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Validators;
 
 /// <summary>
-/// Validator for CreateSensorDataDto
+/// Validator for CreateReadingDto
 /// </summary>
-public class CreateSensorDataValidator : AbstractValidator<CreateSensorDataDto>
+public class CreateReadingValidator : AbstractValidator<CreateReadingDto>
 {
-    public CreateSensorDataValidator()
+    public CreateReadingValidator()
     {
-        RuleFor(x => x.SensorId)
+        RuleFor(x => x.NodeId)
             .NotEmpty()
-            .WithMessage("SensorId is required")
+            .WithMessage("NodeId is required")
             .MaximumLength(100)
-            .WithMessage("SensorId must not exceed 100 characters")
+            .WithMessage("NodeId must not exceed 100 characters")
             .Matches(@"^[a-zA-Z0-9\-_]+$")
-            .WithMessage("SensorId can only contain letters, numbers, hyphens, and underscores");
+            .WithMessage("NodeId can only contain letters, numbers, hyphens, and underscores");
 
-        RuleFor(x => x.SensorType)
+        RuleFor(x => x.Type)
             .NotEmpty()
-            .WithMessage("SensorType is required")
+            .WithMessage("Type (SensorTypeId) is required")
             .MaximumLength(50)
-            .WithMessage("SensorType must not exceed 50 characters")
+            .WithMessage("Type must not exceed 50 characters")
             .Matches(@"^[a-z0-9_]+$")
-            .WithMessage("SensorType must be lowercase with underscores (e.g., 'temperature', 'soil_moisture')");
+            .WithMessage("Type must be lowercase with underscores (e.g., 'temperature', 'soil_moisture')");
 
         RuleFor(x => x.Value)
             .Must(v => !double.IsNaN(v) && !double.IsInfinity(v))

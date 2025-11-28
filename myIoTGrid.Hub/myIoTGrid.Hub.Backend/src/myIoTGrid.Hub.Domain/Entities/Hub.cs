@@ -34,6 +34,6 @@ public class Hub : ITenantEntity
 
     // Navigation Properties
     public Tenant? Tenant { get; set; }
-    public ICollection<Sensor> Sensors { get; set; } = new List<Sensor>();
+    public ICollection<Node> Nodes { get; set; } = new List<Node>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
 }

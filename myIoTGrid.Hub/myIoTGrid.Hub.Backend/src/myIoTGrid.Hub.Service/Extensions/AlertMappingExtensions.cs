@@ -12,15 +12,15 @@ public static class AlertMappingExtensions
     /// <summary>
     /// Converts Alert Entity to AlertDto
     /// </summary>
-    public static AlertDto ToDto(this Alert entity, AlertType alertType, string? hubName = null, string? sensorName = null)
+    public static AlertDto ToDto(this Alert entity, AlertType alertType, string? hubName = null, string? nodeName = null)
     {
         return new AlertDto(
             entity.Id,
             entity.TenantId,
             entity.HubId,
             hubName,
-            entity.SensorId,
-            sensorName,
+            entity.NodeId,
+            nodeName,
             entity.AlertTypeId,
             alertType.Code,
             alertType.Name,
@@ -36,7 +36,7 @@ public static class AlertMappingExtensions
     }
 
     /// <summary>
-    /// Converts Alert Entity to AlertDto (when AlertType, Hub and Sensor are loaded)
+    /// Converts Alert Entity to AlertDto (when AlertType, Hub and Node are loaded)
     /// </summary>
     public static AlertDto ToDto(this Alert entity)
     {
@@ -46,7 +46,7 @@ public static class AlertMappingExtensions
         return entity.ToDto(
             entity.AlertType,
             entity.Hub?.Name,
-            entity.Sensor?.Name
+            entity.Node?.Name
         );
     }
 
@@ -58,7 +58,7 @@ public static class AlertMappingExtensions
         Guid tenantId,
         Guid alertTypeId,
         Guid? hubId,
-        Guid? sensorId,
+        Guid? nodeId,
         AlertSource source)
     {
         return new Alert
@@ -66,7 +66,7 @@ public static class AlertMappingExtensions
             Id = Guid.NewGuid(),
             TenantId = tenantId,
             HubId = hubId,
-            SensorId = sensorId,
+            NodeId = nodeId,
             AlertTypeId = alertTypeId,
             Level = dto.Level.ToEntity(),
             Message = dto.Message,

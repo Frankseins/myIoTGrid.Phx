@@ -3,34 +3,29 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Interfaces;
 
 /// <summary>
-/// Service Interface for Sensor (ESP32/LoRa32 Device) management
+/// Service Interface for Sensor (Physical sensor chip: DHT22, BME280) management.
+/// Matter-konform: Entspricht einem Matter Endpoint.
 /// </summary>
 public interface ISensorService
 {
-    /// <summary>Returns all Sensors for a Hub</summary>
-    Task<IEnumerable<SensorDto>> GetByHubAsync(Guid hubId, CancellationToken ct = default);
+    /// <summary>Returns all Sensors for a Node</summary>
+    Task<IEnumerable<SensorDto>> GetByNodeAsync(Guid nodeId, CancellationToken ct = default);
 
     /// <summary>Returns a Sensor by ID</summary>
     Task<SensorDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>Returns a Sensor by Sensor identifier string within a Hub</summary>
-    Task<SensorDto?> GetBySensorIdAsync(Guid hubId, string sensorId, CancellationToken ct = default);
+    /// <summary>Returns a Sensor by SensorTypeId within a Node</summary>
+    Task<SensorDto?> GetBySensorTypeAsync(Guid nodeId, string sensorTypeId, CancellationToken ct = default);
 
-    /// <summary>Finds or creates a Sensor (auto-registration)</summary>
-    Task<SensorDto> GetOrCreateBySensorIdAsync(Guid hubId, string sensorId, CancellationToken ct = default);
-
-    /// <summary>Creates a new Sensor</summary>
-    Task<SensorDto> CreateAsync(CreateSensorDto dto, CancellationToken ct = default);
+    /// <summary>Creates a new Sensor on a Node</summary>
+    Task<SensorDto> CreateAsync(Guid nodeId, CreateSensorDto dto, CancellationToken ct = default);
 
     /// <summary>Updates a Sensor</summary>
     Task<SensorDto?> UpdateAsync(Guid id, UpdateSensorDto dto, CancellationToken ct = default);
 
-    /// <summary>Updates the LastSeen timestamp</summary>
-    Task UpdateLastSeenAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Deletes a Sensor</summary>
+    Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
 
-    /// <summary>Sets the online status</summary>
-    Task SetOnlineStatusAsync(Guid id, bool isOnline, CancellationToken ct = default);
-
-    /// <summary>Updates the Sensor status (online, lastSeen, battery)</summary>
-    Task UpdateStatusAsync(Guid id, SensorStatusDto status, CancellationToken ct = default);
+    /// <summary>Creates or updates sensors for a node based on sensor type IDs</summary>
+    Task<IEnumerable<SensorDto>> SyncSensorsAsync(Guid nodeId, IEnumerable<string> sensorTypeIds, CancellationToken ct = default);
 }

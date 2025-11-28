@@ -9,10 +9,10 @@ namespace myIoTGrid.Hub.Service.Interfaces;
 public interface ISignalRNotificationService
 {
     /// <summary>
-    /// Sends new sensor data to all clients in the Tenant.
-    /// Event: "NewSensorData"
+    /// Sends a new Reading to all clients in the Tenant.
+    /// Event: "NewReading"
     /// </summary>
-    Task NotifyNewSensorDataAsync(Guid tenantId, SensorDataDto sensorData, CancellationToken ct = default);
+    Task NotifyNewReadingAsync(ReadingDto reading, CancellationToken ct = default);
 
     /// <summary>
     /// Sends a new Alert to all clients in the Tenant.
@@ -33,8 +33,14 @@ public interface ISignalRNotificationService
     Task NotifyHubStatusChangedAsync(Guid tenantId, HubDto hub, CancellationToken ct = default);
 
     /// <summary>
-    /// Sends a Sensor status change to all clients in the Tenant.
-    /// Event: "SensorStatusChanged"
+    /// Sends a Node status change to all clients in the Tenant.
+    /// Event: "NodeStatusChanged"
     /// </summary>
-    Task NotifySensorStatusChangedAsync(Guid tenantId, SensorDto sensor, CancellationToken ct = default);
+    Task NotifyNodeStatusChangedAsync(Guid tenantId, NodeDto node, CancellationToken ct = default);
+
+    /// <summary>
+    /// Sends a Node registered notification to all clients in the Hub group.
+    /// Event: "NodeRegistered"
+    /// </summary>
+    Task NotifyNodeRegisteredAsync(Guid hubId, NodeDto node, CancellationToken ct = default);
 }

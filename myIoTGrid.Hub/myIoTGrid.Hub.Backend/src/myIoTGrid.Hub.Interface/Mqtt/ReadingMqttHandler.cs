@@ -4,23 +4,23 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using myIoTGrid.Hub.Infrastructure.Mqtt;
 using myIoTGrid.Hub.Service.Interfaces;
-using myIoTGrid.Hub.Shared.Constants;
 using myIoTGrid.Hub.Shared.DTOs;
 
 namespace myIoTGrid.Hub.Interface.Mqtt;
 
 /// <summary>
-/// Handler für MQTT-Nachrichten mit Sensordaten.
-/// Verarbeitet Nachrichten auf dem Topic: myiotgrid/{tenantId}/sensordata
+/// Handler für MQTT-Nachrichten mit Readings (Messwerten).
+/// Verarbeitet Nachrichten auf dem Topic: myiotgrid/{tenantId}/readings
+/// Matter-konform: Entspricht Attribute Reports.
 /// </summary>
-public partial class SensorDataMqttHandler : IMqttMessageHandler
+public partial class ReadingMqttHandler : IMqttMessageHandler
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<SensorDataMqttHandler> _logger;
+    private readonly ILogger<ReadingMqttHandler> _logger;
 
-    // Regex für das Topic-Matching: myiotgrid/{tenantId}/sensordata
-    [GeneratedRegex(@"^myiotgrid/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/sensordata$")]
-    private static partial Regex SensorDataTopicRegex();
+    // Regex für das Topic-Matching: myiotgrid/{tenantId}/readings
+    [GeneratedRegex(@"^myiotgrid/([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/readings$")]
+    private static partial Regex ReadingTopicRegex();
 
     private static readonly JsonSerializerOptions JsonOptions = new()
     {
@@ -28,9 +28,9 @@ public partial class SensorDataMqttHandler : IMqttMessageHandler
         PropertyNamingPolicy = JsonNamingPolicy.CamelCase
     };
 
-    public SensorDataMqttHandler(
+    public ReadingMqttHandler(
         IServiceProvider serviceProvider,
-        ILogger<SensorDataMqttHandler> logger)
+        ILogger<ReadingMqttHandler> logger)
     {
         _serviceProvider = serviceProvider;
         _logger = logger;
@@ -39,7 +39,7 @@ public partial class SensorDataMqttHandler : IMqttMessageHandler
     /// <inheritdoc />
     public bool CanHandle(string topic)
     {
-        return SensorDataTopicRegex().IsMatch(topic);
+        return ReadingTopicRegex().IsMatch(topic);
     }
 
     /// <inheritdoc />
@@ -56,7 +56,7 @@ public partial class SensorDataMqttHandler : IMqttMessageHandler
             }
 
             // Payload deserialisieren
-            var dto = JsonSerializer.Deserialize<CreateSensorDataDto>(payload, JsonOptions);
+            var dto = JsonSerializer.Deserialize<CreateReadingDto>(payload, JsonOptions);
             if (dto == null)
             {
                 _logger.LogWarning("Konnte Payload nicht deserialisieren: {Payload}", payload);
@@ -64,34 +64,34 @@ public partial class SensorDataMqttHandler : IMqttMessageHandler
             }
 
             // Validierung
-            if (string.IsNullOrWhiteSpace(dto.HubId))
+            if (string.IsNullOrWhiteSpace(dto.NodeId))
             {
-                _logger.LogWarning("HubId fehlt im Payload");
+                _logger.LogWarning("NodeId fehlt im Payload");
                 return false;
             }
 
-            if (string.IsNullOrWhiteSpace(dto.SensorType))
+            if (string.IsNullOrWhiteSpace(dto.Type))
             {
-                _logger.LogWarning("SensorType fehlt im Payload");
+                _logger.LogWarning("Type (SensorType) fehlt im Payload");
                 return false;
             }
 
             // Service aus DI Container holen (Scoped Service)
             using var scope = _serviceProvider.CreateScope();
             var tenantService = scope.ServiceProvider.GetRequiredService<ITenantService>();
-            var sensorDataService = scope.ServiceProvider.GetRequiredService<ISensorDataService>();
+            var readingService = scope.ServiceProvider.GetRequiredService<IReadingService>();
 
             // TenantId setzen für den Scope
             tenantService.SetCurrentTenantId(tenantId.Value);
 
-            // SensorData erstellen
-            var sensorData = await sensorDataService.CreateAsync(dto, ct);
+            // Reading erstellen
+            var reading = await readingService.CreateAsync(dto, ct);
 
             _logger.LogDebug(
-                "MQTT SensorData verarbeitet: {SensorType}={Value} von {HubId} (Tenant: {TenantId})",
-                dto.SensorType,
+                "MQTT Reading verarbeitet: {Type}={Value} von Node {NodeId} (Tenant: {TenantId})",
+                dto.Type,
                 dto.Value,
-                dto.HubId,
+                dto.NodeId,
                 tenantId);
 
             return true;
@@ -110,11 +110,11 @@ public partial class SensorDataMqttHandler : IMqttMessageHandler
 
     /// <summary>
     /// Extrahiert die TenantId aus dem Topic.
-    /// Topic-Format: myiotgrid/{tenantId}/sensordata
+    /// Topic-Format: myiotgrid/{tenantId}/readings
     /// </summary>
     private Guid? ExtractTenantIdFromTopic(string topic)
     {
-        var match = SensorDataTopicRegex().Match(topic);
+        var match = ReadingTopicRegex().Match(topic);
         if (!match.Success || match.Groups.Count < 2)
         {
             return null;

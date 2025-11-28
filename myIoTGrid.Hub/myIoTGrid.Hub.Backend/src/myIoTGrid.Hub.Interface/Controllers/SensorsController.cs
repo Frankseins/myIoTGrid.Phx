@@ -1,13 +1,12 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using myIoTGrid.Hub.Interface.Hubs;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
 
 namespace myIoTGrid.Hub.Interface.Controllers;
 
 /// <summary>
-/// REST API Controller for Sensors (ESP32/LoRa32 Devices)
+/// REST API Controller for Sensors (Physical sensor chips: DHT22, BME280).
+/// Matter-konform: Entspricht Matter Endpoints.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -15,17 +14,24 @@ namespace myIoTGrid.Hub.Interface.Controllers;
 public class SensorsController : ControllerBase
 {
     private readonly ISensorService _sensorService;
-    private readonly IHubService _hubService;
-    private readonly IHubContext<SensorHub> _hubContext;
 
-    public SensorsController(
-        ISensorService sensorService,
-        IHubService hubService,
-        IHubContext<SensorHub> hubContext)
+    public SensorsController(ISensorService sensorService)
     {
         _sensorService = sensorService;
-        _hubService = hubService;
-        _hubContext = hubContext;
+    }
+
+    /// <summary>
+    /// Returns all Sensors for a Node
+    /// </summary>
+    /// <param name="nodeId">Node-ID</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>List of Sensors</returns>
+    [HttpGet]
+    [ProducesResponseType(typeof(IEnumerable<SensorDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAll([FromQuery] Guid nodeId, CancellationToken ct)
+    {
+        var sensors = await _sensorService.GetByNodeAsync(nodeId, ct);
+        return Ok(sensors);
     }
 
     /// <summary>
@@ -34,8 +40,6 @@ public class SensorsController : ControllerBase
     /// <param name="id">Sensor-ID</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>The Sensor</returns>
-    /// <response code="200">Sensor found</response>
-    /// <response code="404">Sensor not found</response>
     [HttpGet("{id:guid}")]
     [ProducesResponseType(typeof(SensorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -50,75 +54,30 @@ public class SensorsController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new Sensor
+    /// Creates a new Sensor on a Node
     /// </summary>
+    /// <param name="nodeId">Node-ID</param>
     /// <param name="dto">Sensor data</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>The created Sensor</returns>
-    /// <response code="201">Sensor successfully created</response>
-    /// <response code="400">Invalid data or SensorId already exists</response>
     [HttpPost]
     [ProducesResponseType(typeof(SensorDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateSensorDto dto, CancellationToken ct)
+    public async Task<IActionResult> Create([FromQuery] Guid nodeId, [FromBody] CreateSensorDto dto, CancellationToken ct)
     {
-        // If HubId is provided as string, look it up
-        var hubId = dto.HubId;
-        if (hubId == null && !string.IsNullOrWhiteSpace(dto.HubIdentifier))
+        try
         {
-            var hub = await _hubService.GetOrCreateByHubIdAsync(dto.HubIdentifier, ct);
-            hubId = hub.Id;
+            var sensor = await _sensorService.CreateAsync(nodeId, dto, ct);
+            return CreatedAtAction(nameof(GetById), new { id = sensor.Id }, sensor);
         }
-
-        if (hubId == null)
+        catch (InvalidOperationException ex)
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Invalid Request",
-                Detail = "Either HubId or HubIdentifier must be provided"
+                Detail = ex.Message
             });
         }
-
-        var createDto = dto with { HubId = hubId };
-        var sensor = await _sensorService.CreateAsync(createDto, ct);
-        return CreatedAtAction(nameof(GetById), new { id = sensor.Id }, sensor);
-    }
-
-    /// <summary>
-    /// Registers or updates a Sensor (auto-registration)
-    /// </summary>
-    /// <param name="dto">Sensor data</param>
-    /// <param name="ct">Cancellation Token</param>
-    /// <returns>The registered/updated Sensor</returns>
-    [HttpPost("register")]
-    [ProducesResponseType(typeof(SensorDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] CreateSensorDto dto, CancellationToken ct)
-    {
-        // If HubId is provided as string, look it up
-        var hubId = dto.HubId;
-        if (hubId == null && !string.IsNullOrWhiteSpace(dto.HubIdentifier))
-        {
-            var hub = await _hubService.GetOrCreateByHubIdAsync(dto.HubIdentifier, ct);
-            hubId = hub.Id;
-        }
-
-        if (hubId == null)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Invalid Request",
-                Detail = "Either HubId or HubIdentifier must be provided"
-            });
-        }
-
-        var sensor = await _sensorService.GetOrCreateBySensorIdAsync(hubId.Value, dto.SensorId, ct);
-
-        // Notify clients
-        await _hubContext.Clients.Group($"hub:{hubId}")
-            .SendAsync("SensorRegistered", sensor, ct);
-
-        return Ok(sensor);
     }
 
     /// <summary>
@@ -128,8 +87,6 @@ public class SensorsController : ControllerBase
     /// <param name="dto">Update data</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>The updated Sensor</returns>
-    /// <response code="200">Sensor successfully updated</response>
-    /// <response code="404">Sensor not found</response>
     [HttpPut("{id:guid}")]
     [ProducesResponseType(typeof(SensorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -144,24 +101,36 @@ public class SensorsController : ControllerBase
     }
 
     /// <summary>
-    /// Updates the status of a Sensor
+    /// Deletes a Sensor
     /// </summary>
     /// <param name="id">Sensor-ID</param>
-    /// <param name="dto">Status data</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>No content</returns>
-    /// <response code="204">Status updated</response>
-    /// <response code="404">Sensor not found</response>
-    [HttpPut("{id:guid}/status")]
+    [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] SensorStatusDto dto, CancellationToken ct)
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
-        var sensor = await _sensorService.GetByIdAsync(id, ct);
-        if (sensor == null)
+        var deleted = await _sensorService.DeleteAsync(id, ct);
+
+        if (!deleted)
             return NotFound();
 
-        await _sensorService.UpdateStatusAsync(id, dto, ct);
         return NoContent();
+    }
+
+    /// <summary>
+    /// Syncs sensors for a Node based on sensor type IDs
+    /// </summary>
+    /// <param name="nodeId">Node-ID</param>
+    /// <param name="sensorTypeIds">List of sensor type IDs</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>All Sensors for the Node</returns>
+    [HttpPost("sync")]
+    [ProducesResponseType(typeof(IEnumerable<SensorDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Sync([FromQuery] Guid nodeId, [FromBody] IEnumerable<string> sensorTypeIds, CancellationToken ct)
+    {
+        var sensors = await _sensorService.SyncSensorsAsync(nodeId, sensorTypeIds, ct);
+        return Ok(sensors);
     }
 }

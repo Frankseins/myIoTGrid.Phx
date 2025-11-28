@@ -152,7 +152,7 @@ public class MappingExtensionsTests
             LastSeen = DateTime.UtcNow,
             IsOnline = true,
             CreatedAt = DateTime.UtcNow.AddDays(-1),
-            Sensors = new List<Sensor> { new(), new() }
+            Nodes = new List<Node> { new(), new() }  // Hub has Nodes, not Sensors
         };
 
         // Act
@@ -166,11 +166,11 @@ public class MappingExtensionsTests
         result.Description.Should().Be("A test hub");
         result.LastSeen.Should().Be(hub.LastSeen);
         result.IsOnline.Should().BeTrue();
-        result.SensorCount.Should().Be(2);
+        result.SensorCount.Should().Be(2);  // SensorCount is actually NodeCount
     }
 
     [Fact]
-    public void Hub_ToDto_WithSensorCount_MapsCorrectly()
+    public void Hub_ToDto_WithNodeCount_MapsCorrectly()
     {
         // Arrange
         var hub = new myIoTGrid.Hub.Domain.Entities.Hub
@@ -311,57 +311,54 @@ public class MappingExtensionsTests
 
     #endregion
 
-    #region SensorMappingExtensions Tests
+    #region NodeMappingExtensions Tests
 
     [Fact]
-    public void Sensor_ToDto_MapsAllProperties()
+    public void Node_ToDto_MapsAllProperties()
     {
         // Arrange
-        var sensor = new Sensor
+        var node = new Node
         {
             Id = Guid.NewGuid(),
             HubId = Guid.NewGuid(),
-            SensorId = "sensor-1",
-            Name = "Temperature Sensor",
+            NodeId = "node-1",
+            Name = "Weather Station",
             Protocol = Protocol.WLAN,
-            Location = new Location("Wohnzimmer", null, null),
-            SensorTypes = ["temperature", "humidity"],
+            Location = new Location("Garden", null, null),
             LastSeen = DateTime.UtcNow,
             IsOnline = true,
             FirmwareVersion = "1.2.3",
             BatteryLevel = 85,
-            CreatedAt = DateTime.UtcNow.AddDays(-5)
+            CreatedAt = DateTime.UtcNow.AddDays(-5),
+            Sensors = new List<Sensor>()
         };
 
         // Act
-        var result = sensor.ToDto();
+        var result = node.ToDto();
 
         // Assert
-        result.Id.Should().Be(sensor.Id);
-        result.HubId.Should().Be(sensor.HubId);
-        result.SensorId.Should().Be("sensor-1");
-        result.Name.Should().Be("Temperature Sensor");
+        result.Id.Should().Be(node.Id);
+        result.HubId.Should().Be(node.HubId);
+        result.NodeId.Should().Be("node-1");
+        result.Name.Should().Be("Weather Station");
         result.Protocol.Should().Be(ProtocolDto.WLAN);
         result.Location.Should().NotBeNull();
-        result.Location!.Name.Should().Be("Wohnzimmer");
-        result.SensorTypes.Should().Contain(["temperature", "humidity"]);
+        result.Location!.Name.Should().Be("Garden");
         result.IsOnline.Should().BeTrue();
         result.FirmwareVersion.Should().Be("1.2.3");
         result.BatteryLevel.Should().Be(85);
     }
 
     [Fact]
-    public void CreateSensorDto_ToEntity_MapsAllProperties()
+    public void CreateNodeDto_ToEntity_MapsAllProperties()
     {
         // Arrange
         var hubId = Guid.NewGuid();
-        var dto = new CreateSensorDto(
-            HubId: hubId,
-            SensorId: "new-sensor",
-            Name: "New Sensor",
+        var dto = new CreateNodeDto(
+            NodeId: "new-node",
+            Name: "New Node",
             Protocol: ProtocolDto.LoRaWAN,
-            Location: new LocationDto("Garten", 50.0, 8.0),
-            SensorTypes: ["soil_moisture"]
+            Location: new LocationDto("Garage", 50.0, 8.0)
         );
 
         // Act
@@ -370,47 +367,147 @@ public class MappingExtensionsTests
         // Assert
         result.Id.Should().NotBeEmpty();
         result.HubId.Should().Be(hubId);
-        result.SensorId.Should().Be("new-sensor");
-        result.Name.Should().Be("New Sensor");
+        result.NodeId.Should().Be("new-node");
+        result.Name.Should().Be("New Node");
         result.Protocol.Should().Be(Protocol.LoRaWAN);
         result.Location.Should().NotBeNull();
-        result.SensorTypes.Should().Contain("soil_moisture");
         result.IsOnline.Should().BeTrue();
     }
 
     [Fact]
-    public void CreateSensorDto_ToEntity_WithNullName_GeneratesName()
+    public void CreateNodeDto_ToEntity_WithNullName_GeneratesName()
     {
         // Arrange
-        var dto = new CreateSensorDto(
-            HubId: Guid.NewGuid(),
-            SensorId: "sensor-wohnzimmer-01"
-        );
+        var dto = new CreateNodeDto(NodeId: "node-wohnzimmer-01");
 
         // Act
-        var result = dto.ToEntity(dto.HubId!.Value);
+        var result = dto.ToEntity(Guid.NewGuid());
 
         // Assert
-        result.Name.Should().Be("Sensor Wohnzimmer 01");
+        result.Name.Should().Be("Node Wohnzimmer 01");
     }
 
     [Fact]
-    public void Sensor_ApplyUpdate_UpdatesAllProvidedProperties()
+    public void Node_ApplyUpdate_UpdatesAllProvidedProperties()
+    {
+        // Arrange
+        var node = new Node
+        {
+            Name = "Old Name",
+            Location = new Location("Old Location", null, null),
+            FirmwareVersion = "1.0.0"
+        };
+
+        var dto = new UpdateNodeDto(
+            Name: "New Name",
+            Location: new LocationDto("New Location", 51.0, 9.0),
+            FirmwareVersion: "2.0.0"
+        );
+
+        // Act
+        node.ApplyUpdate(dto);
+
+        // Assert
+        node.Name.Should().Be("New Name");
+        node.Location!.Name.Should().Be("New Location");
+        node.FirmwareVersion.Should().Be("2.0.0");
+    }
+
+    [Fact]
+    public void Node_ApplyStatus_UpdatesStatusProperties()
+    {
+        // Arrange
+        var node = new Node
+        {
+            Id = Guid.NewGuid(),
+            IsOnline = false,
+            BatteryLevel = 50,
+            LastSeen = DateTime.UtcNow.AddHours(-1)
+        };
+
+        var status = new NodeStatusDto(
+            NodeId: node.Id,
+            IsOnline: true,
+            LastSeen: DateTime.UtcNow,
+            BatteryLevel: 100
+        );
+
+        // Act
+        node.ApplyStatus(status);
+
+        // Assert
+        node.IsOnline.Should().BeTrue();
+        node.BatteryLevel.Should().Be(100);
+        node.LastSeen.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+    }
+
+    #endregion
+
+    #region SensorMappingExtensions Tests (Physical Sensor Chip)
+
+    [Fact]
+    public void Sensor_ToDto_MapsAllProperties()
+    {
+        // Arrange
+        var sensor = new Sensor
+        {
+            Id = Guid.NewGuid(),
+            NodeId = Guid.NewGuid(),
+            SensorTypeId = "temperature",
+            EndpointId = 1,
+            Name = "Temperature Sensor",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow.AddDays(-5)
+        };
+
+        // Act
+        var result = sensor.ToDto();
+
+        // Assert
+        result.Id.Should().Be(sensor.Id);
+        result.NodeId.Should().Be(sensor.NodeId);
+        result.SensorTypeId.Should().Be("temperature");
+        result.EndpointId.Should().Be(1);
+        result.Name.Should().Be("Temperature Sensor");
+        result.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void CreateSensorDto_ToEntity_MapsAllProperties()
+    {
+        // Arrange
+        var nodeId = Guid.NewGuid();
+        var dto = new CreateSensorDto(
+            SensorTypeId: "humidity",
+            EndpointId: 2,
+            Name: "Humidity Sensor"
+        );
+
+        // Act
+        var result = dto.ToEntity(nodeId);
+
+        // Assert
+        result.Id.Should().NotBeEmpty();
+        result.NodeId.Should().Be(nodeId);
+        result.SensorTypeId.Should().Be("humidity");
+        result.EndpointId.Should().Be(2);
+        result.Name.Should().Be("Humidity Sensor");
+        result.IsActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Sensor_ApplyUpdate_UpdatesProvidedProperties()
     {
         // Arrange
         var sensor = new Sensor
         {
             Name = "Old Name",
-            Location = new Location("Old Location", null, null),
-            SensorTypes = ["temperature"],
-            FirmwareVersion = "1.0.0"
+            IsActive = true
         };
 
         var dto = new UpdateSensorDto(
             Name: "New Name",
-            Location: new LocationDto("New Location", 51.0, 9.0),
-            SensorTypes: ["temperature", "humidity"],
-            FirmwareVersion: "2.0.0"
+            IsActive: false
         );
 
         // Act
@@ -418,36 +515,7 @@ public class MappingExtensionsTests
 
         // Assert
         sensor.Name.Should().Be("New Name");
-        sensor.Location!.Name.Should().Be("New Location");
-        sensor.SensorTypes.Should().Contain(["temperature", "humidity"]);
-        sensor.FirmwareVersion.Should().Be("2.0.0");
-    }
-
-    [Fact]
-    public void Sensor_ApplyStatus_UpdatesStatusProperties()
-    {
-        // Arrange
-        var sensor = new Sensor
-        {
-            IsOnline = false,
-            BatteryLevel = 50,
-            LastSeen = DateTime.UtcNow.AddHours(-1)
-        };
-
-        var status = new SensorStatusDto(
-            SensorId: sensor.Id,
-            IsOnline: true,
-            LastSeen: DateTime.UtcNow,
-            BatteryLevel: 100
-        );
-
-        // Act
-        sensor.ApplyStatus(status);
-
-        // Assert
-        sensor.IsOnline.Should().BeTrue();
-        sensor.BatteryLevel.Should().Be(100);
-        sensor.LastSeen.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(5));
+        sensor.IsActive.Should().BeFalse();
     }
 
     [Fact]
@@ -456,8 +524,8 @@ public class MappingExtensionsTests
         // Arrange
         var sensors = new List<Sensor>
         {
-            new() { Id = Guid.NewGuid(), HubId = Guid.NewGuid(), SensorId = "s1", Name = "S1", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), HubId = Guid.NewGuid(), SensorId = "s2", Name = "S2", CreatedAt = DateTime.UtcNow }
+            new() { Id = Guid.NewGuid(), NodeId = Guid.NewGuid(), SensorTypeId = "temperature", EndpointId = 1, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), NodeId = Guid.NewGuid(), SensorTypeId = "humidity", EndpointId = 2, CreatedAt = DateTime.UtcNow }
         };
 
         // Act
@@ -488,7 +556,7 @@ public class MappingExtensionsTests
             Id = Guid.NewGuid(),
             TenantId = Guid.NewGuid(),
             HubId = Guid.NewGuid(),
-            SensorId = Guid.NewGuid(),
+            NodeId = Guid.NewGuid(),  // Changed from SensorId to NodeId
             AlertTypeId = alertType.Id,
             Level = AlertLevel.Critical,
             Message = "High humidity detected",
@@ -501,13 +569,13 @@ public class MappingExtensionsTests
         };
 
         // Act
-        var result = alert.ToDto(alertType, "Test Hub", "Test Sensor");
+        var result = alert.ToDto(alertType, "Test Hub", "Test Node");
 
         // Assert
         result.Id.Should().Be(alert.Id);
         result.TenantId.Should().Be(alert.TenantId);
         result.HubName.Should().Be("Test Hub");
-        result.SensorName.Should().Be("Test Sensor");
+        result.NodeName.Should().Be("Test Node");
         result.AlertTypeCode.Should().Be("mold_risk");
         result.AlertTypeName.Should().Be("Schimmelrisiko");
         result.Level.Should().Be(AlertLevelDto.Critical);
@@ -529,7 +597,7 @@ public class MappingExtensionsTests
         };
 
         var hub = new myIoTGrid.Hub.Domain.Entities.Hub { Name = "Garden Hub" };
-        var sensor = new Sensor { Name = "Outdoor Sensor" };
+        var node = new Node { Name = "Outdoor Node" };  // Changed from Sensor to Node
 
         var alert = new Alert
         {
@@ -538,7 +606,7 @@ public class MappingExtensionsTests
             AlertTypeId = alertType.Id,
             AlertType = alertType,
             Hub = hub,
-            Sensor = sensor,
+            Node = node,  // Changed from Sensor to Node
             Level = AlertLevel.Warning,
             Source = AlertSource.Local,
             Message = "Frost warning",
@@ -552,7 +620,7 @@ public class MappingExtensionsTests
         // Assert
         result.AlertTypeCode.Should().Be("frost_warning");
         result.HubName.Should().Be("Garden Hub");
-        result.SensorName.Should().Be("Outdoor Sensor");
+        result.NodeName.Should().Be("Outdoor Node");
     }
 
     [Fact]
@@ -584,7 +652,7 @@ public class MappingExtensionsTests
         var tenantId = Guid.NewGuid();
         var alertTypeId = Guid.NewGuid();
         var hubId = Guid.NewGuid();
-        var sensorId = Guid.NewGuid();
+        var nodeId = Guid.NewGuid();  // Changed from sensorId to nodeId
 
         var dto = new CreateAlertDto(
             AlertTypeCode: "battery_low",
@@ -595,14 +663,14 @@ public class MappingExtensionsTests
         );
 
         // Act
-        var result = dto.ToEntity(tenantId, alertTypeId, hubId, sensorId, AlertSource.Local);
+        var result = dto.ToEntity(tenantId, alertTypeId, hubId, nodeId, AlertSource.Local);
 
         // Assert
         result.Id.Should().NotBeEmpty();
         result.TenantId.Should().Be(tenantId);
         result.AlertTypeId.Should().Be(alertTypeId);
         result.HubId.Should().Be(hubId);
-        result.SensorId.Should().Be(sensorId);
+        result.NodeId.Should().Be(nodeId);
         result.Level.Should().Be(AlertLevel.Warning);
         result.Message.Should().Be("Battery is low");
         result.Recommendation.Should().Be("Replace battery soon");

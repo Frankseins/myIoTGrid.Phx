@@ -5,7 +5,8 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Interface.Controllers;
 
 /// <summary>
-/// REST API Controller für Sensor-Typen
+/// REST API Controller for Sensor Types.
+/// Matter-konform: Entspricht Matter Clusters.
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -20,32 +21,32 @@ public class SensorTypesController : ControllerBase
     }
 
     /// <summary>
-    /// Gibt alle Sensor-Typen zurück
+    /// Returns all Sensor Types (cached)
     /// </summary>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>Liste aller Sensor-Typen</returns>
+    /// <returns>List of all Sensor Types</returns>
     [HttpGet]
     [ProducesResponseType(typeof(IEnumerable<SensorTypeDto>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetAll(CancellationToken ct)
     {
-        var sensorTypes = await _sensorTypeService.GetAllAsync(ct);
+        var sensorTypes = await _sensorTypeService.GetAllCachedAsync(ct);
         return Ok(sensorTypes);
     }
 
     /// <summary>
-    /// Gibt einen Sensor-Typ anhand der ID zurück
+    /// Returns a Sensor Type by TypeId
     /// </summary>
-    /// <param name="id">SensorType-ID</param>
+    /// <param name="typeId">SensorType-TypeId (e.g. "temperature")</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>Der Sensor-Typ</returns>
-    /// <response code="200">Sensor-Typ gefunden</response>
-    /// <response code="404">Sensor-Typ nicht gefunden</response>
-    [HttpGet("{id:guid}")]
+    /// <returns>The Sensor Type</returns>
+    /// <response code="200">Sensor Type found</response>
+    /// <response code="404">Sensor Type not found</response>
+    [HttpGet("{typeId}")]
     [ProducesResponseType(typeof(SensorTypeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetById(Guid id, CancellationToken ct)
+    public async Task<IActionResult> GetByTypeId(string typeId, CancellationToken ct)
     {
-        var sensorType = await _sensorTypeService.GetByIdAsync(id, ct);
+        var sensorType = await _sensorTypeService.GetByTypeIdAsync(typeId, ct);
 
         if (sensorType == null)
             return NotFound();
@@ -54,40 +55,58 @@ public class SensorTypesController : ControllerBase
     }
 
     /// <summary>
-    /// Gibt einen Sensor-Typ anhand des Codes zurück
+    /// Returns Sensor Types by Category
     /// </summary>
-    /// <param name="code">SensorType-Code (z.B. "temperature")</param>
+    /// <param name="category">Category (e.g. "climate", "air_quality")</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>Der Sensor-Typ</returns>
-    /// <response code="200">Sensor-Typ gefunden</response>
-    /// <response code="404">Sensor-Typ nicht gefunden</response>
-    [HttpGet("code/{code}")]
-    [ProducesResponseType(typeof(SensorTypeDto), StatusCodes.Status200OK)]
-    [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> GetByCode(string code, CancellationToken ct)
+    /// <returns>List of Sensor Types in category</returns>
+    [HttpGet("category/{category}")]
+    [ProducesResponseType(typeof(IEnumerable<SensorTypeDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByCategory(string category, CancellationToken ct)
     {
-        var sensorType = await _sensorTypeService.GetByCodeAsync(code, ct);
-
-        if (sensorType == null)
-            return NotFound();
-
-        return Ok(sensorType);
+        var sensorTypes = await _sensorTypeService.GetByCategoryAsync(category, ct);
+        return Ok(sensorTypes);
     }
 
     /// <summary>
-    /// Erstellt einen neuen Sensor-Typ
+    /// Returns the unit for a Sensor Type
     /// </summary>
-    /// <param name="dto">Sensor-Typ-Daten</param>
+    /// <param name="typeId">SensorType-TypeId</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>Der erstellte Sensor-Typ</returns>
-    /// <response code="201">Sensor-Typ erfolgreich erstellt</response>
-    /// <response code="400">Ungültige Daten oder Code bereits vorhanden</response>
+    /// <returns>The unit string</returns>
+    [HttpGet("{typeId}/unit")]
+    [ProducesResponseType(typeof(string), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetUnit(string typeId, CancellationToken ct)
+    {
+        var unit = await _sensorTypeService.GetUnitAsync(typeId, ct);
+        return Ok(unit);
+    }
+
+    /// <summary>
+    /// Creates a new custom Sensor Type
+    /// </summary>
+    /// <param name="dto">Sensor Type data</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>The created Sensor Type</returns>
+    /// <response code="201">Sensor Type successfully created</response>
+    /// <response code="400">Invalid data or TypeId already exists</response>
     [HttpPost]
     [ProducesResponseType(typeof(SensorTypeDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateSensorTypeDto dto, CancellationToken ct)
     {
-        var sensorType = await _sensorTypeService.CreateAsync(dto, ct);
-        return CreatedAtAction(nameof(GetById), new { id = sensorType.Id }, sensorType);
+        try
+        {
+            var sensorType = await _sensorTypeService.CreateAsync(dto, ct);
+            return CreatedAtAction(nameof(GetByTypeId), new { typeId = sensorType.TypeId }, sensorType);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = ex.Message
+            });
+        }
     }
 }

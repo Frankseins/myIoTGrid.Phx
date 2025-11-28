@@ -12,11 +12,11 @@ namespace myIoTGrid.Hub.Interface.Services;
 /// </summary>
 public class SignalRNotificationService : ISignalRNotificationService
 {
-    private readonly Microsoft.AspNetCore.SignalR.IHubContext<SensorHub> _hubContext;
+    private readonly IHubContext<SensorHub> _hubContext;
     private readonly ILogger<SignalRNotificationService> _logger;
 
     public SignalRNotificationService(
-        Microsoft.AspNetCore.SignalR.IHubContext<SensorHub> hubContext,
+        IHubContext<SensorHub> hubContext,
         ILogger<SignalRNotificationService> logger)
     {
         _hubContext = hubContext;
@@ -24,18 +24,25 @@ public class SignalRNotificationService : ISignalRNotificationService
     }
 
     /// <inheritdoc />
-    public async Task NotifyNewSensorDataAsync(Guid tenantId, SensorDataDto sensorData, CancellationToken ct = default)
+    public async Task NotifyNewReadingAsync(ReadingDto reading, CancellationToken ct = default)
     {
-        var groupName = SensorHub.GetTenantGroupName(tenantId);
+        var tenantGroup = SensorHub.GetTenantGroupName(reading.TenantId);
+        var nodeGroup = SensorHub.GetNodeGroupName(reading.NodeId);
 
-        await _hubContext.Clients.Group(groupName)
-            .SendAsync("NewSensorData", sensorData, ct);
+        // Sende an Tenant-Gruppe
+        await _hubContext.Clients.Group(tenantGroup)
+            .SendAsync("NewReading", reading, ct);
+
+        // Sende zusätzlich an Node-Gruppe (für Node-spezifische Abonnenten)
+        await _hubContext.Clients.Group(nodeGroup)
+            .SendAsync("NewReading", reading, ct);
 
         _logger.LogDebug(
-            "SignalR NewSensorData gesendet: {SensorType}={Value} (Tenant: {TenantId})",
-            sensorData.SensorTypeCode,
-            sensorData.Value,
-            tenantId);
+            "SignalR NewReading gesendet: {SensorTypeId}={Value} (Tenant: {TenantId}, Node: {NodeId})",
+            reading.SensorTypeId,
+            reading.Value,
+            reading.TenantId,
+            reading.NodeId);
     }
 
     /// <inheritdoc />
@@ -77,14 +84,14 @@ public class SignalRNotificationService : ISignalRNotificationService
     public async Task NotifyHubStatusChangedAsync(Guid tenantId, HubDto hub, CancellationToken ct = default)
     {
         var tenantGroup = SensorHub.GetTenantGroupName(tenantId);
-        var deviceGroup = SensorHub.GetDeviceGroupName(hub.HubId);
+        var hubGroup = SensorHub.GetHubGroupName(hub.HubId);
 
         // Sende an Tenant-Gruppe
         await _hubContext.Clients.Group(tenantGroup)
             .SendAsync("HubStatusChanged", hub, ct);
 
-        // Sende zusätzlich an Device-Gruppe (für Device-spezifische Abonnenten)
-        await _hubContext.Clients.Group(deviceGroup)
+        // Sende zusätzlich an Hub-Gruppe (für Hub-spezifische Abonnenten)
+        await _hubContext.Clients.Group(hubGroup)
             .SendAsync("HubStatusChanged", hub, ct);
 
         _logger.LogInformation(
@@ -95,23 +102,37 @@ public class SignalRNotificationService : ISignalRNotificationService
     }
 
     /// <inheritdoc />
-    public async Task NotifySensorStatusChangedAsync(Guid tenantId, SensorDto sensor, CancellationToken ct = default)
+    public async Task NotifyNodeStatusChangedAsync(Guid tenantId, NodeDto node, CancellationToken ct = default)
     {
         var tenantGroup = SensorHub.GetTenantGroupName(tenantId);
-        var deviceGroup = SensorHub.GetDeviceGroupName(sensor.SensorId);
+        var nodeGroup = SensorHub.GetNodeGroupName(node.Id);
 
         // Sende an Tenant-Gruppe
         await _hubContext.Clients.Group(tenantGroup)
-            .SendAsync("SensorStatusChanged", sensor, ct);
+            .SendAsync("NodeStatusChanged", node, ct);
 
-        // Sende zusätzlich an Device-Gruppe (für Device-spezifische Abonnenten)
-        await _hubContext.Clients.Group(deviceGroup)
-            .SendAsync("SensorStatusChanged", sensor, ct);
+        // Sende zusätzlich an Node-Gruppe (für Node-spezifische Abonnenten)
+        await _hubContext.Clients.Group(nodeGroup)
+            .SendAsync("NodeStatusChanged", node, ct);
 
         _logger.LogInformation(
-            "SignalR SensorStatusChanged gesendet: {SensorId} - Online: {IsOnline} (Tenant: {TenantId})",
-            sensor.SensorId,
-            sensor.IsOnline,
+            "SignalR NodeStatusChanged gesendet: {NodeId} - Online: {IsOnline} (Tenant: {TenantId})",
+            node.NodeId,
+            node.IsOnline,
             tenantId);
+    }
+
+    /// <inheritdoc />
+    public async Task NotifyNodeRegisteredAsync(Guid hubId, NodeDto node, CancellationToken ct = default)
+    {
+        var hubGroup = SensorHub.GetHubGroupName(hubId.ToString());
+
+        await _hubContext.Clients.Group(hubGroup)
+            .SendAsync("NodeRegistered", node, ct);
+
+        _logger.LogInformation(
+            "SignalR NodeRegistered gesendet: {NodeId} (Hub: {HubId})",
+            node.NodeId,
+            hubId);
     }
 }

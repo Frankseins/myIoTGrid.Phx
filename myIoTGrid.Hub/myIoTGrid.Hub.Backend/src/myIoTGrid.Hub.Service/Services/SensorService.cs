@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using myIoTGrid.Hub.Domain.Entities;
-using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Domain.Interfaces;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
@@ -11,34 +10,33 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Services;
 
 /// <summary>
-/// Service for Sensor (ESP32/LoRa32 Device) management
+/// Service for Sensor (Physical sensor chip: DHT22, BME280) management.
+/// Matter-konform: Entspricht einem Matter Endpoint.
 /// </summary>
 public class SensorService : ISensorService
 {
     private readonly HubDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ISignalRNotificationService _signalRNotificationService;
     private readonly ILogger<SensorService> _logger;
 
     public SensorService(
         HubDbContext context,
         IUnitOfWork unitOfWork,
-        ISignalRNotificationService signalRNotificationService,
         ILogger<SensorService> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
-        _signalRNotificationService = signalRNotificationService;
         _logger = logger;
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SensorDto>> GetByHubAsync(Guid hubId, CancellationToken ct = default)
+    public async Task<IEnumerable<SensorDto>> GetByNodeAsync(Guid nodeId, CancellationToken ct = default)
     {
         var sensors = await _context.Sensors
             .AsNoTracking()
-            .Where(s => s.HubId == hubId)
-            .OrderBy(s => s.Name)
+            .Include(s => s.SensorType)
+            .Where(s => s.NodeId == nodeId)
+            .OrderBy(s => s.EndpointId)
             .ToListAsync(ct);
 
         return sensors.ToDtos();
@@ -49,81 +47,48 @@ public class SensorService : ISensorService
     {
         var sensor = await _context.Sensors
             .AsNoTracking()
+            .Include(s => s.SensorType)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
         return sensor?.ToDto();
     }
 
     /// <inheritdoc />
-    public async Task<SensorDto?> GetBySensorIdAsync(Guid hubId, string sensorId, CancellationToken ct = default)
+    public async Task<SensorDto?> GetBySensorTypeAsync(Guid nodeId, string sensorTypeId, CancellationToken ct = default)
     {
         var sensor = await _context.Sensors
             .AsNoTracking()
-            .FirstOrDefaultAsync(s => s.HubId == hubId && s.SensorId == sensorId, ct);
+            .Include(s => s.SensorType)
+            .FirstOrDefaultAsync(s => s.NodeId == nodeId && s.SensorTypeId == sensorTypeId.ToLowerInvariant(), ct);
 
         return sensor?.ToDto();
     }
 
     /// <inheritdoc />
-    public async Task<SensorDto> GetOrCreateBySensorIdAsync(Guid hubId, string sensorId, CancellationToken ct = default)
+    public async Task<SensorDto> CreateAsync(Guid nodeId, CreateSensorDto dto, CancellationToken ct = default)
     {
-        var existingSensor = await _context.Sensors
-            .FirstOrDefaultAsync(s => s.HubId == hubId && s.SensorId == sensorId, ct);
-
-        if (existingSensor != null)
-        {
-            // Update LastSeen and Online status
-            existingSensor.LastSeen = DateTime.UtcNow;
-            existingSensor.IsOnline = true;
-            await _unitOfWork.SaveChangesAsync(ct);
-
-            return existingSensor.ToDto();
-        }
-
-        // Create new Sensor (Auto-Registration)
-        var newSensor = new Sensor
-        {
-            Id = Guid.NewGuid(),
-            HubId = hubId,
-            SensorId = sensorId,
-            Name = GenerateNameFromSensorId(sensorId),
-            Protocol = Protocol.WLAN,
-            SensorTypes = new List<string>(),
-            IsOnline = true,
-            LastSeen = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        _context.Sensors.Add(newSensor);
-        await _unitOfWork.SaveChangesAsync(ct);
-
-        _logger.LogInformation("Sensor auto-registered: {SensorId} ({Name}) for Hub {HubId}",
-            newSensor.SensorId, newSensor.Name, hubId);
-
-        return newSensor.ToDto();
-    }
-
-    /// <inheritdoc />
-    public async Task<SensorDto> CreateAsync(CreateSensorDto dto, CancellationToken ct = default)
-    {
-        var hubId = dto.HubId ?? throw new InvalidOperationException("HubId is required");
-
-        // Check if SensorId already exists within the Hub
+        // Check if EndpointId already exists on this Node
         var exists = await _context.Sensors
             .AsNoTracking()
-            .AnyAsync(s => s.HubId == hubId && s.SensorId == dto.SensorId, ct);
+            .AnyAsync(s => s.NodeId == nodeId && s.EndpointId == dto.EndpointId, ct);
 
         if (exists)
         {
-            throw new InvalidOperationException($"Sensor with SensorId '{dto.SensorId}' already exists for this Hub.");
+            throw new InvalidOperationException($"Sensor with EndpointId '{dto.EndpointId}' already exists on this Node.");
         }
 
-        var sensor = dto.ToEntity(hubId);
+        var sensor = dto.ToEntity(nodeId);
 
         _context.Sensors.Add(sensor);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        _logger.LogInformation("Sensor created: {SensorId} ({Name})", sensor.SensorId, sensor.Name);
+        // Reload with SensorType
+        sensor = await _context.Sensors
+            .Include(s => s.SensorType)
+            .FirstAsync(s => s.Id == sensor.Id, ct);
+
+        _logger.LogInformation("Sensor created: {SensorTypeId} (Endpoint {EndpointId}) on Node {NodeId}",
+            dto.SensorTypeId, dto.EndpointId, nodeId);
 
         return sensor.ToDto();
     }
@@ -132,6 +97,7 @@ public class SensorService : ISensorService
     public async Task<SensorDto?> UpdateAsync(Guid id, UpdateSensorDto dto, CancellationToken ct = default)
     {
         var sensor = await _context.Sensors
+            .Include(s => s.SensorType)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
         if (sensor == null)
@@ -149,62 +115,62 @@ public class SensorService : ISensorService
     }
 
     /// <inheritdoc />
-    public async Task UpdateLastSeenAsync(Guid id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var sensor = await _context.Sensors
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
-        if (sensor == null) return;
+        if (sensor == null) return false;
 
-        sensor.LastSeen = DateTime.UtcNow;
-        sensor.IsOnline = true;
+        _context.Sensors.Remove(sensor);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Sensor deleted: {SensorId}", id);
+        return true;
     }
 
     /// <inheritdoc />
-    public async Task SetOnlineStatusAsync(Guid id, bool isOnline, CancellationToken ct = default)
+    public async Task<IEnumerable<SensorDto>> SyncSensorsAsync(Guid nodeId, IEnumerable<string> sensorTypeIds, CancellationToken ct = default)
     {
-        var sensor = await _context.Sensors
-            .Include(s => s.Hub)
-            .FirstOrDefaultAsync(s => s.Id == id, ct);
+        var typeIdList = sensorTypeIds.Select(id => id.ToLowerInvariant()).ToList();
 
-        if (sensor == null) return;
+        // Get existing sensors for this node
+        var existingSensors = await _context.Sensors
+            .Where(s => s.NodeId == nodeId)
+            .ToListAsync(ct);
 
-        var wasOnline = sensor.IsOnline;
-        sensor.IsOnline = isOnline;
+        var existingTypeIds = existingSensors.Select(s => s.SensorTypeId).ToHashSet();
 
-        if (!isOnline)
+        // Find next EndpointId
+        var maxEndpointId = existingSensors.Count > 0
+            ? existingSensors.Max(s => s.EndpointId)
+            : 0;
+
+        // Add missing sensors
+        var newSensors = new List<Sensor>();
+        foreach (var typeId in typeIdList.Where(id => !existingTypeIds.Contains(id)))
         {
-            _logger.LogWarning("Sensor offline: {SensorId} ({Name})", sensor.SensorId, sensor.Name);
+            maxEndpointId++;
+            newSensors.Add(new Sensor
+            {
+                Id = Guid.NewGuid(),
+                NodeId = nodeId,
+                SensorTypeId = typeId,
+                EndpointId = maxEndpointId,
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            });
         }
 
-        await _unitOfWork.SaveChangesAsync(ct);
-    }
+        if (newSensors.Count > 0)
+        {
+            _context.Sensors.AddRange(newSensors);
+            await _unitOfWork.SaveChangesAsync(ct);
 
-    /// <inheritdoc />
-    public async Task UpdateStatusAsync(Guid id, SensorStatusDto status, CancellationToken ct = default)
-    {
-        var sensor = await _context.Sensors
-            .FirstOrDefaultAsync(s => s.Id == id, ct);
+            _logger.LogInformation("Synced {Count} new sensors to Node {NodeId}", newSensors.Count, nodeId);
+        }
 
-        if (sensor == null) return;
-
-        sensor.ApplyStatus(status);
-        await _unitOfWork.SaveChangesAsync(ct);
-    }
-
-    /// <summary>
-    /// Generates a name from the SensorId
-    /// </summary>
-    private static string GenerateNameFromSensorId(string sensorId)
-    {
-        if (string.IsNullOrWhiteSpace(sensorId)) return "Unknown Sensor";
-
-        // "sensor-wohnzimmer-01" -> "Sensor Wohnzimmer 01"
-        var parts = sensorId.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);
-        var formattedParts = parts.Select(s =>
-            s.Length > 0 ? char.ToUpper(s[0]) + s[1..].ToLower() : s);
-
-        return string.Join(" ", formattedParts);
+        // Return all sensors for the node
+        return await GetByNodeAsync(nodeId, ct);
     }
 }

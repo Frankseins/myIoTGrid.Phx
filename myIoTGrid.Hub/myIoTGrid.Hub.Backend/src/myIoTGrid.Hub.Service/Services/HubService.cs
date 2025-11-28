@@ -41,7 +41,7 @@ public class HubService : IHubService
         var hubs = await _context.Hubs
             .AsNoTracking()
             .Where(h => h.TenantId == tenantId)
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .OrderBy(h => h.Name)
             .ToListAsync(ct);
 
@@ -55,7 +55,7 @@ public class HubService : IHubService
 
         var hub = await _context.Hubs
             .AsNoTracking()
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .FirstOrDefaultAsync(h => h.Id == id && h.TenantId == tenantId, ct);
 
         return hub?.ToDto();
@@ -68,7 +68,7 @@ public class HubService : IHubService
 
         var hub = await _context.Hubs
             .AsNoTracking()
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .FirstOrDefaultAsync(h => h.HubId == hubId && h.TenantId == tenantId, ct);
 
         return hub?.ToDto();
@@ -80,7 +80,7 @@ public class HubService : IHubService
         var tenantId = _tenantService.GetCurrentTenantId();
 
         var existingHub = await _context.Hubs
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .FirstOrDefaultAsync(h => h.HubId == hubId && h.TenantId == tenantId, ct);
 
         if (existingHub != null)
@@ -144,7 +144,7 @@ public class HubService : IHubService
         var tenantId = _tenantService.GetCurrentTenantId();
 
         var hub = await _context.Hubs
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .FirstOrDefaultAsync(h => h.Id == id && h.TenantId == tenantId, ct);
 
         if (hub == null)
@@ -178,7 +178,7 @@ public class HubService : IHubService
     public async Task SetOnlineStatusAsync(Guid id, bool isOnline, CancellationToken ct = default)
     {
         var hub = await _context.Hubs
-            .Include(h => h.Sensors)
+            .Include(h => h.Nodes)
             .FirstOrDefaultAsync(h => h.Id == id, ct);
 
         if (hub == null) return;
@@ -198,6 +198,21 @@ public class HubService : IHubService
         {
             await _signalRNotificationService.NotifyHubStatusChangedAsync(hub.TenantId, hub.ToDto(), ct);
         }
+    }
+
+    /// <inheritdoc />
+    public async Task<HubDto?> GetDefaultHubAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        var hub = await _context.Hubs
+            .AsNoTracking()
+            .Include(h => h.Nodes)
+            .Where(h => h.TenantId == tenantId)
+            .OrderBy(h => h.CreatedAt)
+            .FirstOrDefaultAsync(ct);
+
+        return hub?.ToDto();
     }
 
     /// <summary>

@@ -3,25 +3,32 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Interfaces;
 
 /// <summary>
-/// Service Interface für SensorType-Verwaltung
+/// Service Interface for SensorType management.
+/// Matter-konform: Entspricht Matter Clusters.
 /// </summary>
 public interface ISensorTypeService
 {
-    /// <summary>Gibt alle SensorTypes zurück</summary>
+    /// <summary>Returns all SensorTypes</summary>
     Task<IEnumerable<SensorTypeDto>> GetAllAsync(CancellationToken ct = default);
 
-    /// <summary>Gibt einen SensorType anhand der ID zurück</summary>
-    Task<SensorTypeDto?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    /// <summary>Returns all SensorTypes (cached for 1 hour)</summary>
+    Task<IEnumerable<SensorTypeDto>> GetAllCachedAsync(CancellationToken ct = default);
 
-    /// <summary>Findet einen SensorType anhand des Codes</summary>
-    Task<SensorTypeDto?> GetByCodeAsync(string code, CancellationToken ct = default);
+    /// <summary>Returns a SensorType by TypeId</summary>
+    Task<SensorTypeDto?> GetByTypeIdAsync(string typeId, CancellationToken ct = default);
 
-    /// <summary>Erstellt einen neuen SensorType</summary>
+    /// <summary>Returns SensorTypes by category</summary>
+    Task<IEnumerable<SensorTypeDto>> GetByCategoryAsync(string category, CancellationToken ct = default);
+
+    /// <summary>Gets the unit for a SensorType</summary>
+    Task<string> GetUnitAsync(string typeId, CancellationToken ct = default);
+
+    /// <summary>Creates a new SensorType</summary>
     Task<SensorTypeDto> CreateAsync(CreateSensorTypeDto dto, CancellationToken ct = default);
 
-    /// <summary>Synchronisiert SensorTypes von der Cloud (Placeholder)</summary>
+    /// <summary>Synchronizes SensorTypes from the Cloud</summary>
     Task SyncFromCloudAsync(CancellationToken ct = default);
 
-    /// <summary>Seeding der Default SensorTypes</summary>
+    /// <summary>Seeds default SensorTypes with Matter Cluster IDs</summary>
     Task SeedDefaultTypesAsync(CancellationToken ct = default);
 }

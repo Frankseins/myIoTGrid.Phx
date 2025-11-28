@@ -21,14 +21,14 @@ public static class HubMappingExtensions
             entity.LastSeen,
             entity.IsOnline,
             entity.CreatedAt,
-            entity.Sensors.Count
+            entity.Nodes.Count
         );
     }
 
     /// <summary>
-    /// Converts Hub Entity to HubDto (without Sensors collection loaded)
+    /// Converts Hub Entity to HubDto (without Nodes collection loaded)
     /// </summary>
-    public static HubDto ToDto(this Domain.Entities.Hub entity, int sensorCount)
+    public static HubDto ToDto(this Domain.Entities.Hub entity, int nodeCount)
     {
         return new HubDto(
             entity.Id,
@@ -39,7 +39,7 @@ public static class HubMappingExtensions
             entity.LastSeen,
             entity.IsOnline,
             entity.CreatedAt,
-            sensorCount
+            nodeCount
         );
     }
 

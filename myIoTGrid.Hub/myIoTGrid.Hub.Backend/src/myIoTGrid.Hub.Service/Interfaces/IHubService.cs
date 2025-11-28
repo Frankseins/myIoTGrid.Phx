@@ -30,4 +30,7 @@ public interface IHubService
 
     /// <summary>Sets the online status</summary>
     Task SetOnlineStatusAsync(Guid id, bool isOnline, CancellationToken ct = default);
+
+    /// <summary>Returns the default Hub for the current Tenant</summary>
+    Task<HubDto?> GetDefaultHubAsync(CancellationToken ct = default);
 }

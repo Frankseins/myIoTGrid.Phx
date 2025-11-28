@@ -69,14 +69,18 @@ try
     builder.Services.AddScoped<ISensorTypeService, SensorTypeService>();
     builder.Services.AddScoped<IAlertTypeService, AlertTypeService>();
     builder.Services.AddScoped<IHubService, HubService>();
+    builder.Services.AddScoped<INodeService, NodeService>();
     builder.Services.AddScoped<ISensorService, SensorService>();
-    builder.Services.AddScoped<ISensorDataService, SensorDataService>();
+    builder.Services.AddScoped<IReadingService, ReadingService>();
     builder.Services.AddScoped<IAlertService, AlertService>();
     builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
     builder.Services.AddScoped<ISeedDataService, SeedDataService>();
 
+    // Memory Cache for SensorTypes
+    builder.Services.AddMemoryCache();
+
     // FluentValidation
-    builder.Services.AddValidatorsFromAssemblyContaining<CreateSensorDataValidator>();
+    builder.Services.AddValidatorsFromAssemblyContaining<CreateReadingValidator>();
 
     // SignalR
     builder.Services.AddSignalR();
@@ -91,7 +95,7 @@ try
     // 2. Die folgenden Zeilen einkommentieren:
     //
     // builder.Services.Configure<MqttOptions>(builder.Configuration.GetSection(MqttOptions.SectionName));
-    // builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.SensorDataMqttHandler>();
+    // builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.ReadingMqttHandler>();
     // builder.Services.AddSingleton<IMqttMessageHandler, myIoTGrid.Hub.Interface.Mqtt.HubStatusMqttHandler>();
     // builder.Services.AddHostedService<MqttClientService>();
 
@@ -102,14 +106,14 @@ try
 
     // Background Services
     builder.Services.AddHostedService<SeedDataHostedService>();
-    builder.Services.AddHostedService<SensorMonitorService>();
+    builder.Services.AddHostedService<NodeMonitorService>();
     builder.Services.AddHostedService<HubMonitorService>();
     builder.Services.AddHostedService<DataRetentionService>();
     builder.Services.AddHostedService<MatterBridgeService>();
 
     // Controllers (aus Interface-Projekt)
     builder.Services.AddControllers()
-        .AddApplicationPart(typeof(myIoTGrid.Hub.Interface.Controllers.SensorDataController).Assembly);
+        .AddApplicationPart(typeof(myIoTGrid.Hub.Interface.Controllers.ReadingsController).Assembly);
 
     // Swagger/OpenAPI
     builder.Services.AddEndpointsApiExplorer();

@@ -54,9 +54,9 @@ public class AlertConfiguration : IEntityTypeConfiguration<Alert>
             .HasForeignKey(a => a.HubId)
             .OnDelete(DeleteBehavior.SetNull);
 
-        builder.HasOne(a => a.Sensor)
-            .WithMany()
-            .HasForeignKey(a => a.SensorId)
+        builder.HasOne(a => a.Node)
+            .WithMany(n => n.Alerts)
+            .HasForeignKey(a => a.NodeId)
             .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasOne(a => a.AlertType)
@@ -67,7 +67,7 @@ public class AlertConfiguration : IEntityTypeConfiguration<Alert>
         // Indexes
         builder.HasIndex(a => a.TenantId);
         builder.HasIndex(a => a.HubId);
-        builder.HasIndex(a => a.SensorId);
+        builder.HasIndex(a => a.NodeId);
         builder.HasIndex(a => a.AlertTypeId);
         builder.HasIndex(a => a.Level);
         builder.HasIndex(a => a.Source);

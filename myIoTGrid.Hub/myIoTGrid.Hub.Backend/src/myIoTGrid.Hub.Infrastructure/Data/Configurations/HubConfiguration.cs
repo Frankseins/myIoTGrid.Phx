@@ -43,9 +43,9 @@ public class HubConfiguration : IEntityTypeConfiguration<Domain.Entities.Hub>
             .HasForeignKey(h => h.TenantId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(h => h.Sensors)
-            .WithOne(s => s.Hub)
-            .HasForeignKey(s => s.HubId)
+        builder.HasMany(h => h.Nodes)
+            .WithOne(n => n.Hub)
+            .HasForeignKey(n => n.HubId)
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(h => h.Alerts)

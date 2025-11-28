@@ -1,39 +1,70 @@
 namespace myIoTGrid.Hub.Shared.DTOs;
 
 /// <summary>
-/// DTO für Sensor-Typ Informationen
+/// DTO for SensorType information.
+/// Matter-konform: Entspricht einem Matter Cluster.
 /// </summary>
-/// <param name="Id">Primärschlüssel</param>
-/// <param name="Code">Code (z.B. "temperature")</param>
-/// <param name="Name">Anzeigename (z.B. "Temperatur")</param>
-/// <param name="Unit">Einheit (z.B. "°C")</param>
-/// <param name="Description">Beschreibung</param>
-/// <param name="IconName">Material Icon Name</param>
-/// <param name="IsGlobal">Ob global (von Cloud definiert)</param>
-/// <param name="CreatedAt">Erstellungszeitpunkt</param>
+/// <param name="TypeId">Primary key (e.g., "temperature")</param>
+/// <param name="DisplayName">Display name (e.g., "Temperatur")</param>
+/// <param name="ClusterId">Matter Cluster ID (0x0402 = TemperatureMeasurement)</param>
+/// <param name="MatterClusterName">Matter Cluster Name (e.g., "TemperatureMeasurement")</param>
+/// <param name="Unit">Unit (e.g., "°C")</param>
+/// <param name="Resolution">Resolution (e.g., 0.1)</param>
+/// <param name="MinValue">Minimum value</param>
+/// <param name="MaxValue">Maximum value</param>
+/// <param name="Description">Description</param>
+/// <param name="IsCustom">Is this a custom myIoTGrid type?</param>
+/// <param name="Category">Category (weather, water, air, soil, other)</param>
+/// <param name="Icon">Material Icon Name</param>
+/// <param name="Color">Hex Color for UI</param>
+/// <param name="IsGlobal">Whether this type is global (defined by Cloud)</param>
+/// <param name="CreatedAt">Creation timestamp</param>
 public record SensorTypeDto(
-    Guid Id,
-    string Code,
-    string Name,
+    string TypeId,
+    string DisplayName,
+    uint ClusterId,
+    string? MatterClusterName,
     string Unit,
+    double Resolution,
+    double? MinValue,
+    double? MaxValue,
     string? Description,
-    string? IconName,
+    bool IsCustom,
+    string Category,
+    string? Icon,
+    string? Color,
     bool IsGlobal,
     DateTime CreatedAt
 );
 
 /// <summary>
-/// DTO zum Erstellen eines Sensor-Typs
+/// DTO for creating a SensorType
 /// </summary>
-/// <param name="Code">Code (z.B. "temperature")</param>
-/// <param name="Name">Anzeigename (z.B. "Temperatur")</param>
-/// <param name="Unit">Einheit (z.B. "°C")</param>
-/// <param name="Description">Beschreibung</param>
-/// <param name="IconName">Material Icon Name</param>
+/// <param name="TypeId">Primary key (e.g., "temperature")</param>
+/// <param name="DisplayName">Display name (e.g., "Temperatur")</param>
+/// <param name="ClusterId">Matter Cluster ID</param>
+/// <param name="Unit">Unit (e.g., "°C")</param>
+/// <param name="MatterClusterName">Matter Cluster Name</param>
+/// <param name="Resolution">Resolution</param>
+/// <param name="MinValue">Minimum value</param>
+/// <param name="MaxValue">Maximum value</param>
+/// <param name="Description">Description</param>
+/// <param name="IsCustom">Is this a custom type?</param>
+/// <param name="Category">Category</param>
+/// <param name="Icon">Material Icon Name</param>
+/// <param name="Color">Hex Color</param>
 public record CreateSensorTypeDto(
-    string Code,
-    string Name,
+    string TypeId,
+    string DisplayName,
+    uint ClusterId,
     string Unit,
+    string? MatterClusterName = null,
+    double Resolution = 0.1,
+    double? MinValue = null,
+    double? MaxValue = null,
     string? Description = null,
-    string? IconName = null
+    bool IsCustom = false,
+    string Category = "other",
+    string? Icon = null,
+    string? Color = null
 );

@@ -3,35 +3,66 @@ using myIoTGrid.Hub.Domain.Interfaces;
 namespace myIoTGrid.Hub.Domain.Entities;
 
 /// <summary>
-/// Sensor-Typ Definition (z.B. Temperatur, Luftfeuchtigkeit, CO2)
-/// Wird von Grid.Cloud synchronisiert
+/// Type definition for measurements.
+/// Matter-konform: Entspricht einem Matter Cluster.
+/// Wird von Grid.Cloud synchronisiert.
 /// </summary>
 public class SensorType : ISyncableEntity
 {
-    /// <summary>Primärschlüssel</summary>
-    public Guid Id { get; set; }
+    /// <summary>Primary Key (e.g., "temperature", "humidity")</summary>
+    public string TypeId { get; set; } = string.Empty;
 
-    /// <summary>Code für den Sensor-Typ (z.B. "temperature")</summary>
-    public string Code { get; set; } = string.Empty;
+    /// <summary>Explicit IEntity.Id implementation for interface compliance</summary>
+    Guid IEntity.Id
+    {
+        get => Guid.Empty; // Not used - TypeId is the primary key
+        set { } // No-op
+    }
 
-    /// <summary>Anzeigename (z.B. "Temperatur")</summary>
-    public string Name { get; set; } = string.Empty;
+    /// <summary>Display name (e.g., "Temperatur")</summary>
+    public string DisplayName { get; set; } = string.Empty;
 
-    /// <summary>Einheit (z.B. "°C")</summary>
+    /// <summary>Matter Cluster ID (0x0402 = TemperatureMeasurement)</summary>
+    public uint ClusterId { get; set; }
+
+    /// <summary>Matter Cluster Name (e.g., "TemperatureMeasurement")</summary>
+    public string? MatterClusterName { get; set; }
+
+    /// <summary>Unit (e.g., "°C", "%", "hPa")</summary>
     public string Unit { get; set; } = string.Empty;
 
-    /// <summary>Beschreibung des Sensor-Typs</summary>
+    /// <summary>Resolution (e.g., 0.1)</summary>
+    public double Resolution { get; set; } = 0.1;
+
+    /// <summary>Minimum value</summary>
+    public double? MinValue { get; set; }
+
+    /// <summary>Maximum value</summary>
+    public double? MaxValue { get; set; }
+
+    /// <summary>Description</summary>
     public string? Description { get; set; }
 
-    /// <summary>Material Icon Name für UI</summary>
-    public string? IconName { get; set; }
+    /// <summary>Is this a custom myIoTGrid type? (ClusterId >= 0xFC00)</summary>
+    public bool IsCustom { get; set; }
 
-    /// <summary>Ob dieser Typ global (von Cloud definiert) ist</summary>
+    /// <summary>Category (weather, water, air, soil, other)</summary>
+    public string Category { get; set; } = "other";
+
+    /// <summary>Material Icon Name for UI</summary>
+    public string? Icon { get; set; }
+
+    /// <summary>Hex Color for UI (e.g., "#FF5722")</summary>
+    public string? Color { get; set; }
+
+    /// <summary>Whether this type is global (defined by Cloud)</summary>
     public bool IsGlobal { get; set; }
 
-    /// <summary>Erstellungszeitpunkt</summary>
+    /// <summary>Creation timestamp</summary>
     public DateTime CreatedAt { get; set; }
 
     // Navigation Properties
-    public ICollection<SensorData> SensorData { get; set; } = new List<SensorData>();
+    public ICollection<Sensor> Sensors { get; set; } = new List<Sensor>();
+    public ICollection<Reading> Readings { get; set; } = new List<Reading>();
+    public ICollection<SyncedReading> SyncedReadings { get; set; } = new List<SyncedReading>();
 }

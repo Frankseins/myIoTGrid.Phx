@@ -131,7 +131,7 @@ public class HubMonitorService : BackgroundService
             var dto = new CreateAlertDto(
                 AlertTypeCode: "hub_offline",
                 HubId: hub.HubId,
-                SensorId: null,
+                NodeId: null,
                 Level: AlertLevelDto.Critical,
                 Message: $"Hub '{hub.Name}' ({hub.HubId}) is offline. Last seen: {hub.LastSeen:u}",
                 Recommendation: "Check Hub power supply, network connection, or internet connectivity."

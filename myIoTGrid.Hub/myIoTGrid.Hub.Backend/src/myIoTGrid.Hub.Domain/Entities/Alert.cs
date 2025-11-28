@@ -17,8 +17,8 @@ public class Alert : ITenantEntity
     /// <summary>Optional reference to affected Hub</summary>
     public Guid? HubId { get; set; }
 
-    /// <summary>Optional reference to affected Sensor</summary>
-    public Guid? SensorId { get; set; }
+    /// <summary>Optional reference to affected Node (ESP32/LoRa32 Device)</summary>
+    public Guid? NodeId { get; set; }
 
     /// <summary>Reference to Alert Type</summary>
     public Guid AlertTypeId { get; set; }
@@ -50,6 +50,6 @@ public class Alert : ITenantEntity
     // Navigation Properties
     public Tenant? Tenant { get; set; }
     public Hub? Hub { get; set; }
-    public Sensor? Sensor { get; set; }
+    public Node? Node { get; set; }
     public AlertType? AlertType { get; set; }
 }

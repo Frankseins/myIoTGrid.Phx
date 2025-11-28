@@ -9,7 +9,8 @@ using myIoTGrid.Hub.Shared.Options;
 namespace myIoTGrid.Hub.Interface.BackgroundServices;
 
 /// <summary>
-/// Background service that cleans up old sensor data based on retention policy
+/// Background service that cleans up old reading data based on retention policy.
+/// Matter-konform: Bereinigt alte Attribute Reports.
 /// </summary>
 public class DataRetentionService : BackgroundService
 {
@@ -71,14 +72,14 @@ public class DataRetentionService : BackgroundService
             "Starting data retention cleanup. Removing data older than {Threshold:u}",
             threshold);
 
-        // Delete old sensor data that has been synced to cloud
-        var deletedSensorData = await dbContext.SensorData
-            .Where(sd => sd.Timestamp < threshold && sd.IsSyncedToCloud)
+        // Delete old readings that have been synced to cloud
+        var deletedReadings = await dbContext.Readings
+            .Where(r => r.Timestamp < threshold && r.IsSyncedToCloud)
             .ExecuteDeleteAsync(ct);
 
         _logger.LogInformation(
-            "Deleted {Count} synced sensor data records older than {Days} days",
-            deletedSensorData,
+            "Deleted {Count} synced readings older than {Days} days",
+            deletedReadings,
             _options.DataRetentionDays);
 
         // Delete old acknowledged alerts
@@ -113,8 +114,8 @@ public class DataRetentionService : BackgroundService
         }
 
         _logger.LogInformation(
-            "Data retention cleanup completed. Total deleted: SensorData={SensorData}, Alerts={Alerts}",
-            deletedSensorData,
+            "Data retention cleanup completed. Total deleted: Readings={Readings}, Alerts={Alerts}",
+            deletedReadings,
             deletedAlerts + deletedInactiveAlerts);
     }
 }

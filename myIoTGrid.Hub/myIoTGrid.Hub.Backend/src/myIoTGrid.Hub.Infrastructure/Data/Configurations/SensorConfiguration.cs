@@ -5,7 +5,8 @@ using myIoTGrid.Hub.Domain.Entities;
 namespace myIoTGrid.Hub.Infrastructure.Data.Configurations;
 
 /// <summary>
-/// EF Core Configuration for Sensor Entity (ESP32/LoRa32 Device)
+/// EF Core Configuration for Sensor Entity (Physical sensor chip: DHT22, BME280).
+/// Matter-konform: Entspricht einem Matter Endpoint.
 /// </summary>
 public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
 {
@@ -17,71 +18,42 @@ public class SensorConfiguration : IEntityTypeConfiguration<Sensor>
         builder.HasKey(s => s.Id);
 
         // Properties
-        builder.Property(s => s.HubId)
+        builder.Property(s => s.NodeId)
             .IsRequired();
 
-        builder.Property(s => s.SensorId)
+        builder.Property(s => s.SensorTypeId)
             .IsRequired()
-            .HasMaxLength(100);
-
-        builder.Property(s => s.Name)
-            .IsRequired()
-            .HasMaxLength(200);
-
-        builder.Property(s => s.Protocol)
-            .IsRequired()
-            .HasConversion<string>()
-            .HasMaxLength(20);
-
-        builder.Property(s => s.FirmwareVersion)
             .HasMaxLength(50);
 
-        builder.Property(s => s.IsOnline)
+        builder.Property(s => s.EndpointId)
+            .IsRequired();
+
+        builder.Property(s => s.Name)
+            .HasMaxLength(200);
+
+        builder.Property(s => s.IsActive)
             .IsRequired()
-            .HasDefaultValue(false);
+            .HasDefaultValue(true);
 
         builder.Property(s => s.CreatedAt)
             .IsRequired();
 
-        // Location as Owned Entity
-        builder.OwnsOne(s => s.Location, location =>
-        {
-            location.Property(l => l.Name)
-                .HasColumnName("Location_Name")
-                .HasMaxLength(200);
-
-            location.Property(l => l.Latitude)
-                .HasColumnName("Location_Latitude");
-
-            location.Property(l => l.Longitude)
-                .HasColumnName("Location_Longitude");
-        });
-
-        // SensorTypes as CSV (comma-separated values)
-        builder.Property(s => s.SensorTypes)
-            .HasConversion(
-                v => string.Join(',', v),
-                v => v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList()
-            )
-            .HasMaxLength(500)
-            .HasColumnName("SensorTypes");
-
         // Relationships
-        builder.HasOne(s => s.Hub)
-            .WithMany(h => h.Sensors)
-            .HasForeignKey(s => s.HubId)
+        builder.HasOne(s => s.Node)
+            .WithMany(n => n.Sensors)
+            .HasForeignKey(s => s.NodeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        builder.HasMany(s => s.SensorData)
-            .WithOne(sd => sd.Sensor)
-            .HasForeignKey(sd => sd.SensorId)
-            .OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne(s => s.SensorType)
+            .WithMany(st => st.Sensors)
+            .HasForeignKey(s => s.SensorTypeId)
+            .HasPrincipalKey(st => st.TypeId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         // Indexes
-        builder.HasIndex(s => s.HubId);
-        builder.HasIndex(s => s.SensorId);
-        builder.HasIndex(s => new { s.HubId, s.SensorId }).IsUnique();
-        builder.HasIndex(s => s.IsOnline);
-        builder.HasIndex(s => s.LastSeen);
+        builder.HasIndex(s => s.NodeId);
+        builder.HasIndex(s => s.SensorTypeId);
+        builder.HasIndex(s => new { s.NodeId, s.EndpointId }).IsUnique();
+        builder.HasIndex(s => s.IsActive);
     }
 }

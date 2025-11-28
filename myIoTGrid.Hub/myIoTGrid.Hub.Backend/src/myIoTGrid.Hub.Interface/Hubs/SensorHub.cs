@@ -103,46 +103,46 @@ public class SensorHub : Microsoft.AspNetCore.SignalR.Hub
     }
 
     /// <summary>
-    /// Fügt den Client einer spezifischen Device-Gruppe hinzu (für Sensoren).
-    /// So erhält der Client nur Updates für dieses spezifische Gerät.
+    /// Fügt den Client einer spezifischen Node-Gruppe hinzu (ESP32/LoRa32 Devices).
+    /// So erhält der Client nur Updates für diesen spezifischen Node.
     /// </summary>
-    /// <param name="deviceId">Die ID des Geräts (SensorId)</param>
-    public async Task JoinDeviceGroup(string deviceId)
+    /// <param name="nodeId">Die ID des Nodes</param>
+    public async Task JoinNodeGroup(Guid nodeId)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
+        if (nodeId == Guid.Empty)
         {
-            _logger.LogWarning("JoinDeviceGroup mit leerer deviceId aufgerufen");
+            _logger.LogWarning("JoinNodeGroup mit leerer nodeId aufgerufen");
             return;
         }
 
-        var groupName = GetDeviceGroupName(deviceId);
+        var groupName = GetNodeGroupName(nodeId);
         await Groups.AddToGroupAsync(Context.ConnectionId, groupName);
 
         _logger.LogDebug(
-            "Client {ConnectionId} hat Device-Gruppe beigetreten: {DeviceId}",
+            "Client {ConnectionId} hat Node-Gruppe beigetreten: {NodeId}",
             Context.ConnectionId,
-            deviceId);
+            nodeId);
     }
 
     /// <summary>
-    /// Entfernt den Client aus einer spezifischen Device-Gruppe (für Sensoren).
+    /// Entfernt den Client aus einer spezifischen Node-Gruppe.
     /// </summary>
-    /// <param name="deviceId">Die ID des Geräts (SensorId)</param>
-    public async Task LeaveDeviceGroup(string deviceId)
+    /// <param name="nodeId">Die ID des Nodes</param>
+    public async Task LeaveNodeGroup(Guid nodeId)
     {
-        if (string.IsNullOrWhiteSpace(deviceId))
+        if (nodeId == Guid.Empty)
         {
-            _logger.LogWarning("LeaveDeviceGroup mit leerer deviceId aufgerufen");
+            _logger.LogWarning("LeaveNodeGroup mit leerer nodeId aufgerufen");
             return;
         }
 
-        var groupName = GetDeviceGroupName(deviceId);
+        var groupName = GetNodeGroupName(nodeId);
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, groupName);
 
         _logger.LogDebug(
-            "Client {ConnectionId} hat Device-Gruppe verlassen: {DeviceId}",
+            "Client {ConnectionId} hat Node-Gruppe verlassen: {NodeId}",
             Context.ConnectionId,
-            deviceId);
+            nodeId);
     }
 
     /// <summary>
@@ -203,10 +203,10 @@ public class SensorHub : Microsoft.AspNetCore.SignalR.Hub
     public static string GetHubGroupName(string hubId) => $"hub:{hubId}";
 
     /// <summary>
-    /// Generiert den Gruppennamen für ein Device (Sensor).
-    /// Format: "device:{deviceId}"
+    /// Generiert den Gruppennamen für einen Node (ESP32/LoRa32).
+    /// Format: "node:{nodeId}"
     /// </summary>
-    public static string GetDeviceGroupName(string deviceId) => $"device:{deviceId}";
+    public static string GetNodeGroupName(Guid nodeId) => $"node:{nodeId}";
 
     /// <summary>
     /// Generiert den Gruppennamen für ein Alert-Level.

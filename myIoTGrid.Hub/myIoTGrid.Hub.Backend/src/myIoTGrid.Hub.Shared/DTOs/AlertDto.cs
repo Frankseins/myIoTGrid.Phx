@@ -9,8 +9,8 @@ namespace myIoTGrid.Hub.Shared.DTOs;
 /// <param name="TenantId">Tenant-ID</param>
 /// <param name="HubId">Affected Hub (optional)</param>
 /// <param name="HubName">Hub display name</param>
-/// <param name="SensorId">Affected Sensor (optional)</param>
-/// <param name="SensorName">Sensor display name</param>
+/// <param name="NodeId">Affected Node (optional)</param>
+/// <param name="NodeName">Node display name</param>
 /// <param name="AlertTypeId">Alert type ID</param>
 /// <param name="AlertTypeCode">Alert type code</param>
 /// <param name="AlertTypeName">Alert type display name</param>
@@ -27,8 +27,8 @@ public record AlertDto(
     Guid TenantId,
     Guid? HubId,
     string? HubName,
-    Guid? SensorId,
-    string? SensorName,
+    Guid? NodeId,
+    string? NodeName,
     Guid AlertTypeId,
     string AlertTypeCode,
     string AlertTypeName,
@@ -47,7 +47,7 @@ public record AlertDto(
 /// </summary>
 /// <param name="AlertTypeCode">Alert type code (e.g., "mold_risk")</param>
 /// <param name="HubId">Affected Hub identifier (optional)</param>
-/// <param name="SensorId">Affected Sensor identifier (optional)</param>
+/// <param name="NodeId">Affected Node identifier (optional)</param>
 /// <param name="Level">Alert level</param>
 /// <param name="Message">Alert message</param>
 /// <param name="Recommendation">Recommendation for resolution</param>
@@ -55,7 +55,7 @@ public record AlertDto(
 public record CreateAlertDto(
     string AlertTypeCode,
     string? HubId = null,
-    string? SensorId = null,
+    string? NodeId = null,
     AlertLevelDto Level = AlertLevelDto.Warning,
     string Message = "",
     string? Recommendation = null,
@@ -74,7 +74,7 @@ public record AcknowledgeAlertDto(
 /// DTO for filtering Alerts
 /// </summary>
 /// <param name="HubId">Filter by Hub (Guid)</param>
-/// <param name="SensorId">Filter by Sensor (Guid)</param>
+/// <param name="NodeId">Filter by Node (Guid)</param>
 /// <param name="AlertTypeCode">Filter by alert type code</param>
 /// <param name="Level">Filter by level</param>
 /// <param name="Source">Filter by source</param>
@@ -86,7 +86,7 @@ public record AcknowledgeAlertDto(
 /// <param name="PageSize">Items per page</param>
 public record AlertFilterDto(
     Guid? HubId = null,
-    Guid? SensorId = null,
+    Guid? NodeId = null,
     string? AlertTypeCode = null,
     AlertLevelDto? Level = null,
     AlertSourceDto? Source = null,

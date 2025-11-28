@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("myIoTGrid.Hub.Infrastructure")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7d34e8ddda8c194abf78b33b786d6c0bf2f4cfa7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+92a3a49f0b41a1074e607c4bf6f9bf2cc68ebdf8")]
 [assembly: System.Reflection.AssemblyProductAttribute("myIoTGrid.Hub.Infrastructure")]
 [assembly: System.Reflection.AssemblyTitleAttribute("myIoTGrid.Hub.Infrastructure")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

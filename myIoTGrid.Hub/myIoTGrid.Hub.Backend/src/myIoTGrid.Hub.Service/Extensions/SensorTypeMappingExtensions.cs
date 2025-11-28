@@ -4,50 +4,65 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Extensions;
 
 /// <summary>
-/// Mapping Extensions für SensorType
+/// Mapping Extensions for SensorType Entity.
+/// Matter-konform: Entspricht einem Matter Cluster.
 /// </summary>
 public static class SensorTypeMappingExtensions
 {
     /// <summary>
-    /// Konvertiert SensorType Entity zu SensorTypeDto
+    /// Converts a SensorType entity to a SensorTypeDto
     /// </summary>
-    public static SensorTypeDto ToDto(this SensorType entity)
+    public static SensorTypeDto ToDto(this SensorType sensorType)
     {
         return new SensorTypeDto(
-            entity.Id,
-            entity.Code,
-            entity.Name,
-            entity.Unit,
-            entity.Description,
-            entity.IconName,
-            entity.IsGlobal,
-            entity.CreatedAt
+            TypeId: sensorType.TypeId,
+            DisplayName: sensorType.DisplayName,
+            ClusterId: sensorType.ClusterId,
+            MatterClusterName: sensorType.MatterClusterName,
+            Unit: sensorType.Unit,
+            Resolution: sensorType.Resolution,
+            MinValue: sensorType.MinValue,
+            MaxValue: sensorType.MaxValue,
+            Description: sensorType.Description,
+            IsCustom: sensorType.IsCustom,
+            Category: sensorType.Category,
+            Icon: sensorType.Icon,
+            Color: sensorType.Color,
+            IsGlobal: sensorType.IsGlobal,
+            CreatedAt: sensorType.CreatedAt
         );
     }
 
     /// <summary>
-    /// Konvertiert CreateSensorTypeDto zu SensorType Entity
+    /// Converts a CreateSensorTypeDto to a SensorType entity
     /// </summary>
     public static SensorType ToEntity(this CreateSensorTypeDto dto)
     {
         return new SensorType
         {
-            Id = Guid.NewGuid(),
-            Code = dto.Code.ToLowerInvariant(),
-            Name = dto.Name,
+            TypeId = dto.TypeId.ToLowerInvariant(),
+            DisplayName = dto.DisplayName,
+            ClusterId = dto.ClusterId,
+            MatterClusterName = dto.MatterClusterName,
             Unit = dto.Unit,
+            Resolution = dto.Resolution,
+            MinValue = dto.MinValue,
+            MaxValue = dto.MaxValue,
             Description = dto.Description,
-            IconName = dto.IconName,
+            IsCustom = dto.IsCustom,
+            Category = dto.Category,
+            Icon = dto.Icon,
+            Color = dto.Color,
             IsGlobal = false,
             CreatedAt = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Konvertiert eine Liste von SensorType Entities zu DTOs
+    /// Converts a list of SensorType Entities to DTOs
     /// </summary>
-    public static IEnumerable<SensorTypeDto> ToDtos(this IEnumerable<SensorType> entities)
+    public static IEnumerable<SensorTypeDto> ToDtos(this IEnumerable<SensorType> sensorTypes)
     {
-        return entities.Select(e => e.ToDto());
+        return sensorTypes.Select(st => st.ToDto());
     }
 }

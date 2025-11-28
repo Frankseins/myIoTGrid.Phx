@@ -1,20 +1,25 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using myIoTGrid.Hub.Domain.Entities;
+using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Infrastructure.Repositories;
 
 namespace myIoTGrid.Hub.Service.Tests.Repositories;
 
+/// <summary>
+/// Tests for generic Repository using AlertType entity
+/// (SensorType uses TypeId as primary key, AlertType uses standard Guid Id)
+/// </summary>
 public class RepositoryTests : IDisposable
 {
     private readonly HubDbContext _context;
-    private readonly Repository<SensorType> _sut;
+    private readonly Repository<AlertType> _sut;
 
     public RepositoryTests()
     {
         _context = TestDbContextFactory.Create();
-        _sut = new Repository<SensorType>(_context);
+        _sut = new Repository<AlertType>(_context);
     }
 
     public void Dispose()
@@ -29,12 +34,12 @@ public class RepositoryTests : IDisposable
     {
         // Arrange
         var id = Guid.NewGuid();
-        _context.SensorTypes.Add(new SensorType
+        _context.AlertTypes.Add(new AlertType
         {
             Id = id,
             Code = "test",
             Name = "Test",
-            Unit = "t",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         });
         await _context.SaveChangesAsync();
@@ -75,8 +80,8 @@ public class RepositoryTests : IDisposable
     public async Task GetAllAsync_WithEntities_ReturnsAllEntities()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
@@ -94,12 +99,12 @@ public class RepositoryTests : IDisposable
     public async Task FindAsync_WithMatchingPredicate_ReturnsMatchingEntities()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "match", Name = "Match", Unit = "m", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "other", Name = "Other", Unit = "o", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "match", Name = "Match", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "other", Name = "Other", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.FindAsync(st => st.Code == "match");
+        var result = await _sut.FindAsync(at => at.Code == "match");
 
         // Assert
         result.Should().ContainSingle();
@@ -110,11 +115,11 @@ public class RepositoryTests : IDisposable
     public async Task FindAsync_WithNoMatches_ReturnsEmptyCollection()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "test", Name = "Test", Unit = "t", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "test", Name = "Test", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.FindAsync(st => st.Code == "nonexistent");
+        var result = await _sut.FindAsync(at => at.Code == "nonexistent");
 
         // Assert
         result.Should().BeEmpty();
@@ -128,11 +133,11 @@ public class RepositoryTests : IDisposable
     public async Task FirstOrDefaultAsync_WithMatchingPredicate_ReturnsFirstMatch()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "first", Name = "First", Unit = "f", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "first", Name = "First", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.FirstOrDefaultAsync(st => st.Code == "first");
+        var result = await _sut.FirstOrDefaultAsync(at => at.Code == "first");
 
         // Assert
         result.Should().NotBeNull();
@@ -143,7 +148,7 @@ public class RepositoryTests : IDisposable
     public async Task FirstOrDefaultAsync_WithNoMatches_ReturnsNull()
     {
         // Act
-        var result = await _sut.FirstOrDefaultAsync(st => st.Code == "nonexistent");
+        var result = await _sut.FirstOrDefaultAsync(at => at.Code == "nonexistent");
 
         // Assert
         result.Should().BeNull();
@@ -157,11 +162,11 @@ public class RepositoryTests : IDisposable
     public async Task ExistsAsync_WithMatchingEntity_ReturnsTrue()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "exists", Name = "Exists", Unit = "e", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "exists", Name = "Exists", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.ExistsAsync(st => st.Code == "exists");
+        var result = await _sut.ExistsAsync(at => at.Code == "exists");
 
         // Assert
         result.Should().BeTrue();
@@ -171,7 +176,7 @@ public class RepositoryTests : IDisposable
     public async Task ExistsAsync_WithNoMatchingEntity_ReturnsFalse()
     {
         // Act
-        var result = await _sut.ExistsAsync(st => st.Code == "nonexistent");
+        var result = await _sut.ExistsAsync(at => at.Code == "nonexistent");
 
         // Assert
         result.Should().BeFalse();
@@ -185,9 +190,9 @@ public class RepositoryTests : IDisposable
     public async Task CountAsync_WithoutPredicate_ReturnsAllCount()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "c", Name = "C", Unit = "c", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "c", Name = "C", DefaultLevel = AlertLevel.Critical, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
@@ -201,13 +206,13 @@ public class RepositoryTests : IDisposable
     public async Task CountAsync_WithPredicate_ReturnsMatchingCount()
     {
         // Arrange
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "Match", Unit = "a", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "Match", Unit = "b", CreatedAt = DateTime.UtcNow });
-        _context.SensorTypes.Add(new SensorType { Id = Guid.NewGuid(), Code = "c", Name = "Other", Unit = "c", CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "Match", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "Match", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow });
+        _context.AlertTypes.Add(new AlertType { Id = Guid.NewGuid(), Code = "c", Name = "Other", DefaultLevel = AlertLevel.Critical, CreatedAt = DateTime.UtcNow });
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.CountAsync(st => st.Name == "Match");
+        var result = await _sut.CountAsync(at => at.Name == "Match");
 
         // Assert
         result.Should().Be(2);
@@ -231,12 +236,12 @@ public class RepositoryTests : IDisposable
     public async Task AddAsync_AddsEntityToDbSet()
     {
         // Arrange
-        var entity = new SensorType
+        var entity = new AlertType
         {
             Id = Guid.NewGuid(),
             Code = "new",
             Name = "New",
-            Unit = "n",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         };
 
@@ -246,7 +251,7 @@ public class RepositoryTests : IDisposable
 
         // Assert
         result.Should().Be(entity);
-        var fromDb = await _context.SensorTypes.FindAsync(entity.Id);
+        var fromDb = await _context.AlertTypes.FindAsync(entity.Id);
         fromDb.Should().NotBeNull();
     }
 
@@ -258,10 +263,10 @@ public class RepositoryTests : IDisposable
     public async Task AddRangeAsync_AddsMultipleEntities()
     {
         // Arrange
-        var entities = new List<SensorType>
+        var entities = new List<AlertType>
         {
-            new() { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow },
-            new() { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow }
+            new() { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow },
+            new() { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow }
         };
 
         // Act
@@ -269,7 +274,7 @@ public class RepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var count = await _context.SensorTypes.CountAsync();
+        var count = await _context.AlertTypes.CountAsync();
         count.Should().Be(2);
     }
 
@@ -281,17 +286,17 @@ public class RepositoryTests : IDisposable
     public async Task Update_UpdatesEntity()
     {
         // Arrange
-        var entity = new SensorType
+        var entity = new AlertType
         {
             Id = Guid.NewGuid(),
             Code = "original",
             Name = "Original",
-            Unit = "o",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         };
-        _context.SensorTypes.Add(entity);
+        _context.AlertTypes.Add(entity);
         await _context.SaveChangesAsync();
-        _context.Entry(entity).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        _context.Entry(entity).State = EntityState.Detached;
 
         // Act
         entity.Name = "Updated";
@@ -299,7 +304,7 @@ public class RepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var fromDb = await _context.SensorTypes.FindAsync(entity.Id);
+        var fromDb = await _context.AlertTypes.FindAsync(entity.Id);
         fromDb!.Name.Should().Be("Updated");
     }
 
@@ -311,12 +316,12 @@ public class RepositoryTests : IDisposable
     public async Task UpdateRange_UpdatesMultipleEntities()
     {
         // Arrange
-        var entity1 = new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow };
-        var entity2 = new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow };
-        _context.SensorTypes.AddRange(entity1, entity2);
+        var entity1 = new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow };
+        var entity2 = new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow };
+        _context.AlertTypes.AddRange(entity1, entity2);
         await _context.SaveChangesAsync();
-        _context.Entry(entity1).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
-        _context.Entry(entity2).State = Microsoft.EntityFrameworkCore.EntityState.Detached;
+        _context.Entry(entity1).State = EntityState.Detached;
+        _context.Entry(entity2).State = EntityState.Detached;
 
         // Act
         entity1.Name = "Updated A";
@@ -325,8 +330,8 @@ public class RepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var fromDb1 = await _context.SensorTypes.FindAsync(entity1.Id);
-        var fromDb2 = await _context.SensorTypes.FindAsync(entity2.Id);
+        var fromDb1 = await _context.AlertTypes.FindAsync(entity1.Id);
+        var fromDb2 = await _context.AlertTypes.FindAsync(entity2.Id);
         fromDb1!.Name.Should().Be("Updated A");
         fromDb2!.Name.Should().Be("Updated B");
     }
@@ -339,15 +344,15 @@ public class RepositoryTests : IDisposable
     public async Task Remove_RemovesEntity()
     {
         // Arrange
-        var entity = new SensorType
+        var entity = new AlertType
         {
             Id = Guid.NewGuid(),
             Code = "todelete",
             Name = "To Delete",
-            Unit = "d",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         };
-        _context.SensorTypes.Add(entity);
+        _context.AlertTypes.Add(entity);
         await _context.SaveChangesAsync();
 
         // Act
@@ -355,7 +360,7 @@ public class RepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var fromDb = await _context.SensorTypes.FindAsync(entity.Id);
+        var fromDb = await _context.AlertTypes.FindAsync(entity.Id);
         fromDb.Should().BeNull();
     }
 
@@ -367,9 +372,9 @@ public class RepositoryTests : IDisposable
     public async Task RemoveRange_RemovesMultipleEntities()
     {
         // Arrange
-        var entity1 = new SensorType { Id = Guid.NewGuid(), Code = "a", Name = "A", Unit = "a", CreatedAt = DateTime.UtcNow };
-        var entity2 = new SensorType { Id = Guid.NewGuid(), Code = "b", Name = "B", Unit = "b", CreatedAt = DateTime.UtcNow };
-        _context.SensorTypes.AddRange(entity1, entity2);
+        var entity1 = new AlertType { Id = Guid.NewGuid(), Code = "a", Name = "A", DefaultLevel = AlertLevel.Info, CreatedAt = DateTime.UtcNow };
+        var entity2 = new AlertType { Id = Guid.NewGuid(), Code = "b", Name = "B", DefaultLevel = AlertLevel.Warning, CreatedAt = DateTime.UtcNow };
+        _context.AlertTypes.AddRange(entity1, entity2);
         await _context.SaveChangesAsync();
 
         // Act
@@ -377,7 +382,7 @@ public class RepositoryTests : IDisposable
         await _context.SaveChangesAsync();
 
         // Assert
-        var count = await _context.SensorTypes.CountAsync();
+        var count = await _context.AlertTypes.CountAsync();
         count.Should().Be(0);
     }
 
@@ -418,7 +423,7 @@ public class RepositoryTests : IDisposable
         using var cts = new CancellationTokenSource();
 
         // Act
-        var result = await _sut.FindAsync(st => st.Code == "test", cts.Token);
+        var result = await _sut.FindAsync(at => at.Code == "test", cts.Token);
 
         // Assert
         result.Should().NotBeNull();
@@ -431,7 +436,7 @@ public class RepositoryTests : IDisposable
         using var cts = new CancellationTokenSource();
 
         // Act
-        var result = await _sut.ExistsAsync(st => st.Code == "test", cts.Token);
+        var result = await _sut.ExistsAsync(at => at.Code == "test", cts.Token);
 
         // Assert
         result.Should().BeFalse();
@@ -471,6 +476,7 @@ public class TenantRepositoryTests : IDisposable
             Id = _alertTypeId,
             Code = "test",
             Name = "Test",
+            DefaultLevel = AlertLevel.Info,
             CreatedAt = DateTime.UtcNow
         });
         _context.SaveChanges();

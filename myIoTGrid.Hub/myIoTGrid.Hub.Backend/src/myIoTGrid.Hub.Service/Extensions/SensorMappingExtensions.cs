@@ -1,102 +1,65 @@
 using myIoTGrid.Hub.Domain.Entities;
-using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Shared.DTOs;
 
 namespace myIoTGrid.Hub.Service.Extensions;
 
 /// <summary>
-/// Mapping Extensions for Sensor (ESP32/LoRa32 Device)
+/// Mapping Extensions for Sensor Entity (Physical sensor chip: DHT22, BME280).
+/// Matter-konform: Entspricht einem Matter Endpoint.
 /// </summary>
 public static class SensorMappingExtensions
 {
     /// <summary>
-    /// Converts Sensor Entity to SensorDto
+    /// Converts a Sensor entity to a SensorDto
     /// </summary>
-    public static SensorDto ToDto(this Sensor entity)
+    public static SensorDto ToDto(this Sensor sensor)
     {
         return new SensorDto(
-            entity.Id,
-            entity.HubId,
-            entity.SensorId,
-            entity.Name,
-            entity.Protocol.ToDto(),
-            entity.Location.ToDto(),
-            entity.SensorTypes,
-            entity.LastSeen,
-            entity.IsOnline,
-            entity.FirmwareVersion,
-            entity.BatteryLevel,
-            entity.CreatedAt
+            Id: sensor.Id,
+            NodeId: sensor.NodeId,
+            SensorTypeId: sensor.SensorTypeId,
+            EndpointId: sensor.EndpointId,
+            Name: sensor.Name,
+            IsActive: sensor.IsActive,
+            SensorType: sensor.SensorType?.ToDto(),
+            CreatedAt: sensor.CreatedAt
         );
     }
 
     /// <summary>
-    /// Converts CreateSensorDto to Sensor Entity
+    /// Converts a CreateSensorDto to a Sensor entity
     /// </summary>
-    public static Sensor ToEntity(this CreateSensorDto dto, Guid hubId)
+    public static Sensor ToEntity(this CreateSensorDto dto, Guid nodeId)
     {
         return new Sensor
         {
             Id = Guid.NewGuid(),
-            HubId = hubId,
-            SensorId = dto.SensorId,
-            Name = dto.Name ?? GenerateNameFromSensorId(dto.SensorId),
-            Protocol = dto.Protocol.ToEntity(),
-            Location = dto.Location.ToEntity(),
-            SensorTypes = dto.SensorTypes ?? new List<string>(),
-            IsOnline = true,
-            LastSeen = DateTime.UtcNow,
+            NodeId = nodeId,
+            SensorTypeId = dto.SensorTypeId,
+            EndpointId = dto.EndpointId,
+            Name = dto.Name,
+            IsActive = true,
             CreatedAt = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Applies UpdateSensorDto to Sensor Entity
+    /// Applies an UpdateSensorDto to a Sensor entity
     /// </summary>
-    public static void ApplyUpdate(this Sensor entity, UpdateSensorDto dto)
+    public static void ApplyUpdate(this Sensor sensor, UpdateSensorDto dto)
     {
-        if (dto.Name != null)
-            entity.Name = dto.Name;
-        if (dto.Location != null)
-            entity.Location = dto.Location.ToEntity();
-        if (dto.SensorTypes != null)
-            entity.SensorTypes = dto.SensorTypes;
-        if (dto.FirmwareVersion != null)
-            entity.FirmwareVersion = dto.FirmwareVersion;
-    }
+        if (!string.IsNullOrEmpty(dto.Name))
+            sensor.Name = dto.Name;
 
-    /// <summary>
-    /// Applies SensorStatusDto to Sensor Entity
-    /// </summary>
-    public static void ApplyStatus(this Sensor entity, SensorStatusDto status)
-    {
-        entity.IsOnline = status.IsOnline;
-        if (status.LastSeen.HasValue)
-            entity.LastSeen = status.LastSeen.Value;
-        if (status.BatteryLevel.HasValue)
-            entity.BatteryLevel = status.BatteryLevel.Value;
+        if (dto.IsActive.HasValue)
+            sensor.IsActive = dto.IsActive.Value;
     }
 
     /// <summary>
     /// Converts a list of Sensor Entities to DTOs
     /// </summary>
-    public static IEnumerable<SensorDto> ToDtos(this IEnumerable<Sensor> entities)
+    public static IEnumerable<SensorDto> ToDtos(this IEnumerable<Sensor> sensors)
     {
-        return entities.Select(e => e.ToDto());
-    }
-
-    /// <summary>
-    /// Generates a name from the SensorId
-    /// </summary>
-    private static string GenerateNameFromSensorId(string sensorId)
-    {
-        if (string.IsNullOrWhiteSpace(sensorId)) return "Unknown Sensor";
-
-        // "sensor-wohnzimmer-01" -> "Sensor Wohnzimmer 01"
-        var parts = sensorId.Split(['-', '_'], StringSplitOptions.RemoveEmptyEntries);
-        var formattedParts = parts.Select(s =>
-            s.Length > 0 ? char.ToUpper(s[0]) + s[1..].ToLower() : s);
-
-        return string.Join(" ", formattedParts);
+        return sensors.Select(s => s.ToDto());
     }
 }
