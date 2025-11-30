@@ -1,0 +1,139 @@
+# =============================================================================
+# .gitignore - myIoTGrid Hub Backend (.NET 10)
+# =============================================================================
+
+# =============================================================================
+# .NET / C# Build Outputs
+# =============================================================================
+bin/
+obj/
+out/
+publish/
+*.dll
+*.exe
+*.pdb
+*.cache
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+*.snupkg
+**/packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# =============================================================================
+# IDE / Editor
+# =============================================================================
+
+# Visual Studio
+.vs/
+*.rsuser
+*.sln.docstates
+*.userprefs
+
+# JetBrains Rider
+.idea/
+
+# VS Code
+.vscode/
+
+# Vim
+*.swp
+*.swo
+*~
+
+# =============================================================================
+# Test Results & Coverage
+# =============================================================================
+TestResults/
+CoverageReport/
+coverage/
+*.trx
+*.coverage
+*.coveragexml
+coverage.cobertura.xml
+
+# =============================================================================
+# Local Development & Runtime Data
+# =============================================================================
+
+# SQLite Database (runtime data)
+*.db
+*.db-shm
+*.db-wal
+src/myIoTGrid.Hub.Api/data/
+
+# Log files
+*.log
+logs/
+src/myIoTGrid.Hub.Api/logs/
+
+# Local settings (may contain secrets)
+appsettings.Local.json
+appsettings.*.Local.json
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# =============================================================================
+# Secrets & Certificates (NEVER commit!)
+# =============================================================================
+*.pfx
+*.p12
+*.key
+*.pem
+*.cer
+*.crt
+secrets/
+credentials/
+
+# =============================================================================
+# Operating System
+# =============================================================================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# =============================================================================
+# Temporary Files
+# =============================================================================
+tmp/
+temp/
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# =============================================================================
+# Docker (optional - keep compose files, ignore runtime)
+# =============================================================================
+# docker-compose.override.yml
+
+# =============================================================================
+# Misc
+# =============================================================================
+*.orig
+*.rej
+.directory

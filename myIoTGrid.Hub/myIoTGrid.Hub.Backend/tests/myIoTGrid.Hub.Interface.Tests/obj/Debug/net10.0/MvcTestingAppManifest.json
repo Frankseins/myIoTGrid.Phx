@@ -1,7 +1,0 @@
-{
-  "myIoTGrid.Hub.Domain, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Users\/frankbersch\/RiderProjects\/myIoTGrid\/myIoTGrid.Hub\/myIoTGrid.Hub.Backend\/src\/myIoTGrid.Hub.Domain",
-  "myIoTGrid.Hub.Infrastructure, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Users\/frankbersch\/RiderProjects\/myIoTGrid\/myIoTGrid.Hub\/myIoTGrid.Hub.Backend\/src\/myIoTGrid.Hub.Infrastructure",
-  "myIoTGrid.Hub.Interface, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Users\/frankbersch\/RiderProjects\/myIoTGrid\/myIoTGrid.Hub\/myIoTGrid.Hub.Backend\/src\/myIoTGrid.Hub.Interface",
-  "myIoTGrid.Hub.Service, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Users\/frankbersch\/RiderProjects\/myIoTGrid\/myIoTGrid.Hub\/myIoTGrid.Hub.Backend\/src\/myIoTGrid.Hub.Service",
-  "myIoTGrid.Hub.Shared, Version=1.0.0.0, Culture=neutral, PublicKeyToken=null": "\/Users\/frankbersch\/RiderProjects\/myIoTGrid\/myIoTGrid.Hub\/myIoTGrid.Hub.Backend\/src\/myIoTGrid.Hub.Shared"
-}
