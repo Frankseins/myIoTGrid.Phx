@@ -6,6 +6,8 @@ using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
+using myIoTGrid.Hub.Shared.Extensions;
 
 namespace myIoTGrid.Hub.Service.Services;
 
@@ -242,6 +244,90 @@ public class ReadingService : IReadingService
             Page: filter.Page,
             PageSize: filter.PageSize
         );
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResultDto<ReadingDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        var query = _context.Readings
+            .AsNoTracking()
+            .Include(r => r.Node)
+                .ThenInclude(n => n!.Location)
+            .Include(r => r.Assignment)
+            .Where(r => r.TenantId == tenantId);
+
+        // Global search (MeasurementType, Unit)
+        if (!string.IsNullOrWhiteSpace(queryParams.Search))
+        {
+            query = query.ApplySearch(
+                queryParams.Search,
+                r => r.MeasurementType,
+                r => r.Unit);
+        }
+
+        // Filter by NodeId
+        if (queryParams.Filters?.TryGetValue("nodeId", out var nodeIdFilter) == true &&
+            Guid.TryParse(nodeIdFilter, out var nodeId))
+        {
+            query = query.Where(r => r.NodeId == nodeId);
+        }
+
+        // Filter by HubId (via Node)
+        if (queryParams.Filters?.TryGetValue("hubId", out var hubIdFilter) == true &&
+            Guid.TryParse(hubIdFilter, out var hubId))
+        {
+            query = query.Where(r => r.Node != null && r.Node.HubId == hubId);
+        }
+
+        // Filter by MeasurementType
+        if (queryParams.Filters?.TryGetValue("measurementType", out var measurementTypeFilter) == true &&
+            !string.IsNullOrEmpty(measurementTypeFilter))
+        {
+            query = query.Where(r => r.MeasurementType == measurementTypeFilter.ToLowerInvariant());
+        }
+
+        // Filter by AssignmentId
+        if (queryParams.Filters?.TryGetValue("assignmentId", out var assignmentIdFilter) == true &&
+            Guid.TryParse(assignmentIdFilter, out var assignmentId))
+        {
+            query = query.Where(r => r.AssignmentId == assignmentId);
+        }
+
+        // Filter by IsSyncedToCloud
+        if (queryParams.Filters?.TryGetValue("isSyncedToCloud", out var syncedFilter) == true &&
+            bool.TryParse(syncedFilter, out var isSynced))
+        {
+            query = query.Where(r => r.IsSyncedToCloud == isSynced);
+        }
+
+        // Date filter on Timestamp
+        query = query.ApplyDateFilter(queryParams, r => r.Timestamp);
+
+        // Total count before paging
+        var totalRecords = await query.CountAsync(ct);
+
+        // Apply sorting (default: Timestamp descending)
+        var (sortField, ascending) = queryParams.ParseSort();
+        if (string.IsNullOrWhiteSpace(sortField))
+        {
+            query = query.OrderByDescending(r => r.Timestamp);
+        }
+        else
+        {
+            query = query.ApplySort(queryParams, "Timestamp");
+        }
+
+        // Apply paging
+        query = query.ApplyPaging(queryParams);
+
+        var items = await query.ToListAsync(ct);
+
+        return PagedResultDto<ReadingDto>.Create(
+            items.ToDtos(),
+            totalRecords,
+            queryParams);
     }
 
     /// <inheritdoc />

@@ -1,4 +1,5 @@
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
 
 namespace myIoTGrid.Hub.Service.Interfaces;
 
@@ -10,6 +11,9 @@ public interface ISensorTypeService
 {
     /// <summary>Returns all SensorTypes</summary>
     Task<IEnumerable<SensorTypeDto>> GetAllAsync(CancellationToken ct = default);
+
+    /// <summary>Returns SensorTypes with paging, sorting, and filtering</summary>
+    Task<PagedResultDto<SensorTypeDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default);
 
     /// <summary>Returns all SensorTypes (cached for 1 hour)</summary>
     Task<IEnumerable<SensorTypeDto>> GetAllCachedAsync(CancellationToken ct = default);

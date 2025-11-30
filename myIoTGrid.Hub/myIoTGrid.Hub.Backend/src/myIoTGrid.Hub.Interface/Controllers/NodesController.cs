@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using myIoTGrid.Hub.Interface.Hubs;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
 
 namespace myIoTGrid.Hub.Interface.Controllers;
 

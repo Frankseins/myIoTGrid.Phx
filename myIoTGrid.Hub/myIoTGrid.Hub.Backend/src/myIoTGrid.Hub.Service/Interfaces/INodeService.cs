@@ -1,4 +1,5 @@
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
 
 namespace myIoTGrid.Hub.Service.Interfaces;
 
@@ -8,8 +9,14 @@ namespace myIoTGrid.Hub.Service.Interfaces;
 /// </summary>
 public interface INodeService
 {
+    /// <summary>Returns all Nodes</summary>
+    Task<IEnumerable<NodeDto>> GetAllAsync(CancellationToken ct = default);
+
     /// <summary>Returns all Nodes for a Hub</summary>
     Task<IEnumerable<NodeDto>> GetByHubAsync(Guid hubId, CancellationToken ct = default);
+
+    /// <summary>Returns Nodes with paging, sorting, and filtering</summary>
+    Task<PagedResultDto<NodeDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default);
 
     /// <summary>Returns a Node by ID</summary>
     Task<NodeDto?> GetByIdAsync(Guid id, CancellationToken ct = default);

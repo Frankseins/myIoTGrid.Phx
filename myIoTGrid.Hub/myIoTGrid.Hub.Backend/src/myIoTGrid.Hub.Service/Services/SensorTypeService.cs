@@ -8,6 +8,8 @@ using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
+using myIoTGrid.Hub.Shared.Extensions;
 
 namespace myIoTGrid.Hub.Service.Services;
 
@@ -49,6 +51,54 @@ public class SensorTypeService : ISensorTypeService
             .ToListAsync(ct);
 
         return sensorTypes.ToDtos();
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResultDto<SensorTypeDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default)
+    {
+        var query = _context.SensorTypes
+            .AsNoTracking()
+            .Include(st => st.Capabilities)
+            .Where(st => st.IsActive);
+
+        // Global search
+        if (!string.IsNullOrWhiteSpace(queryParams.Search))
+        {
+            var term = queryParams.Search.ToLower();
+            query = query.Where(st =>
+                st.Name.ToLower().Contains(term) ||
+                st.Code.ToLower().Contains(term) ||
+                (st.Manufacturer != null && st.Manufacturer.ToLower().Contains(term)) ||
+                st.Category.ToLower().Contains(term));
+        }
+
+        // Filter by category
+        if (queryParams.Filters?.TryGetValue("category", out var category) == true
+            && !string.IsNullOrWhiteSpace(category))
+        {
+            query = query.Where(st => st.Category == category);
+        }
+
+        // Filter by protocol
+        if (queryParams.Filters?.TryGetValue("protocol", out var protocol) == true
+            && Enum.TryParse<CommunicationProtocol>(protocol, true, out var protocolEnum))
+        {
+            query = query.Where(st => st.Protocol == protocolEnum);
+        }
+
+        // Total count before paging
+        var totalRecords = await query.CountAsync(ct);
+
+        // Sorting
+        query = query.ApplySort(queryParams, "Name");
+
+        // Paging
+        query = query.ApplyPaging(queryParams);
+
+        var items = await query.ToListAsync(ct);
+        var dtos = items.ToDtos();
+
+        return PagedResultDto<SensorTypeDto>.Create(dtos, totalRecords, queryParams);
     }
 
     /// <inheritdoc />

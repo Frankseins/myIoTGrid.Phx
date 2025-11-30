@@ -7,6 +7,8 @@ using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
+using myIoTGrid.Hub.Shared.Extensions;
 
 namespace myIoTGrid.Hub.Service.Services;
 
@@ -34,6 +36,18 @@ public class NodeService : INodeService
     }
 
     /// <inheritdoc />
+    public async Task<IEnumerable<NodeDto>> GetAllAsync(CancellationToken ct = default)
+    {
+        var nodes = await _context.Nodes
+            .AsNoTracking()
+            .Include(n => n.SensorAssignments)
+            .OrderBy(n => n.Name)
+            .ToListAsync(ct);
+
+        return nodes.Select(n => n.ToDto());
+    }
+
+    /// <inheritdoc />
     public async Task<IEnumerable<NodeDto>> GetByHubAsync(Guid hubId, CancellationToken ct = default)
     {
         var nodes = await _context.Nodes
@@ -44,6 +58,65 @@ public class NodeService : INodeService
             .ToListAsync(ct);
 
         return nodes.Select(n => n.ToDto());
+    }
+
+    /// <inheritdoc />
+    public async Task<PagedResultDto<NodeDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default)
+    {
+        var query = _context.Nodes
+            .AsNoTracking()
+            .Include(n => n.SensorAssignments)
+            .Include(n => n.Hub)
+            .AsQueryable();
+
+        // Global search (Name, NodeId)
+        if (!string.IsNullOrWhiteSpace(queryParams.Search))
+        {
+            query = query.ApplySearch(
+                queryParams.Search,
+                n => n.Name,
+                n => n.NodeId);
+        }
+
+        // Filter by HubId
+        if (queryParams.Filters?.TryGetValue("hubId", out var hubIdFilter) == true &&
+            Guid.TryParse(hubIdFilter, out var hubId))
+        {
+            query = query.Where(n => n.HubId == hubId);
+        }
+
+        // Filter by Protocol
+        if (queryParams.Filters?.TryGetValue("protocol", out var protocolFilter) == true &&
+            Enum.TryParse<Protocol>(protocolFilter, true, out var protocol))
+        {
+            query = query.Where(n => n.Protocol == protocol);
+        }
+
+        // Filter by IsOnline
+        if (queryParams.Filters?.TryGetValue("isOnline", out var isOnlineFilter) == true &&
+            bool.TryParse(isOnlineFilter, out var isOnline))
+        {
+            query = query.Where(n => n.IsOnline == isOnline);
+        }
+
+        // Date filter on LastSeen
+        query = query.ApplyDateFilter(queryParams, n => n.LastSeen);
+
+        // Total count before paging
+        var totalRecords = await query.CountAsync(ct);
+
+        // Apply sorting (default: Name ascending)
+        query = query.ApplySort(queryParams, "Name");
+
+        // Apply paging
+        query = query.ApplyPaging(queryParams);
+
+        var items = await query.ToListAsync(ct);
+
+        return PagedResultDto<NodeDto>.Create(
+            items.Select(n => n.ToDto()),
+            totalRecords,
+            queryParams);
     }
 
     /// <inheritdoc />

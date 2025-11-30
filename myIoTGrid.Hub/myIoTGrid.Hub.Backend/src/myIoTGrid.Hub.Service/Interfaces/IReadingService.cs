@@ -1,4 +1,5 @@
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.DTOs.Common;
 
 namespace myIoTGrid.Hub.Service.Interfaces;
 
@@ -17,8 +18,11 @@ public interface IReadingService
     /// <summary>Returns Readings for a Node</summary>
     Task<IEnumerable<ReadingDto>> GetByNodeAsync(Guid nodeId, ReadingFilterDto? filter = null, CancellationToken ct = default);
 
-    /// <summary>Returns Readings filtered and paginated</summary>
+    /// <summary>Returns Readings filtered and paginated (legacy)</summary>
     Task<PaginatedResultDto<ReadingDto>> GetFilteredAsync(ReadingFilterDto filter, CancellationToken ct = default);
+
+    /// <summary>Returns Readings with paging, sorting, and filtering</summary>
+    Task<PagedResultDto<ReadingDto>> GetPagedAsync(QueryParamsDto queryParams, CancellationToken ct = default);
 
     /// <summary>Returns the latest Readings per Node</summary>
     Task<IEnumerable<ReadingDto>> GetLatestByNodeAsync(Guid nodeId, CancellationToken ct = default);
