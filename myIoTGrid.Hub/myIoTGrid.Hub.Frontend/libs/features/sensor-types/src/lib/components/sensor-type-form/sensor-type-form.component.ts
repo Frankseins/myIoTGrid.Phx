@@ -114,7 +114,7 @@ export class SensorTypeFormComponent implements OnInit {
   private initForm(): void {
     this.form = this.fb.group({
       // Basic Information
-      code: ['', [Validators.required, Validators.pattern(/^[a-z0-9_]+$/)]],
+      code: ['', [Validators.required, Validators.pattern(/^[a-z0-9_-]+$/)]],
       name: ['', [Validators.required, Validators.minLength(2)]],
       manufacturer: [''],
       datasheetUrl: [''],
@@ -195,8 +195,8 @@ export class SensorTypeFormComponent implements OnInit {
       manufacturer: sensorType.manufacturer || '',
       datasheetUrl: sensorType.datasheetUrl || '',
       description: sensorType.description || '',
-      category: sensorType.category,
-      protocol: sensorType.protocol,
+      category: sensorType.category || 'custom',
+      protocol: sensorType.protocol ?? CommunicationProtocol.I2C,
       defaultI2CAddress: sensorType.defaultI2CAddress || '',
       defaultSdaPin: sensorType.defaultSdaPin,
       defaultSclPin: sensorType.defaultSclPin,
@@ -205,11 +205,11 @@ export class SensorTypeFormComponent implements OnInit {
       defaultDigitalPin: sensorType.defaultDigitalPin,
       defaultTriggerPin: sensorType.defaultTriggerPin,
       defaultEchoPin: sensorType.defaultEchoPin,
-      defaultIntervalSeconds: sensorType.defaultIntervalSeconds,
-      minIntervalSeconds: sensorType.minIntervalSeconds,
-      warmupTimeMs: sensorType.warmupTimeMs,
-      defaultOffsetCorrection: sensorType.defaultOffsetCorrection,
-      defaultGainCorrection: sensorType.defaultGainCorrection,
+      defaultIntervalSeconds: sensorType.defaultIntervalSeconds ?? 60,
+      minIntervalSeconds: sensorType.minIntervalSeconds ?? 1,
+      warmupTimeMs: sensorType.warmupTimeMs ?? 0,
+      defaultOffsetCorrection: sensorType.defaultOffsetCorrection ?? 0,
+      defaultGainCorrection: sensorType.defaultGainCorrection ?? 1.0,
       icon: sensorType.icon || 'sensors',
       color: sensorType.color || '#607d8b'
     });

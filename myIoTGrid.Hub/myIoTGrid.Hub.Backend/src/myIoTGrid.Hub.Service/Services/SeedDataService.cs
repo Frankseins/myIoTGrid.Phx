@@ -11,17 +11,20 @@ public class SeedDataService : ISeedDataService
     private readonly ITenantService _tenantService;
     private readonly ISensorTypeService _sensorTypeService;
     private readonly IAlertTypeService _alertTypeService;
+    private readonly ISensorService _sensorService;
     private readonly ILogger<SeedDataService> _logger;
 
     public SeedDataService(
         ITenantService tenantService,
         ISensorTypeService sensorTypeService,
         IAlertTypeService alertTypeService,
+        ISensorService sensorService,
         ILogger<SeedDataService> logger)
     {
         _tenantService = tenantService;
         _sensorTypeService = sensorTypeService;
         _alertTypeService = alertTypeService;
+        _sensorService = sensorService;
         _logger = logger;
     }
 
@@ -33,6 +36,7 @@ public class SeedDataService : ISeedDataService
         await SeedTenantAsync(ct);
         await SeedSensorTypesAsync(ct);
         await SeedAlertTypesAsync(ct);
+        await SeedSensorsAsync(ct);
 
         _logger.LogInformation("Seed data process completed");
     }
@@ -59,5 +63,13 @@ public class SeedDataService : ISeedDataService
         _logger.LogDebug("Seeding default alert types...");
         await _alertTypeService.SeedDefaultTypesAsync(ct);
         _logger.LogInformation("Default alert types seeded");
+    }
+
+    /// <inheritdoc />
+    public async Task SeedSensorsAsync(CancellationToken ct = default)
+    {
+        _logger.LogDebug("Seeding default sensors (one per SensorType)...");
+        await _sensorService.SeedDefaultSensorsAsync(ct);
+        _logger.LogInformation("Default sensors seeded");
     }
 }

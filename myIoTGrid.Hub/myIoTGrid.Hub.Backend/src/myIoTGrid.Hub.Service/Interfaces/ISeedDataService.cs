@@ -24,4 +24,9 @@ public interface ISeedDataService
     /// Seeds default alert types
     /// </summary>
     Task SeedAlertTypesAsync(CancellationToken ct = default);
+
+    /// <summary>
+    /// Seeds default sensors (one per SensorType)
+    /// </summary>
+    Task SeedSensorsAsync(CancellationToken ct = default);
 }

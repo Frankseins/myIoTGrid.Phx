@@ -208,7 +208,7 @@ export class SensorFormComponent implements OnInit {
       name: sensor.name,
       description: sensor.description || '',
       serialNumber: sensor.serialNumber || '',
-      intervalSecondsOverride: sensor.intervalSecondsOverride,
+      intervalSecondsOverride: sensor.intervalSecondsOverride ?? null,
       // Pin Configuration Override
       i2cAddressOverride: sensor.i2cAddressOverride || null,
       sdaPinOverride: sensor.sdaPinOverride ?? null,
@@ -219,10 +219,10 @@ export class SensorFormComponent implements OnInit {
       triggerPinOverride: sensor.triggerPinOverride ?? null,
       echoPinOverride: sensor.echoPinOverride ?? null,
       // Calibration
-      offsetCorrection: sensor.offsetCorrection,
-      gainCorrection: sensor.gainCorrection,
+      offsetCorrection: sensor.offsetCorrection ?? 0,
+      gainCorrection: sensor.gainCorrection ?? 1.0,
       calibrationNotes: sensor.calibrationNotes || '',
-      isActive: sensor.isActive
+      isActive: sensor.isActive ?? true
     });
 
     // Signal für SensorType setzen

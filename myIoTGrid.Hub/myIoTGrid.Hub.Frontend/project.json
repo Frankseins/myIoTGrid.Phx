@@ -60,7 +60,8 @@
           "buildTarget": "myIoTGrid.Hub.Frontend:build:production"
         },
         "development": {
-          "buildTarget": "myIoTGrid.Hub.Frontend:build:development"
+          "buildTarget": "myIoTGrid.Hub.Frontend:build:development",
+          "proxyConfig": "proxy.conf.json"
         },
         "local": {
           "buildTarget": "myIoTGrid.Hub.Frontend:build:development",

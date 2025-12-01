@@ -33,11 +33,13 @@
 
             <div class="form-row">
               <mat-form-field class="full"
-                              [appearance]="(isViewMode() || isEditMode()) ? 'fill' : 'outline'"
-                              [floatLabel]="(isViewMode() || isEditMode()) ? 'always' : 'auto'">
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Sensortyp</mat-label>
                 @if (isViewMode() || isEditMode()) {
+                  <!-- Display-only input, hidden input maintains form value -->
                   <input matInput [value]="getSensorTypeName(form.get('sensorTypeId')?.value)" readonly>
+                  <input type="hidden" [formControl]="$any(form.get('sensorTypeId'))">
                   @if (isEditMode()) {
                     <mat-hint>Sensortyp kann nicht geändert werden</mat-hint>
                   }

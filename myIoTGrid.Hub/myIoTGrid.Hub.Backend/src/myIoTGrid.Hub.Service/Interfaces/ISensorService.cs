@@ -32,4 +32,7 @@ public interface ISensorService
 
     /// <summary>Deletes a Sensor</summary>
     Task DeleteAsync(Guid id, CancellationToken ct = default);
+
+    /// <summary>Seeds default sensors (one per SensorType)</summary>
+    Task SeedDefaultSensorsAsync(CancellationToken ct = default);
 }

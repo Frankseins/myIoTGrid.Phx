@@ -2,25 +2,29 @@
   @if (isLoading()) {
     <myiotgrid-loading-spinner message="Lade Node..."></myiotgrid-loading-spinner>
   } @else {
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>
-          <button mat-icon-button (click)="onBack()" class="back-button">
-            <mat-icon>arrow_back</mat-icon>
-          </button>
-          {{ pageTitle() }}
-        </mat-card-title>
-        <div class="header-actions">
-          @if (isViewMode()) {
-            <button mat-raised-button color="primary" (click)="onEdit()">
-              <mat-icon>edit</mat-icon>
-              Bearbeiten
-            </button>
-          }
-        </div>
-      </mat-card-header>
+    <div class="card outlook">
+      <!-- Toolbar -->
+      <div class="toolbar outlook-toolbar">
+        <button mat-icon-button class="tbar-icon" matTooltip="Zurück zur Liste" (click)="onBack()">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
 
-      <mat-card-content>
+        <span class="toolbar-title">{{ pageTitle() }}</span>
+        <span class="spacer"></span>
+
+        <!-- Lock/Unlock Button (nur bei vorhandenen Datensätzen, nicht bei Create) -->
+        @if (!isCreateMode()) {
+          <button mat-icon-button class="tbar-icon"
+                  [class.warn]="!isViewMode()"
+                  [matTooltip]="isViewMode() ? 'Bearbeiten aktivieren' : 'Bearbeitung aktiv'"
+                  (click)="toggleEditMode()">
+            <mat-icon>{{ isViewMode() ? 'lock' : 'lock_open' }}</mat-icon>
+          </button>
+        }
+      </div>
+
+      <!-- Content -->
+      <div class="content">
         <form [formGroup]="form" (ngSubmit)="onSave()">
 
           <!-- Basic Information -->
@@ -28,10 +32,18 @@
             <h3>Allgemein</h3>
 
             <div class="form-row">
-              <mat-form-field appearance="outline">
+              <mat-form-field class="full"
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Node-ID</mat-label>
-                <input matInput formControlName="nodeId" placeholder="z.B. sensor-wohnzimmer-01">
-                <mat-hint>Eindeutige ID (Buchstaben, Zahlen, Bindestriche, Unterstriche)</mat-hint>
+                <input matInput formControlName="nodeId"
+                       [readonly]="isViewMode() || isEditMode()"
+                       placeholder="z.B. sensor-wohnzimmer-01">
+                @if (isCreateMode()) {
+                  <mat-hint>Eindeutige ID (Buchstaben, Zahlen, Bindestriche, Unterstriche)</mat-hint>
+                } @else if (isEditMode()) {
+                  <mat-hint>Node-ID kann nicht geändert werden</mat-hint>
+                }
                 @if (form.get('nodeId')?.hasError('required')) {
                   <mat-error>Node-ID ist erforderlich</mat-error>
                 }
@@ -40,9 +52,11 @@
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field class="full"
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Name</mat-label>
-                <input matInput formControlName="name" placeholder="z.B. Wohnzimmer Sensor">
+                <input matInput formControlName="name" [readonly]="isViewMode()" placeholder="z.B. Wohnzimmer Sensor">
                 @if (form.get('name')?.hasError('required')) {
                   <mat-error>Name ist erforderlich</mat-error>
                 }
@@ -53,28 +67,50 @@
             </div>
 
             <div class="form-row">
-              <mat-form-field appearance="outline">
+              <mat-form-field class="full"
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Hub</mat-label>
-                <mat-select formControlName="hubId">
-                  @for (hub of hubs(); track hub.id) {
-                    <mat-option [value]="hub.id">{{ hub.name }} ({{ hub.hubId }})</mat-option>
+                @if (isViewMode() || isEditMode()) {
+                  <!-- Display-only input that shows hub name, hidden select maintains form value -->
+                  <input matInput [value]="getHubName(form.get('hubId')?.value)" readonly>
+                  <input type="hidden" [formControl]="$any(form.get('hubId'))">
+                  @if (isEditMode()) {
+                    <mat-hint>Hub kann nicht geändert werden</mat-hint>
                   }
-                </mat-select>
+                } @else {
+                  <mat-select formControlName="hubId">
+                    @for (hub of hubs(); track hub.id) {
+                      <mat-option [value]="hub.id">{{ hub.name }} ({{ hub.hubId }})</mat-option>
+                    }
+                  </mat-select>
+                }
                 @if (form.get('hubId')?.hasError('required')) {
                   <mat-error>Hub ist erforderlich</mat-error>
                 }
               </mat-form-field>
 
-              <mat-form-field appearance="outline">
+              <mat-form-field class="full"
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Protokoll</mat-label>
-                <mat-select formControlName="protocol">
-                  @for (proto of protocols; track proto.value) {
-                    <mat-option [value]="proto.value">
-                      <mat-icon>{{ proto.value === 1 ? 'wifi' : 'cell_tower' }}</mat-icon>
-                      {{ proto.label }}
-                    </mat-option>
+                @if (isViewMode() || isEditMode()) {
+                  <!-- Display-only input that shows protocol name, hidden select maintains form value -->
+                  <input matInput [value]="getProtocolLabel(form.get('protocol')?.value)" readonly>
+                  <input type="hidden" [formControl]="$any(form.get('protocol'))">
+                  @if (isEditMode()) {
+                    <mat-hint>Protokoll kann nicht geändert werden</mat-hint>
                   }
-                </mat-select>
+                } @else {
+                  <mat-select formControlName="protocol">
+                    @for (proto of protocols; track proto.value) {
+                      <mat-option [value]="proto.value">
+                        <mat-icon>{{ proto.value === 1 ? 'wifi' : 'cell_tower' }}</mat-icon>
+                        {{ proto.label }}
+                      </mat-option>
+                    }
+                  </mat-select>
+                }
               </mat-form-field>
             </div>
           </section>
@@ -85,38 +121,46 @@
           <section class="form-section">
             <h3>Standort</h3>
 
-            <mat-form-field appearance="outline" class="full-width">
+            <mat-form-field class="full-width"
+                            [appearance]="isViewMode() ? 'fill' : 'outline'"
+                            [floatLabel]="isViewMode() ? 'always' : 'auto'">
               <mat-label>Standort-Name</mat-label>
-              <input matInput formControlName="locationName" placeholder="z.B. Wohnzimmer">
-              <mat-hint>Optionaler Name für den Standort des Sensors</mat-hint>
+              <input matInput formControlName="locationName" [readonly]="isViewMode()" placeholder="z.B. Wohnzimmer">
+              @if (!isViewMode()) {
+                <mat-hint>Optionaler Name für den Standort des Sensors</mat-hint>
+              }
             </mat-form-field>
           </section>
 
           @if (!isCreateMode()) {
             <mat-divider></mat-divider>
 
-            <!-- Firmware (only for existing nodes) -->
+            <!-- Firmware -->
             <section class="form-section">
               <h3>Firmware</h3>
 
-              <mat-form-field appearance="outline" class="full-width">
+              <mat-form-field class="full-width"
+                              [appearance]="isViewMode() ? 'fill' : 'outline'"
+                              [floatLabel]="isViewMode() ? 'always' : 'auto'">
                 <mat-label>Firmware-Version</mat-label>
-                <input matInput formControlName="firmwareVersion" placeholder="z.B. 1.0.0">
+                <input matInput formControlName="firmwareVersion" [readonly]="isViewMode()" placeholder="z.B. 1.0.0">
               </mat-form-field>
             </section>
 
             <mat-divider></mat-divider>
 
-            <!-- Sensor Assignments (only for existing nodes) -->
+            <!-- Sensor Assignments -->
             <section class="form-section">
               <div class="section-header">
                 <h3>Zugeordnete Sensoren</h3>
-                <button mat-stroked-button color="primary" type="button"
-                        (click)="openAssignmentForm()"
-                        [disabled]="getUnassignedSensors().length === 0">
-                  <mat-icon>add</mat-icon>
-                  Sensor zuordnen
-                </button>
+                @if (!isViewMode()) {
+                  <button mat-stroked-button color="primary" type="button"
+                          (click)="openAssignmentForm()"
+                          [disabled]="getUnassignedSensors().length === 0">
+                    <mat-icon>add</mat-icon>
+                    Sensor zuordnen
+                  </button>
+                }
               </div>
 
               @if (isLoadingAssignments()) {
@@ -245,20 +289,22 @@
                         }
 
                         <!-- Assignment Actions -->
-                        <div class="assignment-actions">
-                          <button mat-button type="button" (click)="toggleAssignmentActive(assignment)">
-                            <mat-icon>{{ assignment.isActive ? 'pause' : 'play_arrow' }}</mat-icon>
-                            {{ assignment.isActive ? 'Deaktivieren' : 'Aktivieren' }}
-                          </button>
-                          <button mat-button type="button" (click)="openAssignmentForm(assignment)">
-                            <mat-icon>edit</mat-icon>
-                            Bearbeiten
-                          </button>
-                          <button mat-button color="warn" type="button" (click)="deleteAssignment(assignment)">
-                            <mat-icon>delete</mat-icon>
-                            Entfernen
-                          </button>
-                        </div>
+                        @if (!isViewMode()) {
+                          <div class="assignment-actions">
+                            <button mat-button type="button" (click)="toggleAssignmentActive(assignment)">
+                              <mat-icon>{{ assignment.isActive ? 'pause' : 'play_arrow' }}</mat-icon>
+                              {{ assignment.isActive ? 'Deaktivieren' : 'Aktivieren' }}
+                            </button>
+                            <button mat-button type="button" (click)="openAssignmentForm(assignment)">
+                              <mat-icon>edit</mat-icon>
+                              Bearbeiten
+                            </button>
+                            <button mat-button color="warn" type="button" (click)="deleteAssignment(assignment)">
+                              <mat-icon>delete</mat-icon>
+                              Entfernen
+                            </button>
+                          </div>
+                        }
                       </div>
                     </mat-expansion-panel>
                   }
@@ -390,13 +436,15 @@
             </section>
           }
 
-          <!-- Preview -->
           <mat-divider></mat-divider>
 
+          <!-- Preview -->
           <section class="form-section">
             <h3>Vorschau</h3>
-            <div class="preview-card">
-              <mat-icon class="preview-icon">{{ getProtocolIcon() }}</mat-icon>
+            <div class="preview">
+              <div class="preview-icon" [style.background-color]="'#1976d2'">
+                <mat-icon>{{ getProtocolIcon() }}</mat-icon>
+              </div>
               <div class="preview-info">
                 <span class="preview-name">{{ form.get('name')?.value || 'Node Name' }}</span>
                 <code class="preview-id">{{ form.get('nodeId')?.value || 'node-id' }}</code>
@@ -406,22 +454,26 @@
               </div>
             </div>
           </section>
-
-          <!-- Actions -->
-          @if (!isViewMode()) {
-            <div class="form-actions">
-              <button mat-button type="button" (click)="onCancel()">
-                Abbrechen
-              </button>
-              <button mat-raised-button color="primary" type="submit"
-                      [disabled]="form.invalid || isSaving()">
-                <mat-icon>{{ isSaving() ? 'sync' : 'save' }}</mat-icon>
-                {{ isSaving() ? 'Speichern...' : (isCreateMode() ? 'Erstellen' : 'Speichern') }}
-              </button>
-            </div>
-          }
         </form>
-      </mat-card-content>
-    </mat-card>
+      </div>
+
+      <!-- Footer Action Bar (nur im Edit/Create Modus sichtbar) -->
+      @if (!isViewMode()) {
+        <div class="form-footer">
+          <div class="actions">
+            <button mat-button type="button" (click)="onCancel()">
+              <mat-icon>close</mat-icon>
+              Abbrechen
+            </button>
+            <button mat-flat-button color="primary" type="button"
+                    [disabled]="form.invalid || isSaving()"
+                    (click)="onSave()">
+              <mat-icon>{{ isSaving() ? 'sync' : 'check' }}</mat-icon>
+              {{ isSaving() ? 'Speichern...' : (isCreateMode() ? 'Erstellen' : 'Speichern') }}
+            </button>
+          </div>
+        </div>
+      }
+    </div>
   }
 </div>

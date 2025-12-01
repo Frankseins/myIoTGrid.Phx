@@ -222,4 +222,69 @@ public class SensorService : ISensorService
 
         _logger.LogInformation("Sensor deleted: {SensorId}", id);
     }
+
+    /// <inheritdoc />
+    public async Task SeedDefaultSensorsAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        // Get all active SensorTypes with their Capabilities
+        var sensorTypes = await _context.SensorTypes
+            .AsNoTracking()
+            .Include(st => st.Capabilities)
+            .Where(st => st.IsActive)
+            .ToListAsync(ct);
+
+        // Get existing sensors for this tenant (to avoid duplicates)
+        var existingSensorTypeIds = await _context.Sensors
+            .AsNoTracking()
+            .Where(s => s.TenantId == tenantId)
+            .Select(s => s.SensorTypeId)
+            .ToListAsync(ct);
+
+        var now = DateTime.UtcNow;
+        var newSensors = new List<Domain.Entities.Sensor>();
+
+        foreach (var sensorType in sensorTypes)
+        {
+            // Skip if a sensor of this type already exists
+            if (existingSensorTypeIds.Contains(sensorType.Id))
+            {
+                continue;
+            }
+
+            // Get all active capability IDs for this sensor type
+            var activeCapabilityIds = sensorType.Capabilities
+                .Where(c => c.IsActive)
+                .Select(c => c.Id)
+                .ToList();
+
+            var sensor = new Domain.Entities.Sensor
+            {
+                Id = Guid.NewGuid(),
+                TenantId = tenantId,
+                SensorTypeId = sensorType.Id,
+                Name = $"{sensorType.Name} #1",
+                Description = $"Default sensor for {sensorType.Name}",
+                IsActive = true,
+                OffsetCorrection = sensorType.DefaultOffsetCorrection,
+                GainCorrection = sensorType.DefaultGainCorrection,
+                ActiveCapabilityIdsJson = activeCapabilityIds.Count > 0
+                    ? System.Text.Json.JsonSerializer.Serialize(activeCapabilityIds)
+                    : null,
+                CreatedAt = now,
+                UpdatedAt = now
+            };
+
+            newSensors.Add(sensor);
+        }
+
+        if (newSensors.Count > 0)
+        {
+            await _context.Sensors.AddRangeAsync(newSensors, ct);
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            _logger.LogInformation("{Count} default Sensors created (one per SensorType)", newSensors.Count);
+        }
+    }
 }

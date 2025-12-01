@@ -202,15 +202,12 @@ export class NodeFormComponent implements OnInit {
       nodeId: node.nodeId,
       name: node.name,
       hubId: node.hubId,
-      protocol: node.protocol,
+      protocol: node.protocol ?? Protocol.WLAN,
       locationName: node.location?.name || '',
       firmwareVersion: node.firmwareVersion || ''
     });
-
-    // NodeId should not be editable after creation
-    if (this.mode() !== 'create') {
-      this.form.get('nodeId')?.disable();
-    }
+    // Note: We use [readonly] in the template instead of disable()
+    // to keep the form valid while preventing edits
   }
 
   onSave(): void {
@@ -263,8 +260,18 @@ export class NodeFormComponent implements OnInit {
     }
   }
 
-  onEdit(): void {
-    this.mode.set('edit');
+  /** Toggle zwischen View und Edit Mode (Lock-Button) */
+  toggleEditMode(): void {
+    if (this.isViewMode()) {
+      this.mode.set('edit');
+    } else {
+      this.mode.set('view');
+      // Reset form to original values when switching back to view
+      const n = this.node();
+      if (n) {
+        this.patchForm(n);
+      }
+    }
   }
 
   onCancel(): void {
@@ -273,6 +280,22 @@ export class NodeFormComponent implements OnInit {
 
   onBack(): void {
     this.router.navigate(['/nodes']);
+  }
+
+  getHubName(hubId: string): string {
+    const hub = this.hubs().find(h => h.id === hubId);
+    return hub ? `${hub.name} (${hub.hubId})` : '';
+  }
+
+  getProtocolLabel(protocol: Protocol): string {
+    switch (protocol) {
+      case Protocol.WLAN:
+        return 'WLAN';
+      case Protocol.LoRaWAN:
+        return 'LoRaWAN';
+      default:
+        return 'Unbekannt';
+    }
   }
 
   getProtocolIcon(): string {

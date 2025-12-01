@@ -11,6 +11,7 @@ public class SeedDataServiceTests
     private readonly Mock<ITenantService> _tenantServiceMock;
     private readonly Mock<ISensorTypeService> _sensorTypeServiceMock;
     private readonly Mock<IAlertTypeService> _alertTypeServiceMock;
+    private readonly Mock<ISensorService> _sensorServiceMock;
     private readonly Mock<ILogger<SeedDataService>> _loggerMock;
     private readonly SeedDataService _sut;
 
@@ -19,12 +20,14 @@ public class SeedDataServiceTests
         _tenantServiceMock = new Mock<ITenantService>();
         _sensorTypeServiceMock = new Mock<ISensorTypeService>();
         _alertTypeServiceMock = new Mock<IAlertTypeService>();
+        _sensorServiceMock = new Mock<ISensorService>();
         _loggerMock = new Mock<ILogger<SeedDataService>>();
 
         _sut = new SeedDataService(
             _tenantServiceMock.Object,
             _sensorTypeServiceMock.Object,
             _alertTypeServiceMock.Object,
+            _sensorServiceMock.Object,
             _loggerMock.Object
         );
     }
@@ -41,6 +44,8 @@ public class SeedDataServiceTests
             .Returns(Task.CompletedTask);
         _alertTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _sut.SeedAllAsync();
@@ -49,6 +54,7 @@ public class SeedDataServiceTests
         _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()), Times.Once);
         _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Once);
         _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
@@ -66,12 +72,15 @@ public class SeedDataServiceTests
         _alertTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()))
             .Callback(() => callOrder.Add("AlertType"))
             .Returns(Task.CompletedTask);
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .Callback(() => callOrder.Add("Sensor"))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _sut.SeedAllAsync();
 
         // Assert
-        callOrder.Should().ContainInOrder("Tenant", "SensorType", "AlertType");
+        callOrder.Should().ContainInOrder("Tenant", "SensorType", "AlertType", "Sensor");
     }
 
     [Fact]
@@ -87,6 +96,8 @@ public class SeedDataServiceTests
             .Returns(Task.CompletedTask);
         _alertTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(token))
             .Returns(Task.CompletedTask);
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(token))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _sut.SeedAllAsync(token);
@@ -95,6 +106,7 @@ public class SeedDataServiceTests
         _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(token), Times.Once);
         _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(token), Times.Once);
         _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(token), Times.Once);
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(token), Times.Once);
     }
 
     [Fact]
@@ -140,6 +152,25 @@ public class SeedDataServiceTests
         var act = () => _sut.SeedAllAsync();
         await act.Should().ThrowAsync<InvalidOperationException>()
             .WithMessage("AlertType error");
+    }
+
+    [Fact]
+    public async Task SeedAllAsync_WhenSensorServiceThrows_PropagatesException()
+    {
+        // Arrange
+        _tenantServiceMock.Setup(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _sensorTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _alertTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Sensor error"));
+
+        // Act & Assert
+        var act = () => _sut.SeedAllAsync();
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("Sensor error");
     }
 
     #endregion
@@ -202,6 +233,7 @@ public class SeedDataServiceTests
         // Assert
         _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
         _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -264,6 +296,7 @@ public class SeedDataServiceTests
         // Assert
         _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()), Times.Never);
         _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -326,6 +359,70 @@ public class SeedDataServiceTests
         // Assert
         _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()), Times.Never);
         _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Never);
+    }
+
+    #endregion
+
+    #region SeedSensorsAsync Tests
+
+    [Fact]
+    public async Task SeedSensorsAsync_CallsSeedDefaultSensorsAsync()
+    {
+        // Arrange
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SeedSensorsAsync();
+
+        // Assert
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task SeedSensorsAsync_WithCancellationToken_PassesToken()
+    {
+        // Arrange
+        using var cts = new CancellationTokenSource();
+        var token = cts.Token;
+
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(token))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SeedSensorsAsync(token);
+
+        // Assert
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(token), Times.Once);
+    }
+
+    [Fact]
+    public async Task SeedSensorsAsync_WhenServiceThrows_PropagatesException()
+    {
+        // Arrange
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new InvalidOperationException("Test error"));
+
+        // Act & Assert
+        var act = () => _sut.SeedSensorsAsync();
+        await act.Should().ThrowAsync<InvalidOperationException>();
+    }
+
+    [Fact]
+    public async Task SeedSensorsAsync_DoesNotCallOtherServices()
+    {
+        // Arrange
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
+
+        // Act
+        await _sut.SeedSensorsAsync();
+
+        // Assert
+        _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
+        _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Never);
     }
 
     #endregion
@@ -342,6 +439,8 @@ public class SeedDataServiceTests
             .Returns(Task.CompletedTask);
         _alertTypeServiceMock.Setup(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
+        _sensorServiceMock.Setup(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.CompletedTask);
 
         // Act
         await _sut.SeedAllAsync();
@@ -351,6 +450,7 @@ public class SeedDataServiceTests
         _tenantServiceMock.Verify(x => x.EnsureDefaultTenantAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
         _sensorTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
         _alertTypeServiceMock.Verify(x => x.SeedDefaultTypesAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
+        _sensorServiceMock.Verify(x => x.SeedDefaultSensorsAsync(It.IsAny<CancellationToken>()), Times.Exactly(2));
     }
 
     #endregion
