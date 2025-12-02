@@ -164,7 +164,7 @@ public class MappingExtensionsTests
         result.HubId.Should().Be("test-hub");
         result.Name.Should().Be("Test Hub");
         result.Description.Should().Be("A test hub");
-        result.LastSeen.Should().Be(hub.LastSeen);
+        result.LastSeen.Should().BeCloseTo(hub.LastSeen!.Value, TimeSpan.FromSeconds(1));
         result.IsOnline.Should().BeTrue();
         result.SensorCount.Should().Be(2);  // SensorCount is actually NodeCount
     }

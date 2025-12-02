@@ -126,11 +126,18 @@ public class HubControllerTests
     public async Task GetStatus_ReturnsOkWithStatus()
     {
         // Arrange
+        var services = new ServiceStatusDto(
+            Api: new ServiceState(true),
+            Database: new ServiceState(true),
+            Mqtt: new ServiceState(true),
+            Cloud: new ServiceState(false, "Not configured")
+        );
         var status = new HubStatusDto(
             IsOnline: true,
             LastSeen: DateTime.UtcNow,
             NodeCount: 5,
-            OnlineNodeCount: 3
+            OnlineNodeCount: 3,
+            Services: services
         );
 
         _hubServiceMock.Setup(s => s.GetStatusAsync(It.IsAny<CancellationToken>()))
@@ -151,8 +158,14 @@ public class HubControllerTests
     public async Task GetStatus_CallsGetStatusAsync()
     {
         // Arrange
+        var services = new ServiceStatusDto(
+            Api: new ServiceState(true),
+            Database: new ServiceState(true),
+            Mqtt: new ServiceState(false),
+            Cloud: new ServiceState(false)
+        );
         _hubServiceMock.Setup(s => s.GetStatusAsync(It.IsAny<CancellationToken>()))
-            .ReturnsAsync(new HubStatusDto(true, DateTime.UtcNow, 0, 0));
+            .ReturnsAsync(new HubStatusDto(true, DateTime.UtcNow, 0, 0, services));
 
         // Act
         await _sut.GetStatus(CancellationToken.None);
