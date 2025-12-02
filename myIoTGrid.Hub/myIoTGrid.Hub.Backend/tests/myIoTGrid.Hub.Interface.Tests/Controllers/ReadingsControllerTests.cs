@@ -32,16 +32,15 @@ public class ReadingsControllerTests
     public async Task Create_WithValidData_ReturnsCreatedAtAction()
     {
         // Arrange
-        var dto = new CreateReadingDto(
-            NodeId: "node-01",
-            EndpointId: 1,
-            MeasurementType: "temperature",
-            RawValue: 21.5,
-            Timestamp: DateTime.UtcNow
+        var dto = new CreateSensorReadingDto(
+            DeviceId: "node-01",
+            Type: "temperature",
+            Value: 21.5,
+            Timestamp: DateTimeOffset.UtcNow.ToUnixTimeSeconds()
         );
         var reading = CreateReadingDto(1, "temperature", 21.5);
 
-        _readingServiceMock.Setup(s => s.CreateAsync(dto, It.IsAny<CancellationToken>()))
+        _readingServiceMock.Setup(s => s.CreateFromSensorAsync(dto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(reading);
 
         // Act
@@ -57,15 +56,14 @@ public class ReadingsControllerTests
     public async Task Create_WithMinimalData_ReturnsCreatedAtAction()
     {
         // Arrange
-        var dto = new CreateReadingDto(
-            NodeId: "node-01",
-            EndpointId: 2,
-            MeasurementType: "humidity",
-            RawValue: 65.0
+        var dto = new CreateSensorReadingDto(
+            DeviceId: "node-01",
+            Type: "humidity",
+            Value: 65.0
         );
         var reading = CreateReadingDto(2, "humidity", 65.0);
 
-        _readingServiceMock.Setup(s => s.CreateAsync(dto, It.IsAny<CancellationToken>()))
+        _readingServiceMock.Setup(s => s.CreateFromSensorAsync(dto, It.IsAny<CancellationToken>()))
             .ReturnsAsync(reading);
 
         // Act

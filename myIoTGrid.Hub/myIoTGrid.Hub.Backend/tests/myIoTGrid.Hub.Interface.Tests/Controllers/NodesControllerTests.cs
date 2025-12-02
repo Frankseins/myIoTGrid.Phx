@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Moq;
@@ -48,6 +49,15 @@ public class NodesControllerTests
             _assignmentServiceMock.Object,
             _hubServiceMock.Object,
             _hubContextMock.Object);
+
+        // Setup HttpContext for Register endpoint tests
+        var httpContext = new DefaultHttpContext();
+        httpContext.Request.Scheme = "http";
+        httpContext.Request.Host = new HostString("localhost", 5000);
+        _sut.ControllerContext = new ControllerContext
+        {
+            HttpContext = httpContext
+        };
     }
 
     #region GetAll Tests
@@ -205,28 +215,41 @@ public class NodesControllerTests
     #region Register Tests
 
     [Fact]
-    public async Task Register_WithHubId_ReturnsOkWithNode()
+    public async Task Register_WithValidData_ReturnsOkWithRegistrationResponse()
     {
         // Arrange
-        var dto = new CreateNodeDto(
-            NodeId: "node-01",
+        var dto = new RegisterNodeDto(
+            SerialNumber: "node-01",
+            FirmwareVersion: "1.0.0",
+            HardwareType: "ESP32",
+            Capabilities: new List<string> { "temperature", "humidity" },
             Name: "Test Node",
-            HubIdentifier: null,
-            HubId: _hubId,
-            Protocol: ProtocolDto.WLAN,
             Location: null
         );
         var node = CreateNodeDto("node-01", "Test Node");
+        var defaultHub = new HubDto(
+            Id: _hubId,
+            TenantId: _tenantId,
+            HubId: "default-hub",
+            Name: "Default Hub",
+            Description: null,
+            LastSeen: null,
+            IsOnline: true,
+            CreatedAt: DateTime.UtcNow,
+            SensorCount: 0
+        );
 
-        _nodeServiceMock.Setup(s => s.RegisterOrUpdateAsync(It.IsAny<CreateNodeDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(node);
+        _hubServiceMock.Setup(s => s.GetDefaultHubAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(defaultHub);
+        _nodeServiceMock.Setup(s => s.RegisterOrUpdateWithStatusAsync(It.IsAny<CreateNodeDto>(), "1.0.0", It.IsAny<CancellationToken>()))
+            .ReturnsAsync((node, true));
 
         // Act
         var result = await _sut.Register(dto, CancellationToken.None);
 
         // Assert
         var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
-        okResult.Value.Should().BeOfType<NodeDto>();
+        okResult.Value.Should().BeOfType<NodeRegistrationResponseDto>();
 
         _clientProxyMock.Verify(
             c => c.SendCoreAsync("NodeRegistered", It.IsAny<object[]>(), It.IsAny<CancellationToken>()),
@@ -234,53 +257,59 @@ public class NodesControllerTests
     }
 
     [Fact]
-    public async Task Register_WithHubIdentifier_LooksUpHubAndReturnsOk()
+    public async Task Register_WithLoRaHardwareType_SetsLoRaWANProtocol()
     {
         // Arrange
-        var dto = new CreateNodeDto(
-            NodeId: "node-01",
-            Name: "Test Node",
-            HubIdentifier: "hub-01",
-            HubId: null,
-            Protocol: ProtocolDto.WLAN,
+        var dto = new RegisterNodeDto(
+            SerialNumber: "lora-node-01",
+            FirmwareVersion: "1.0.0",
+            HardwareType: "LORA",
+            Capabilities: new List<string> { "temperature" },
+            Name: "LoRa Node",
             Location: null
         );
-        var hubDto = new HubDto(
+        var node = CreateNodeDto("lora-node-01", "LoRa Node");
+        var defaultHub = new HubDto(
             Id: _hubId,
             TenantId: _tenantId,
-            HubId: "hub-01",
-            Name: "Test Hub",
+            HubId: "default-hub",
+            Name: "Default Hub",
             Description: null,
             LastSeen: null,
             IsOnline: true,
             CreatedAt: DateTime.UtcNow,
             SensorCount: 0
         );
-        var node = CreateNodeDto("node-01", "Test Node");
 
-        _hubServiceMock.Setup(s => s.GetOrCreateByHubIdAsync("hub-01", It.IsAny<CancellationToken>()))
-            .ReturnsAsync(hubDto);
-        _nodeServiceMock.Setup(s => s.RegisterOrUpdateAsync(It.IsAny<CreateNodeDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(node);
+        _hubServiceMock.Setup(s => s.GetDefaultHubAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(defaultHub);
+        _nodeServiceMock.Setup(s => s.RegisterOrUpdateWithStatusAsync(
+                It.Is<CreateNodeDto>(d => d.Protocol == ProtocolDto.LoRaWAN),
+                "1.0.0",
+                It.IsAny<CancellationToken>()))
+            .ReturnsAsync((node, true));
 
         // Act
         var result = await _sut.Register(dto, CancellationToken.None);
 
         // Assert
         result.Should().BeOfType<OkObjectResult>();
-        _hubServiceMock.Verify(s => s.GetOrCreateByHubIdAsync("hub-01", It.IsAny<CancellationToken>()), Times.Once);
+        _nodeServiceMock.Verify(s => s.RegisterOrUpdateWithStatusAsync(
+            It.Is<CreateNodeDto>(d => d.Protocol == ProtocolDto.LoRaWAN),
+            "1.0.0",
+            It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
-    public async Task Register_WithoutHubIdOrIdentifier_ReturnsBadRequest()
+    public async Task Register_WithoutSerialNumber_ReturnsBadRequest()
     {
         // Arrange
-        var dto = new CreateNodeDto(
-            NodeId: "node-01",
-            Name: "Test Node",
-            HubIdentifier: null,
-            HubId: null,
-            Protocol: ProtocolDto.WLAN,
+        var dto = new RegisterNodeDto(
+            SerialNumber: "",
+            FirmwareVersion: "1.0.0",
+            HardwareType: "ESP32",
+            Capabilities: null,
+            Name: null,
             Location: null
         );
 
@@ -290,7 +319,7 @@ public class NodesControllerTests
         // Assert
         var badRequest = result.Should().BeOfType<BadRequestObjectResult>().Subject;
         var problemDetails = badRequest.Value.Should().BeOfType<ProblemDetails>().Subject;
-        problemDetails.Detail.Should().Contain("HubId or HubIdentifier");
+        problemDetails.Detail.Should().Contain("SerialNumber");
     }
 
     #endregion

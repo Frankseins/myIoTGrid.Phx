@@ -8,6 +8,6 @@ export interface ApiConfig {
 export const API_CONFIG = new InjectionToken<ApiConfig>('API_CONFIG');
 
 export const defaultApiConfig: ApiConfig = {
-  baseUrl: 'http://localhost:5000/api',
-  signalRUrl: 'http://localhost:5000/hubs/sensors'
+  baseUrl: 'http://localhost:5001/api',
+  signalRUrl: 'http://localhost:5001/hubs/sensors'
 };
