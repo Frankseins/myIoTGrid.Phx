@@ -1,0 +1,8 @@
+{
+  "name": "hal_esp32",
+  "version": "1.0.0",
+  "description": "Hardware Abstraction Layer for ESP32 platform",
+  "keywords": "hal, esp32, arduino",
+  "license": "MIT",
+  "platforms": ["espressif32"]
+}

@@ -1,0 +1,73 @@
+# myIoTGrid Sensor Simulator - Docker Compose
+# Use with Hub Backend for local development and testing
+
+version: '3.8'
+
+services:
+  sensor-sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: myiotgrid-sensor-sim
+    restart: unless-stopped
+    environment:
+      - HUB_HOST=${HUB_HOST:-hub-api}
+      - HUB_PORT=${HUB_PORT:-5000}
+    volumes:
+      - sensor-data:/data
+    networks:
+      - myiotgrid
+    depends_on:
+      - hub-api
+    labels:
+      - "com.myiotgrid.service=sensor"
+      - "com.myiotgrid.type=simulator"
+
+  # Multiple sensor instances can be created
+  sensor-sim-2:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: myiotgrid-sensor-sim-2
+    restart: unless-stopped
+    environment:
+      - HUB_HOST=${HUB_HOST:-hub-api}
+      - HUB_PORT=${HUB_PORT:-5000}
+    volumes:
+      - sensor-data-2:/data
+    networks:
+      - myiotgrid
+    depends_on:
+      - hub-api
+    profiles:
+      - multi-sensor
+
+  # Hub API (reference from Hub project)
+  hub-api:
+    image: ghcr.io/myiotgrid/hub-api:latest
+    container_name: myiotgrid-hub-api
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__HubDb=Data Source=/data/hub.db
+    volumes:
+      - hub-data:/data
+    networks:
+      - myiotgrid
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  sensor-data:
+  sensor-data-2:
+  hub-data:
+
+networks:
+  myiotgrid:
+    driver: bridge

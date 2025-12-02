@@ -1,0 +1,7 @@
+{
+  "name": "controller",
+  "version": "1.0.0",
+  "description": "Node controller and configuration management for myIoTGrid Sensor",
+  "keywords": "controller, config, management",
+  "license": "MIT"
+}

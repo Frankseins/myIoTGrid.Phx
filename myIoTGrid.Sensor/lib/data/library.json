@@ -1,0 +1,10 @@
+{
+  "name": "data",
+  "version": "1.0.0",
+  "description": "Data structures and JSON serialization for myIoTGrid Sensor",
+  "keywords": "data, json, serialization",
+  "license": "MIT",
+  "dependencies": {
+    "bblanchon/ArduinoJson": "^7.2.1"
+  }
+}

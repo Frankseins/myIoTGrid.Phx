@@ -29,6 +29,25 @@ export interface HubStatus {
   lastSeen?: string;
   nodeCount: number;
   onlineNodeCount: number;
+  services: ServiceStatus;
+}
+
+/**
+ * Individual service status
+ */
+export interface ServiceStatus {
+  api: ServiceState;
+  database: ServiceState;
+  mqtt: ServiceState;
+  cloud: ServiceState;
+}
+
+/**
+ * State of a single service
+ */
+export interface ServiceState {
+  isOnline: boolean;
+  message?: string;
 }
 
 export interface CreateHubDto {

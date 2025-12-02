@@ -98,15 +98,15 @@ export class NavigationRailComponent implements OnInit, OnDestroy {
     { icon: 'router', label: 'Nodes', route: '/nodes', disabled: false },
     { icon: 'memory', label: 'Sensoren', route: '/sensors', disabled: false },
     { icon: 'category', label: 'Sensortypen', route: '/sensor-types', disabled: false },
-    { icon: 'hub', label: 'Hubs', route: '/hubs', disabled: false },
     { icon: 'warning', label: 'Warnungen', route: '/alerts', disabled: false }
   ];
 
   /**
    * Settings destination (shown at bottom, above profile)
+   * Routes to /hubs which contains Hub settings and system info
    */
   private settingsDestination: NavigationDestination[] = [
-    { icon: 'settings', label: 'Einstellungen', route: '/settings', disabled: false }
+    { icon: 'settings', label: 'Einstellungen', route: '/hubs', disabled: false }
   ];
 
   /**
@@ -154,7 +154,7 @@ export class NavigationRailComponent implements OnInit, OnDestroy {
    * Open user profile / settings
    */
   public openProfile(): void {
-    this.router.navigate(['/settings']);
+    this.router.navigate(['/hubs']);
   }
 
   /**

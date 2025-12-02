@@ -1,0 +1,8 @@
+{
+  "name": "hal_native",
+  "version": "1.0.0",
+  "description": "Hardware Abstraction Layer for Native/Linux platform",
+  "keywords": "hal, native, linux, simulator",
+  "license": "MIT",
+  "platforms": ["native"]
+}

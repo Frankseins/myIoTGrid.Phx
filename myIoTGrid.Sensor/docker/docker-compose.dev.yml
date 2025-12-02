@@ -1,0 +1,24 @@
+# myIoTGrid Sensor Simulator - Development Docker Compose
+# Standalone sensor simulator pointing to local Hub
+
+version: '3.8'
+
+services:
+  sensor-sim:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: myiotgrid-sensor-sim-dev
+    restart: "no"
+    environment:
+      # Point to Hub running on host machine
+      - HUB_HOST=host.docker.internal
+      - HUB_PORT=5000
+    volumes:
+      - ./data:/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    labels:
+      - "com.myiotgrid.service=sensor"
+      - "com.myiotgrid.type=simulator"
+      - "com.myiotgrid.env=development"

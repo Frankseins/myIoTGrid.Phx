@@ -1,0 +1,7 @@
+{
+  "name": "connection",
+  "version": "1.0.0",
+  "description": "Connection implementations for myIoTGrid Sensor (HTTP, MQTT, LoRaWAN)",
+  "keywords": "connection, http, mqtt, lorawan",
+  "license": "MIT"
+}

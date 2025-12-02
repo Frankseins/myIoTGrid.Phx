@@ -31,8 +31,10 @@ export const appRoutes: Routes = [
     loadChildren: () => import('@myiotgrid/alerts/feature').then(m => m.ALERTS_ROUTES)
   },
   {
+    // Redirect old settings route to hubs
     path: 'settings',
-    loadChildren: () => import('@myiotgrid/settings/feature').then(m => m.SETTINGS_ROUTES)
+    redirectTo: '/hubs',
+    pathMatch: 'full'
   },
   {
     path: '**',
