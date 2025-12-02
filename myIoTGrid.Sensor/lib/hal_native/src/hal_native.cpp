@@ -14,7 +14,7 @@
 #include <sys/stat.h>
 
 #include <curl/curl.h>
-#include <uuid/uuid.h>
+#include <random>
 
 namespace {
 
@@ -53,13 +53,24 @@ void ensureDataDir() {
     }
 }
 
-// Generate UUID string
+// Generate UUID string (simple random-based implementation)
 std::string generateUUID() {
-    uuid_t uuid;
-    uuid_generate(uuid);
-    char uuidStr[37];
-    uuid_unparse_upper(uuid, uuidStr);
-    return std::string(uuidStr);
+    static std::random_device rd;
+    static std::mt19937_64 gen(rd());
+    static std::uniform_int_distribution<uint64_t> dis;
+
+    uint64_t part1 = dis(gen);
+    uint64_t part2 = dis(gen);
+
+    char buffer[37];
+    snprintf(buffer, sizeof(buffer),
+             "%08X-%04X-%04X-%04X-%012llX",
+             static_cast<uint32_t>(part1 >> 32),
+             static_cast<uint16_t>((part1 >> 16) & 0xFFFF),
+             static_cast<uint16_t>((part1 & 0x0FFF) | 0x4000),  // Version 4
+             static_cast<uint16_t>((part2 >> 48) & 0x3FFF | 0x8000),  // Variant
+             static_cast<unsigned long long>(part2 & 0xFFFFFFFFFFFFULL));
+    return std::string(buffer);
 }
 
 } // anonymous namespace

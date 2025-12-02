@@ -57,7 +57,7 @@ bool NodeController::setup() {
     // If no valid config, register with Hub
     if (!config.isValid()) {
         // Create temporary connection for registration
-        connection::ConnectionConfig connConfig;
+        data::ConnectionConfig connConfig;
         connConfig.mode = "http";
         connConfig.endpoint = endpoint;
         connection_ = createConnection(connConfig);
@@ -72,8 +72,8 @@ bool NodeController::setup() {
         config = configManager_.getConfig();
     }
 
-    // Create connection based on config
-    if (!connection_ || connection_->getEndpoint() != config.connection.endpoint) {
+    // Create connection based on config (always recreate if endpoint changed)
+    if (!connection_) {
         connection_ = createConnection(config.connection);
     }
 
