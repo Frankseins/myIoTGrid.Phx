@@ -321,7 +321,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("INTEGER");
 
-                    b.Property<Guid>("AssignmentId")
+                    b.Property<Guid?>("AssignmentId")
                         .HasColumnType("TEXT");
 
                     b.Property<bool>("IsSyncedToCloud")
@@ -916,8 +916,7 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.HasOne("myIoTGrid.Hub.Domain.Entities.NodeSensorAssignment", "Assignment")
                         .WithMany("Readings")
                         .HasForeignKey("AssignmentId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.SetNull);
 
                     b.HasOne("myIoTGrid.Hub.Domain.Entities.Node", "Node")
                         .WithMany("Readings")

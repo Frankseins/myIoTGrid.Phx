@@ -71,13 +71,15 @@ bool JsonSerializer::deserializeNodeConfig(const std::string& json, NodeConfig& 
         return false;
     }
 
-    // Required fields
-    if (!doc["deviceId"].is<const char*>()) {
-        hal::log_error("Missing required field: deviceId");
+    // Required fields - accept both "deviceId" and "nodeId" from Hub
+    if (doc["deviceId"].is<const char*>()) {
+        config.deviceId = doc["deviceId"].as<std::string>();
+    } else if (doc["nodeId"].is<const char*>()) {
+        config.deviceId = doc["nodeId"].as<std::string>();
+    } else {
+        hal::log_error("Missing required field: deviceId or nodeId");
         return false;
     }
-
-    config.deviceId = doc["deviceId"].as<std::string>();
     config.name = doc["name"] | "";
     config.location = doc["location"] | "";
     config.intervalSeconds = doc["intervalSeconds"] | 60;

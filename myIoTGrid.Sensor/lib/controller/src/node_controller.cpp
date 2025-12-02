@@ -2,6 +2,7 @@
 #include "http_connection.h"
 #include "hal/hal.h"
 #include "config.h"
+#include <cmath>
 
 namespace controller {
 

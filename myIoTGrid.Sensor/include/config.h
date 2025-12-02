@@ -23,7 +23,7 @@ namespace config {
 
 // Hub API Configuration
 constexpr const char* DEFAULT_HUB_HOST = "localhost";
-constexpr int DEFAULT_HUB_PORT = 5000;
+constexpr int DEFAULT_HUB_PORT = 5001;
 constexpr const char* DEFAULT_HUB_PROTOCOL = "http";
 
 // WiFi Configuration (ESP32 only)
@@ -42,7 +42,7 @@ constexpr const char* STORAGE_KEY_CONFIG = "config";
 constexpr const char* STORAGE_KEY_DEVICE_ID = "device_id";
 
 // API Endpoints
-constexpr const char* API_REGISTER = "/api/devices/register";
+constexpr const char* API_REGISTER = "/api/Nodes/register";
 constexpr const char* API_READINGS = "/api/readings";
 
 // Serial Number Prefix

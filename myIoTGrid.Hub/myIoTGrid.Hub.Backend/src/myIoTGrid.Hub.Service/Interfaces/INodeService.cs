@@ -45,6 +45,9 @@ public interface INodeService
     /// <summary>Auto-Register: Creates node if not exists, updates if exists</summary>
     Task<NodeDto> RegisterOrUpdateAsync(CreateNodeDto dto, CancellationToken ct = default);
 
+    /// <summary>Auto-Register with status: Creates node if not exists, updates if exists. Returns (NodeDto, isNew)</summary>
+    Task<(NodeDto Node, bool IsNew)> RegisterOrUpdateWithStatusAsync(CreateNodeDto dto, string? firmwareVersion = null, CancellationToken ct = default);
+
     /// <summary>Deletes a Node</summary>
     Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
 }

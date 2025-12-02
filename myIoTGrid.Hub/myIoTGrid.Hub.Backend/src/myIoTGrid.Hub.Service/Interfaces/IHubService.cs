@@ -22,6 +22,9 @@ public interface IHubService
     /// <summary>Ensures the default Hub exists (called during startup)</summary>
     Task EnsureDefaultHubAsync(CancellationToken ct = default);
 
+    /// <summary>Returns the default Hub for sensor registration</summary>
+    Task<HubDto> GetDefaultHubAsync(CancellationToken ct = default);
+
     // === Legacy API (for internal use) ===
 
     /// <summary>Returns a Hub by ID</summary>

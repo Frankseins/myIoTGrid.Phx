@@ -4,6 +4,7 @@ using myIoTGrid.Hub.Interface.Hubs;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
 using myIoTGrid.Hub.Shared.DTOs.Common;
+using myIoTGrid.Hub.Shared.Enums;
 
 namespace myIoTGrid.Hub.Interface.Controllers;
 
@@ -121,41 +122,67 @@ public class NodesController : ControllerBase
     }
 
     /// <summary>
-    /// Registers or updates a Node (auto-registration)
+    /// Registers or updates a Node from sensor device (ESP32/LoRa32)
     /// </summary>
-    /// <param name="dto">Node data</param>
+    /// <param name="dto">Sensor registration data</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>The registered/updated Node</returns>
+    /// <returns>Registration response with node info and sensor configuration</returns>
     [HttpPost("register")]
-    [ProducesResponseType(typeof(NodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(NodeRegistrationResponseDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Register([FromBody] CreateNodeDto dto, CancellationToken ct)
+    public async Task<IActionResult> Register([FromBody] RegisterNodeDto dto, CancellationToken ct)
     {
-        // If HubId is provided as string, look it up
-        var hubId = dto.HubId;
-        if (hubId == null && !string.IsNullOrWhiteSpace(dto.HubIdentifier))
-        {
-            var hub = await _hubService.GetOrCreateByHubIdAsync(dto.HubIdentifier, ct);
-            hubId = hub.Id;
-        }
-
-        if (hubId == null)
+        if (string.IsNullOrWhiteSpace(dto.SerialNumber))
         {
             return BadRequest(new ProblemDetails
             {
                 Title = "Invalid Request",
-                Detail = "Either HubId or HubIdentifier must be provided"
+                Detail = "SerialNumber is required"
             });
         }
 
-        var createDto = dto with { HubId = hubId };
-        var node = await _nodeService.RegisterOrUpdateAsync(createDto, ct);
+        // Get or create default hub for sensor registration
+        var defaultHub = await _hubService.GetDefaultHubAsync(ct);
+
+        // Convert RegisterNodeDto to CreateNodeDto
+        var createDto = new CreateNodeDto(
+            NodeId: dto.SerialNumber,
+            Name: dto.Name ?? $"Sensor {dto.SerialNumber}",
+            HubId: defaultHub.Id,
+            Protocol: dto.HardwareType?.ToUpperInvariant() == "LORA" ? ProtocolDto.LoRaWAN : ProtocolDto.WLAN,
+            Location: dto.Location
+        );
+
+        var (node, isNew) = await _nodeService.RegisterOrUpdateWithStatusAsync(createDto, dto.FirmwareVersion, ct);
 
         // Notify clients
-        await _hubContext.Clients.Group($"hub:{hubId}")
+        await _hubContext.Clients.Group($"hub:{defaultHub.Id}")
             .SendAsync("NodeRegistered", node, ct);
 
-        return Ok(node);
+        // Build sensor configuration from capabilities
+        // Enable all sensors that the device reported as capabilities
+        var sensors = dto.Capabilities?
+            .Select(cap => new SensorConfigDto(Type: cap, Enabled: true, Pin: -1))
+            .ToList() ?? [];
+
+        // Build connection configuration - use the request's base URL
+        var request = HttpContext.Request;
+        var endpoint = $"{request.Scheme}://{request.Host}";
+        var connection = new ConnectionConfigDto(Mode: "http", Endpoint: endpoint);
+
+        var response = new NodeRegistrationResponseDto(
+            NodeId: node.Id,
+            SerialNumber: node.NodeId,
+            Name: node.Name,
+            Location: node.Location?.Name,
+            IntervalSeconds: 60, // Default interval
+            Sensors: sensors,
+            Connection: connection,
+            IsNewNode: isNew,
+            Message: isNew ? "Node registered successfully" : "Node updated successfully"
+        );
+
+        return Ok(response);
     }
 
     /// <summary>

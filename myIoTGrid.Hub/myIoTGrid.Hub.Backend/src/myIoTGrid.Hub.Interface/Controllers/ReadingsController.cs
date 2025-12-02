@@ -32,9 +32,27 @@ public class ReadingsController : ControllerBase
     [HttpPost]
     [ProducesResponseType(typeof(ReadingDto), StatusCodes.Status201Created)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
-    public async Task<IActionResult> Create([FromBody] CreateReadingDto dto, CancellationToken ct)
+    public async Task<IActionResult> Create([FromBody] CreateSensorReadingDto dto, CancellationToken ct)
     {
-        var reading = await _readingService.CreateAsync(dto, ct);
+        if (string.IsNullOrWhiteSpace(dto.DeviceId))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "DeviceId is required"
+            });
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Type))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "Type is required"
+            });
+        }
+
+        var reading = await _readingService.CreateFromSensorAsync(dto, ct);
         return CreatedAtAction(nameof(GetById), new { id = reading.Id }, reading);
     }
 

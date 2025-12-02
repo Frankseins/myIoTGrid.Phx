@@ -9,7 +9,7 @@ public record ReadingDto(
     Guid TenantId,
     Guid NodeId,
     string NodeName,
-    Guid AssignmentId,
+    Guid? AssignmentId,
     string MeasurementType,
     double RawValue,
     double Value,
@@ -65,4 +65,16 @@ public record ReadingValueDto(
     int EndpointId,
     string MeasurementType,
     double RawValue
+);
+
+/// <summary>
+/// DTO for creating a Reading from sensor device (ESP32/LoRa32).
+/// Accepts the firmware's native payload format.
+/// </summary>
+public record CreateSensorReadingDto(
+    string DeviceId,
+    string Type,
+    double Value,
+    string? Unit = null,
+    long? Timestamp = null
 );

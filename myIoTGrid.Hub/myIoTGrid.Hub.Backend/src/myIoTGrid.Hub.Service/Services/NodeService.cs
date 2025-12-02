@@ -302,6 +302,41 @@ public class NodeService : INodeService
     }
 
     /// <inheritdoc />
+    public async Task<(NodeDto Node, bool IsNew)> RegisterOrUpdateWithStatusAsync(CreateNodeDto dto, string? firmwareVersion = null, CancellationToken ct = default)
+    {
+        var hubId = dto.HubId ?? throw new InvalidOperationException("HubId is required");
+
+        var existingNode = await _context.Nodes
+            .Include(n => n.SensorAssignments)
+            .FirstOrDefaultAsync(n => n.HubId == hubId && n.NodeId == dto.NodeId, ct);
+
+        if (existingNode != null)
+        {
+            // Update existing node
+            existingNode.LastSeen = DateTime.UtcNow;
+            existingNode.IsOnline = true;
+
+            if (!string.IsNullOrEmpty(dto.Name))
+                existingNode.Name = dto.Name;
+
+            if (dto.Location != null)
+                existingNode.Location = dto.Location.ToEntity();
+
+            if (!string.IsNullOrEmpty(firmwareVersion))
+                existingNode.FirmwareVersion = firmwareVersion;
+
+            await _unitOfWork.SaveChangesAsync(ct);
+
+            _logger.LogDebug("Node updated via registration: {NodeId}", dto.NodeId);
+            return (existingNode.ToDto(), false);
+        }
+
+        // Create new Node
+        var newNode = await CreateAsync(dto, ct);
+        return (newNode, true);
+    }
+
+    /// <inheritdoc />
     public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var node = await _context.Nodes

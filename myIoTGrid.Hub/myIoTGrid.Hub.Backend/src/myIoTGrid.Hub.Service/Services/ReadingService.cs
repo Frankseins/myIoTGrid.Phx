@@ -146,6 +146,68 @@ public class ReadingService : IReadingService
     }
 
     /// <inheritdoc />
+    public async Task<ReadingDto> CreateFromSensorAsync(CreateSensorReadingDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        // DeviceId from sensor is the Node's internal GUID (returned from registration)
+        if (!Guid.TryParse(dto.DeviceId, out var nodeGuid))
+        {
+            throw new InvalidOperationException($"Invalid DeviceId format: {dto.DeviceId}. Expected GUID.");
+        }
+
+        // Find Node by GUID
+        var node = await _context.Nodes
+            .FirstOrDefaultAsync(n => n.Id == nodeGuid, ct);
+
+        if (node == null)
+        {
+            throw new InvalidOperationException($"Node not found: {dto.DeviceId}");
+        }
+
+        // Convert timestamp (Unix seconds to DateTime)
+        var timestamp = dto.Timestamp.HasValue
+            ? DateTimeOffset.FromUnixTimeSeconds(dto.Timestamp.Value).UtcDateTime
+            : DateTime.UtcNow;
+
+        // Create reading without assignment lookup (simplified sensor flow)
+        var reading = new Reading
+        {
+            TenantId = tenantId,
+            NodeId = node.Id,
+            AssignmentId = null, // Sensor readings without assignments
+            MeasurementType = dto.Type.ToLowerInvariant(),
+            RawValue = dto.Value,
+            Value = dto.Value, // No calibration without assignment
+            Unit = dto.Unit ?? string.Empty,
+            Timestamp = timestamp,
+            IsSyncedToCloud = false
+        };
+
+        _context.Readings.Add(reading);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        // Update Node LastSeen
+        await _nodeService.UpdateLastSeenAsync(node.Id, ct);
+
+        // Reload with navigation properties
+        reading = await _context.Readings
+            .Include(r => r.Node)
+                .ThenInclude(n => n!.Location)
+            .FirstAsync(r => r.Id == reading.Id, ct);
+
+        var readingDto = reading.ToDto();
+
+        // SignalR Notification
+        await _signalRNotificationService.NotifyNewReadingAsync(readingDto, ct);
+
+        _logger.LogDebug("Sensor reading created: {NodeId} {Type}={Value} {Unit}",
+            node.NodeId, dto.Type, dto.Value, dto.Unit ?? "");
+
+        return readingDto;
+    }
+
+    /// <inheritdoc />
     public async Task<ReadingDto?> GetByIdAsync(long id, CancellationToken ct = default)
     {
         var reading = await _context.Readings

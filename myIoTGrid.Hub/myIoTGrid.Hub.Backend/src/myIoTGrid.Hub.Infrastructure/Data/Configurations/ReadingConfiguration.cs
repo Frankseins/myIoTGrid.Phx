@@ -27,8 +27,9 @@ public class ReadingConfiguration : IEntityTypeConfiguration<Reading>
         builder.Property(r => r.NodeId)
             .IsRequired();
 
+        // AssignmentId is optional - direct sensor readings don't have an assignment
         builder.Property(r => r.AssignmentId)
-            .IsRequired();
+            .IsRequired(false);
 
         builder.Property(r => r.MeasurementType)
             .IsRequired()
@@ -60,7 +61,8 @@ public class ReadingConfiguration : IEntityTypeConfiguration<Reading>
         builder.HasOne(r => r.Assignment)
             .WithMany(a => a.Readings)
             .HasForeignKey(r => r.AssignmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes for Performance (time-series queries)
         builder.HasIndex(r => r.TenantId);

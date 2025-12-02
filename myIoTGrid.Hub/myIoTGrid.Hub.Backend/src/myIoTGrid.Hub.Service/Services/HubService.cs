@@ -225,6 +225,27 @@ public class HubService : IHubService
     }
 
     /// <inheritdoc />
+    public async Task<HubDto> GetDefaultHubAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        var hub = await _context.Hubs
+            .Include(h => h.Nodes)
+            .FirstOrDefaultAsync(h => h.TenantId == tenantId, ct);
+
+        if (hub == null)
+        {
+            // Ensure default hub exists
+            await EnsureDefaultHubAsync(ct);
+            hub = await _context.Hubs
+                .Include(h => h.Nodes)
+                .FirstOrDefaultAsync(h => h.TenantId == tenantId, ct);
+        }
+
+        return hub!.ToDto();
+    }
+
+    /// <inheritdoc />
     public async Task<HubDto?> UpdateAsync(Guid id, UpdateHubDto dto, CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();

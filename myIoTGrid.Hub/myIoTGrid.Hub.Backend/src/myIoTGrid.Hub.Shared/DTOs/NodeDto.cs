@@ -51,3 +51,48 @@ public record NodeStatusDto(
     DateTime? LastSeen,
     int? BatteryLevel
 );
+
+/// <summary>
+/// DTO for sensor/device registration (from ESP32/LoRa32 devices)
+/// </summary>
+public record RegisterNodeDto(
+    string SerialNumber,
+    string? FirmwareVersion = null,
+    string? HardwareType = null,
+    List<string>? Capabilities = null,
+    string? Name = null,
+    LocationDto? Location = null
+);
+
+/// <summary>
+/// Response DTO for node registration
+/// Contains configuration for the sensor device to initialize its sensors
+/// </summary>
+public record NodeRegistrationResponseDto(
+    Guid NodeId,
+    string SerialNumber,
+    string Name,
+    string? Location,
+    int IntervalSeconds,
+    List<SensorConfigDto> Sensors,
+    ConnectionConfigDto Connection,
+    bool IsNewNode,
+    string Message
+);
+
+/// <summary>
+/// Sensor configuration for device registration response
+/// </summary>
+public record SensorConfigDto(
+    string Type,
+    bool Enabled,
+    int Pin = -1
+);
+
+/// <summary>
+/// Connection configuration for device registration response
+/// </summary>
+public record ConnectionConfigDto(
+    string Mode,
+    string Endpoint
+);

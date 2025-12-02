@@ -57,7 +57,8 @@ public class NodeSensorAssignmentConfiguration : IEntityTypeConfiguration<NodeSe
         builder.HasMany(a => a.Readings)
             .WithOne(r => r.Assignment)
             .HasForeignKey(r => r.AssignmentId)
-            .OnDelete(DeleteBehavior.Cascade);
+            .IsRequired(false)
+            .OnDelete(DeleteBehavior.SetNull);
 
         // Indexes
         builder.HasIndex(a => a.NodeId);

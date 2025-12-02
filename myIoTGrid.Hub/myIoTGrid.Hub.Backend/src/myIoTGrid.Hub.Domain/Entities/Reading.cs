@@ -17,8 +17,8 @@ public class Reading
     /// <summary>FK to the Node</summary>
     public Guid NodeId { get; set; }
 
-    /// <summary>FK to the NodeSensorAssignment</summary>
-    public Guid AssignmentId { get; set; }
+    /// <summary>FK to the NodeSensorAssignment (nullable for direct sensor readings)</summary>
+    public Guid? AssignmentId { get; set; }
 
     /// <summary>Type of measurement (e.g., "temperature", "humidity")</summary>
     public string MeasurementType { get; set; } = string.Empty;
