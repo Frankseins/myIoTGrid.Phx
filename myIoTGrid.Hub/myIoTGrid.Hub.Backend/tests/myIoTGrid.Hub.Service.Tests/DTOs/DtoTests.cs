@@ -138,98 +138,123 @@ public class NodeDtoTests
 
 #endregion
 
-#region SensorDto Tests (Sensor Instance with Calibration)
+#region SensorDto Tests (v3.0 Two-Tier Model)
 
 /// <summary>
-/// Tests for Sensor DTOs (concrete sensor instances with calibration settings)
-/// New 3-tier model: SensorType (Library) → Sensor (Instance) → NodeSensorAssignment (Binding)
+/// Tests for Sensor DTOs (complete sensor definitions with hardware config and calibration)
+/// v3.0 Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class SensorDtoTests
 {
     [Fact]
     public void SensorDto_ShouldBeCreatedWithAllProperties()
     {
-        // Arrange & Act - New model: Sensor has calibration, no NodeId/EndpointId
-        var activeCapabilityIds = new List<Guid> { Guid.NewGuid(), Guid.NewGuid() };
+        // Arrange & Act - v3.0: SensorDto is complete sensor definition
+        var capabilities = new List<SensorCapabilityDto>
+        {
+            new SensorCapabilityDto(
+                Id: Guid.NewGuid(),
+                SensorId: Guid.NewGuid(),
+                MeasurementType: "temperature",
+                DisplayName: "Temperature",
+                Unit: "°C",
+                MinValue: -40,
+                MaxValue: 80,
+                Resolution: 0.1,
+                Accuracy: 0.5,
+                MatterClusterId: 0x0402,
+                MatterClusterName: "TemperatureMeasurement",
+                SortOrder: 0,
+                IsActive: true
+            )
+        };
+
         var dto = new SensorDto(
             Id: Guid.NewGuid(),
             TenantId: Guid.NewGuid(),
-            SensorTypeId: Guid.NewGuid(),
-            SensorTypeCode: "dht22",
-            SensorTypeName: "DHT22 Temperature & Humidity Sensor",
+            Code: "dht22-wohnzimmer",
             Name: "Living Room DHT22",
             Description: "Temperature and humidity sensor in living room",
             SerialNumber: "DHT22-001",
-            IntervalSecondsOverride: 30,
-            // Pin Configuration Override
-            I2CAddressOverride: "0x77",
-            SdaPinOverride: 21,
-            SclPinOverride: 22,
-            OneWirePinOverride: null,
-            AnalogPinOverride: null,
-            DigitalPinOverride: 4,
-            TriggerPinOverride: null,
-            EchoPinOverride: null,
-            // Calibration
+            Manufacturer: "Aosong",
+            Model: "DHT22",
+            DatasheetUrl: "https://example.com/dht22.pdf",
+            Protocol: CommunicationProtocolDto.OneWire,
+            I2CAddress: null,
+            SdaPin: null,
+            SclPin: null,
+            OneWirePin: 4,
+            AnalogPin: null,
+            DigitalPin: null,
+            TriggerPin: null,
+            EchoPin: null,
+            IntervalSeconds: 60,
+            MinIntervalSeconds: 2,
+            WarmupTimeMs: 1000,
             OffsetCorrection: 0.5,
             GainCorrection: 1.02,
             LastCalibratedAt: DateTime.UtcNow.AddMonths(-1),
             CalibrationNotes: "Calibrated with reference thermometer",
             CalibrationDueAt: DateTime.UtcNow.AddMonths(5),
-            ActiveCapabilityIds: activeCapabilityIds,
+            Category: "climate",
+            Icon: "thermostat",
+            Color: "#FF5722",
+            Capabilities: capabilities,
             IsActive: true,
             CreatedAt: DateTime.UtcNow.AddDays(-10),
             UpdatedAt: DateTime.UtcNow
         );
 
         // Assert
-        dto.SensorTypeCode.Should().Be("dht22");
-        dto.SensorTypeName.Should().Be("DHT22 Temperature & Humidity Sensor");
+        dto.Code.Should().Be("dht22-wohnzimmer");
         dto.Name.Should().Be("Living Room DHT22");
         dto.Description.Should().Be("Temperature and humidity sensor in living room");
         dto.SerialNumber.Should().Be("DHT22-001");
-        dto.IntervalSecondsOverride.Should().Be(30);
+        dto.Protocol.Should().Be(CommunicationProtocolDto.OneWire);
+        dto.IntervalSeconds.Should().Be(60);
         dto.OffsetCorrection.Should().Be(0.5);
         dto.GainCorrection.Should().Be(1.02);
         dto.LastCalibratedAt.Should().NotBeNull();
         dto.CalibrationNotes.Should().Be("Calibrated with reference thermometer");
-        dto.ActiveCapabilityIds.Should().HaveCount(2);
+        dto.Capabilities.Should().HaveCount(1);
         dto.IsActive.Should().BeTrue();
     }
 
     [Fact]
     public void CreateSensorDto_ShouldHaveRequiredAndOptionalValues()
     {
-        // Act - New model: CreateSensorDto has SensorTypeId (Guid), no EndpointId
-        var sensorTypeId = Guid.NewGuid();
+        // Act - v3.0: CreateSensorDto has Code, Name, Protocol, Category
         var dto = new CreateSensorDto(
-            SensorTypeId: sensorTypeId,
+            Code: "bme280-kitchen",
             Name: "Kitchen Sensor",
+            Protocol: CommunicationProtocolDto.I2C,
+            Category: "climate",
             Description: "Sensor in the kitchen",
             SerialNumber: "BME280-042"
         );
 
         // Assert
-        dto.SensorTypeId.Should().Be(sensorTypeId);
+        dto.Code.Should().Be("bme280-kitchen");
         dto.Name.Should().Be("Kitchen Sensor");
+        dto.Protocol.Should().Be(CommunicationProtocolDto.I2C);
+        dto.Category.Should().Be("climate");
         dto.Description.Should().Be("Sensor in the kitchen");
         dto.SerialNumber.Should().Be("BME280-042");
-        dto.IntervalSecondsOverride.Should().BeNull();
-        dto.ActiveCapabilityIds.Should().BeNull();
     }
 
     [Fact]
     public void CreateSensorDto_ShouldAllowMinimalProperties()
     {
-        // Act - New model: Only SensorTypeId and Name required
-        var sensorTypeId = Guid.NewGuid();
+        // Act - v3.0: Only Code, Name, Protocol, Category required
         var dto = new CreateSensorDto(
-            SensorTypeId: sensorTypeId,
-            Name: "Simple Sensor"
+            Code: "simple-sensor",
+            Name: "Simple Sensor",
+            Protocol: CommunicationProtocolDto.Analog,
+            Category: "custom"
         );
 
         // Assert
-        dto.SensorTypeId.Should().Be(sensorTypeId);
+        dto.Code.Should().Be("simple-sensor");
         dto.Name.Should().Be("Simple Sensor");
         dto.Description.Should().BeNull();
         dto.SerialNumber.Should().BeNull();
@@ -238,7 +263,7 @@ public class SensorDtoTests
     [Fact]
     public void UpdateSensorDto_ShouldAllowPartialUpdates()
     {
-        // Act - New model: UpdateSensorDto for updating sensor properties
+        // Act - v3.0: UpdateSensorDto for updating sensor properties
         var dto = new UpdateSensorDto(
             Name: "Updated Name",
             IsActive: false
@@ -254,7 +279,7 @@ public class SensorDtoTests
     [Fact]
     public void CalibrateSensorDto_ShouldSetCalibrationValues()
     {
-        // Act - New model: CalibrateSensorDto for sensor calibration
+        // Act - CalibrateSensorDto for sensor calibration
         var dueDate = DateTime.UtcNow.AddMonths(6);
         var dto = new CalibrateSensorDto(
             OffsetCorrection: 0.5,
@@ -805,119 +830,21 @@ public class TenantDtoTests
 
 #endregion
 
-#region SensorTypeDto Tests (New 3-tier Model)
+#region SensorCapabilityDto Tests (v3.0 Two-Tier Model)
 
-public class SensorTypeDtoTests
+/// <summary>
+/// Tests for SensorCapabilityDto (v3.0).
+/// Capabilities now belong to Sensor directly, not SensorType.
+/// </summary>
+public class SensorCapabilityDtoTests
 {
     [Fact]
-    public void SensorTypeDto_ShouldBeCreatedWithAllProperties()
-    {
-        // Act - New model: SensorTypeDto has Id, Code, Name, Protocol, Capabilities
-        var capabilities = new List<SensorTypeCapabilityDto>
-        {
-            new SensorTypeCapabilityDto(
-                Id: Guid.NewGuid(),
-                MeasurementType: "temperature",
-                DisplayName: "Temperature",
-                Unit: "°C",
-                MinValue: -40,
-                MaxValue: 80,
-                Resolution: 0.1,
-                Accuracy: 0.5,
-                MatterClusterId: 0x0402,
-                MatterClusterName: "TemperatureMeasurement",
-                SortOrder: 0,
-                IsActive: true
-            )
-        };
-
-        var dto = new SensorTypeDto(
-            Id: Guid.NewGuid(),
-            Code: "dht22",
-            Name: "DHT22 Temperature & Humidity Sensor",
-            Manufacturer: "Aosong",
-            DatasheetUrl: "https://example.com/dht22.pdf",
-            Description: "Digital temperature and humidity sensor",
-            Protocol: CommunicationProtocolDto.OneWire,
-            DefaultI2CAddress: null,
-            DefaultSdaPin: null,
-            DefaultSclPin: null,
-            DefaultOneWirePin: 4,
-            DefaultAnalogPin: null,
-            DefaultDigitalPin: null,
-            DefaultTriggerPin: null,
-            DefaultEchoPin: null,
-            DefaultIntervalSeconds: 60,
-            MinIntervalSeconds: 2,
-            WarmupTimeMs: 1000,
-            DefaultOffsetCorrection: 0,
-            DefaultGainCorrection: 1.0,
-            Category: "climate",
-            Icon: "thermostat",
-            Color: "#FF5722",
-            IsGlobal: true,
-            IsActive: true,
-            Capabilities: capabilities,
-            CreatedAt: DateTime.UtcNow,
-            UpdatedAt: DateTime.UtcNow
-        );
-
-        // Assert
-        dto.Code.Should().Be("dht22");
-        dto.Name.Should().Be("DHT22 Temperature & Humidity Sensor");
-        dto.Protocol.Should().Be(CommunicationProtocolDto.OneWire);
-        dto.Capabilities.Should().HaveCount(1);
-        dto.IsGlobal.Should().BeTrue();
-    }
-
-    [Fact]
-    public void SensorTypeDto_ShouldAllowNullOptionalValues()
-    {
-        // Act - New model with minimal properties
-        var dto = new SensorTypeDto(
-            Id: Guid.NewGuid(),
-            Code: "custom_sensor",
-            Name: "Custom Sensor",
-            Manufacturer: null,
-            DatasheetUrl: null,
-            Description: null,
-            Protocol: CommunicationProtocolDto.Analog,
-            DefaultI2CAddress: null,
-            DefaultSdaPin: null,
-            DefaultSclPin: null,
-            DefaultOneWirePin: null,
-            DefaultAnalogPin: 34,
-            DefaultDigitalPin: null,
-            DefaultTriggerPin: null,
-            DefaultEchoPin: null,
-            DefaultIntervalSeconds: 60,
-            MinIntervalSeconds: 1,
-            WarmupTimeMs: 0,
-            DefaultOffsetCorrection: 0,
-            DefaultGainCorrection: 1.0,
-            Category: "custom",
-            Icon: null,
-            Color: null,
-            IsGlobal: false,
-            IsActive: true,
-            Capabilities: Enumerable.Empty<SensorTypeCapabilityDto>(),
-            CreatedAt: DateTime.UtcNow,
-            UpdatedAt: DateTime.UtcNow
-        );
-
-        // Assert
-        dto.Code.Should().Be("custom_sensor");
-        dto.Manufacturer.Should().BeNull();
-        dto.Description.Should().BeNull();
-        dto.IsGlobal.Should().BeFalse();
-    }
-
-    [Fact]
-    public void SensorTypeCapabilityDto_ContainsMatterClusterInfo()
+    public void SensorCapabilityDto_ContainsMatterClusterInfo()
     {
         // Act - Capability contains Matter cluster info
-        var capability = new SensorTypeCapabilityDto(
+        var capability = new SensorCapabilityDto(
             Id: Guid.NewGuid(),
+            SensorId: Guid.NewGuid(),
             MeasurementType: "temperature",
             DisplayName: "Temperature",
             Unit: "°C",
@@ -937,6 +864,26 @@ public class SensorTypeDtoTests
         capability.Unit.Should().Be("°C");
         capability.MinValue.Should().Be(-40);
         capability.MaxValue.Should().Be(80);
+    }
+
+    [Fact]
+    public void CreateSensorCapabilityDto_ShouldHaveRequiredAndOptionalValues()
+    {
+        // Act - v3.0: CreateSensorCapabilityDto
+        var dto = new CreateSensorCapabilityDto(
+            MeasurementType: "humidity",
+            DisplayName: "Humidity",
+            Unit: "%"
+        );
+
+        // Assert
+        dto.MeasurementType.Should().Be("humidity");
+        dto.DisplayName.Should().Be("Humidity");
+        dto.Unit.Should().Be("%");
+        dto.MinValue.Should().BeNull();
+        dto.MaxValue.Should().BeNull();
+        dto.Resolution.Should().Be(0.01);
+        dto.Accuracy.Should().Be(0.5);
     }
 }
 

@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
+using myIoTGrid.Hub.Domain.Entities;
+using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Domain.Interfaces;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
@@ -11,25 +14,32 @@ using myIoTGrid.Hub.Shared.Extensions;
 namespace myIoTGrid.Hub.Service.Services;
 
 /// <summary>
-/// Service for Sensor instance management.
-/// Concrete sensors with calibration settings.
+/// Service for Sensor management (v3.0).
+/// Complete sensor definition with hardware configuration and calibration.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class SensorService : ISensorService
 {
     private readonly HubDbContext _context;
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
+    private readonly IMemoryCache _cache;
     private readonly ILogger<SensorService> _logger;
+
+    private const string CacheKeyPrefix = "Sensors_";
+    private static readonly TimeSpan CacheDuration = TimeSpan.FromMinutes(30);
 
     public SensorService(
         HubDbContext context,
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
+        IMemoryCache cache,
         ILogger<SensorService> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
+        _cache = cache;
         _logger = logger;
     }
 
@@ -40,9 +50,10 @@ public class SensorService : ISensorService
 
         var sensors = await _context.Sensors
             .AsNoTracking()
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .Where(s => s.TenantId == tenantId)
-            .OrderBy(s => s.Name)
+            .OrderBy(s => s.Category)
+            .ThenBy(s => s.Name)
             .ToListAsync(ct);
 
         return sensors.ToDtos();
@@ -55,7 +66,7 @@ public class SensorService : ISensorService
 
         var query = _context.Sensors
             .AsNoTracking()
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .Where(s => s.TenantId == tenantId);
 
         // Global search
@@ -64,17 +75,33 @@ public class SensorService : ISensorService
             var term = queryParams.Search.ToLower();
             query = query.Where(s =>
                 s.Name.ToLower().Contains(term) ||
+                s.Code.ToLower().Contains(term) ||
                 (s.Description != null && s.Description.ToLower().Contains(term)) ||
                 (s.SerialNumber != null && s.SerialNumber.ToLower().Contains(term)) ||
-                (s.SensorType != null && s.SensorType.Name.ToLower().Contains(term)) ||
-                (s.SensorType != null && s.SensorType.Code.ToLower().Contains(term)));
+                (s.Manufacturer != null && s.Manufacturer.ToLower().Contains(term)) ||
+                s.Category.ToLower().Contains(term));
         }
 
-        // Filter by sensorTypeId
-        if (queryParams.Filters?.TryGetValue("sensorTypeId", out var sensorTypeId) == true
-            && Guid.TryParse(sensorTypeId, out var sensorTypeGuid))
+        // Filter by category
+        if (queryParams.Filters?.TryGetValue("category", out var category) == true
+            && !string.IsNullOrWhiteSpace(category))
         {
-            query = query.Where(s => s.SensorTypeId == sensorTypeGuid);
+            query = query.Where(s => s.Category == category.ToLower());
+        }
+
+        // Filter by protocol
+        if (queryParams.Filters?.TryGetValue("protocol", out var protocol) == true
+            && Enum.TryParse<CommunicationProtocol>(protocol, true, out var protocolEnum))
+        {
+            query = query.Where(s => s.Protocol == protocolEnum);
+        }
+
+        // Filter by manufacturer
+        if (queryParams.Filters?.TryGetValue("manufacturer", out var manufacturer) == true
+            && !string.IsNullOrWhiteSpace(manufacturer))
+        {
+            var manufacturerLower = manufacturer.ToLower();
+            query = query.Where(s => s.Manufacturer != null && s.Manufacturer.ToLower().Contains(manufacturerLower));
         }
 
         // Filter by isActive
@@ -104,21 +131,36 @@ public class SensorService : ISensorService
     {
         var sensor = await _context.Sensors
             .AsNoTracking()
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
         return sensor?.ToDto();
     }
 
     /// <inheritdoc />
-    public async Task<IEnumerable<SensorDto>> GetBySensorTypeAsync(Guid sensorTypeId, CancellationToken ct = default)
+    public async Task<SensorDto?> GetByCodeAsync(string code, CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();
+        var normalizedCode = code.ToLowerInvariant();
+
+        var sensor = await _context.Sensors
+            .AsNoTracking()
+            .Include(s => s.Capabilities)
+            .FirstOrDefaultAsync(s => s.TenantId == tenantId && s.Code == normalizedCode, ct);
+
+        return sensor?.ToDto();
+    }
+
+    /// <inheritdoc />
+    public async Task<IEnumerable<SensorDto>> GetByCategoryAsync(string category, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+        var normalizedCategory = category.ToLowerInvariant();
 
         var sensors = await _context.Sensors
             .AsNoTracking()
-            .Include(s => s.SensorType)
-            .Where(s => s.TenantId == tenantId && s.SensorTypeId == sensorTypeId)
+            .Include(s => s.Capabilities)
+            .Where(s => s.TenantId == tenantId && s.Category == normalizedCategory && s.IsActive)
             .OrderBy(s => s.Name)
             .ToListAsync(ct);
 
@@ -126,18 +168,31 @@ public class SensorService : ISensorService
     }
 
     /// <inheritdoc />
+    public async Task<IEnumerable<SensorCapabilityDto>> GetCapabilitiesAsync(Guid sensorId, CancellationToken ct = default)
+    {
+        var capabilities = await _context.SensorCapabilities
+            .AsNoTracking()
+            .Where(c => c.SensorId == sensorId && c.IsActive)
+            .OrderBy(c => c.SortOrder)
+            .ToListAsync(ct);
+
+        return capabilities.ToDtos();
+    }
+
+    /// <inheritdoc />
     public async Task<SensorDto> CreateAsync(CreateSensorDto dto, CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();
+        var normalizedCode = dto.Code.ToLowerInvariant();
 
-        // Verify SensorType exists
-        var sensorTypeExists = await _context.SensorTypes
+        // Check if Code already exists for this tenant
+        var exists = await _context.Sensors
             .AsNoTracking()
-            .AnyAsync(st => st.Id == dto.SensorTypeId, ct);
+            .AnyAsync(s => s.TenantId == tenantId && s.Code == normalizedCode, ct);
 
-        if (!sensorTypeExists)
+        if (exists)
         {
-            throw new InvalidOperationException($"SensorType with Id '{dto.SensorTypeId}' not found.");
+            throw new InvalidOperationException($"Sensor with Code '{normalizedCode}' already exists.");
         }
 
         var sensor = dto.ToEntity(tenantId);
@@ -145,13 +200,14 @@ public class SensorService : ISensorService
         _context.Sensors.Add(sensor);
         await _unitOfWork.SaveChangesAsync(ct);
 
-        // Reload with SensorType
+        // Reload with capabilities
         sensor = await _context.Sensors
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .FirstAsync(s => s.Id == sensor.Id, ct);
 
-        _logger.LogInformation("Sensor created: {Name} (Type: {SensorTypeId})",
-            sensor.Name, sensor.SensorTypeId);
+        InvalidateCache(tenantId);
+
+        _logger.LogInformation("Sensor created: {Code} ({Name})", sensor.Code, sensor.Name);
 
         return sensor.ToDto();
     }
@@ -160,7 +216,7 @@ public class SensorService : ISensorService
     public async Task<SensorDto> UpdateAsync(Guid id, UpdateSensorDto dto, CancellationToken ct = default)
     {
         var sensor = await _context.Sensors
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
         if (sensor == null)
@@ -171,6 +227,8 @@ public class SensorService : ISensorService
         sensor.ApplyUpdate(dto);
         await _unitOfWork.SaveChangesAsync(ct);
 
+        InvalidateCache(sensor.TenantId);
+
         _logger.LogInformation("Sensor updated: {SensorId}", id);
 
         return sensor.ToDto();
@@ -180,7 +238,7 @@ public class SensorService : ISensorService
     public async Task<SensorDto> CalibrateAsync(Guid id, CalibrateSensorDto dto, CancellationToken ct = default)
     {
         var sensor = await _context.Sensors
-            .Include(s => s.SensorType)
+            .Include(s => s.Capabilities)
             .FirstOrDefaultAsync(s => s.Id == id, ct);
 
         if (sensor == null)
@@ -190,6 +248,8 @@ public class SensorService : ISensorService
 
         sensor.ApplyCalibration(dto);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        InvalidateCache(sensor.TenantId);
 
         _logger.LogInformation("Sensor calibrated: {SensorId} (Offset: {Offset}, Gain: {Gain})",
             id, dto.OffsetCorrection, dto.GainCorrection);
@@ -217,8 +277,11 @@ public class SensorService : ISensorService
             throw new InvalidOperationException("Cannot delete sensor with active assignments. Remove assignments first.");
         }
 
+        var tenantId = sensor.TenantId;
         _context.Sensors.Remove(sensor);
         await _unitOfWork.SaveChangesAsync(ct);
+
+        InvalidateCache(tenantId);
 
         _logger.LogInformation("Sensor deleted: {SensorId}", id);
     }
@@ -228,55 +291,156 @@ public class SensorService : ISensorService
     {
         var tenantId = _tenantService.GetCurrentTenantId();
 
-        // Get all active SensorTypes with their Capabilities
-        var sensorTypes = await _context.SensorTypes
-            .AsNoTracking()
-            .Include(st => st.Capabilities)
-            .Where(st => st.IsActive)
-            .ToListAsync(ct);
-
-        // Get existing sensors for this tenant (to avoid duplicates)
-        var existingSensorTypeIds = await _context.Sensors
+        // Check if any sensors already exist for this tenant
+        var existingCodes = await _context.Sensors
             .AsNoTracking()
             .Where(s => s.TenantId == tenantId)
-            .Select(s => s.SensorTypeId)
+            .Select(s => s.Code)
             .ToListAsync(ct);
 
+        var newSensors = new List<Sensor>();
         var now = DateTime.UtcNow;
-        var newSensors = new List<Domain.Entities.Sensor>();
 
-        foreach (var sensorType in sensorTypes)
+        // DHT22 - Temperature & Humidity
+        if (!existingCodes.Contains("dht22"))
         {
-            // Skip if a sensor of this type already exists
-            if (existingSensorTypeIds.Contains(sensorType.Id))
-            {
-                continue;
-            }
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "dht22",
+                name: "DHT22 (AM2302)",
+                manufacturer: "Aosong",
+                protocol: CommunicationProtocol.Digital,
+                category: "climate",
+                icon: "thermostat",
+                color: "#FF5722",
+                digitalPin: 4,
+                intervalSeconds: 2,
+                minIntervalSeconds: 2,
+                capabilities: new[]
+                {
+                    CreateCapability("temperature", "Temperatur", "°C", -40, 80, 0.1, 0.5, 1026, "TemperatureMeasurement"),
+                    CreateCapability("humidity", "Luftfeuchtigkeit", "%", 0, 100, 1, 2, 1029, "RelativeHumidityMeasurement")
+                },
+                now: now
+            ));
+        }
 
-            // Get all active capability IDs for this sensor type
-            var activeCapabilityIds = sensorType.Capabilities
-                .Where(c => c.IsActive)
-                .Select(c => c.Id)
-                .ToList();
+        // BME280 - Temperature, Humidity & Pressure
+        if (!existingCodes.Contains("bme280"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "bme280",
+                name: "GY-BME280 Breakout (I²C)",
+                manufacturer: "Bosch",
+                protocol: CommunicationProtocol.I2C,
+                category: "climate",
+                icon: "cloud",
+                color: "#2196F3",
+                i2CAddress: "0x76",
+                sdaPin: 21,
+                sclPin: 22,
+                intervalSeconds: 60,
+                capabilities: new[]
+                {
+                    CreateCapability("temperature", "Temperatur", "°C", -40, 85, 0.01, 0.5, 1026, "TemperatureMeasurement"),
+                    CreateCapability("humidity", "Luftfeuchtigkeit", "%", 0, 100, 0.008, 3, 1029, "RelativeHumidityMeasurement"),
+                    CreateCapability("pressure", "Luftdruck", "hPa", 300, 1100, 0.18, 1, 1027, "PressureMeasurement")
+                },
+                now: now
+            ));
+        }
 
-            var sensor = new Domain.Entities.Sensor
-            {
-                Id = Guid.NewGuid(),
-                TenantId = tenantId,
-                SensorTypeId = sensorType.Id,
-                Name = $"{sensorType.Name} #1",
-                Description = $"Default sensor for {sensorType.Name}",
-                IsActive = true,
-                OffsetCorrection = sensorType.DefaultOffsetCorrection,
-                GainCorrection = sensorType.DefaultGainCorrection,
-                ActiveCapabilityIdsJson = activeCapabilityIds.Count > 0
-                    ? System.Text.Json.JsonSerializer.Serialize(activeCapabilityIds)
-                    : null,
-                CreatedAt = now,
-                UpdatedAt = now
-            };
+        // BH1750 - Light
+        if (!existingCodes.Contains("bh1750"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "bh1750",
+                name: "BH1750 Lichtsensor (I²C)",
+                manufacturer: "ROHM",
+                protocol: CommunicationProtocol.I2C,
+                category: "climate",
+                icon: "light_mode",
+                color: "#FFC107",
+                i2CAddress: "0x23",
+                sdaPin: 21,
+                sclPin: 22,
+                intervalSeconds: 60,
+                capabilities: new[]
+                {
+                    CreateCapability("illuminance", "Helligkeit", "lux", 1, 65535, 1, 20, 1024, "IlluminanceMeasurement")
+                },
+                now: now
+            ));
+        }
 
-            newSensors.Add(sensor);
+        // DS18B20 - Water Temperature
+        if (!existingCodes.Contains("ds18b20"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "ds18b20",
+                name: "DS18B20 wasserdicht",
+                manufacturer: "Maxim",
+                protocol: CommunicationProtocol.OneWire,
+                category: "water",
+                icon: "water",
+                color: "#00BCD4",
+                oneWirePin: 4,
+                intervalSeconds: 60,
+                capabilities: new[]
+                {
+                    CreateCapability("water_temperature", "Wassertemperatur", "°C", -55, 125, 0.0625, 0.5, 64513)
+                },
+                now: now
+            ));
+        }
+
+        // JSN-SR04T - Water Level
+        if (!existingCodes.Contains("jsn-sr04t"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "jsn-sr04t",
+                name: "JSN-SR04T Ultraschall wasserdicht",
+                protocol: CommunicationProtocol.UltraSonic,
+                category: "water",
+                icon: "waves",
+                color: "#03A9F4",
+                triggerPin: 5,
+                echoPin: 18,
+                intervalSeconds: 30,
+                capabilities: new[]
+                {
+                    CreateCapability("water_level", "Wasserstand", "cm", 25, 450, 1, 1, 64512)
+                },
+                now: now
+            ));
+        }
+
+        // NEO-6M - GPS
+        if (!existingCodes.Contains("neo-6m"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "neo-6m",
+                name: "GPS-Modul NEO-6M mit Antenne",
+                manufacturer: "u-blox",
+                protocol: CommunicationProtocol.UART,
+                category: "location",
+                icon: "location_on",
+                color: "#4CAF50",
+                intervalSeconds: 1,
+                capabilities: new[]
+                {
+                    CreateCapability("latitude", "Breitengrad", "°", -90, 90, 0.000001, 2.5),
+                    CreateCapability("longitude", "Längengrad", "°", -180, 180, 0.000001, 2.5),
+                    CreateCapability("altitude", "Höhe", "m", -500, 50000, 0.1, 10),
+                    CreateCapability("speed", "Geschwindigkeit", "km/h", 0, 500, 0.1, 0.5)
+                },
+                now: now
+            ));
         }
 
         if (newSensors.Count > 0)
@@ -284,7 +448,102 @@ public class SensorService : ISensorService
             await _context.Sensors.AddRangeAsync(newSensors, ct);
             await _unitOfWork.SaveChangesAsync(ct);
 
-            _logger.LogInformation("{Count} default Sensors created (one per SensorType)", newSensors.Count);
+            InvalidateCache(tenantId);
+
+            _logger.LogInformation("{Count} default Sensors created", newSensors.Count);
         }
+    }
+
+    private void InvalidateCache(Guid tenantId)
+    {
+        _cache.Remove($"{CacheKeyPrefix}{tenantId}");
+    }
+
+    private static Sensor CreateSensor(
+        Guid tenantId,
+        string code,
+        string name,
+        CommunicationProtocol protocol,
+        string category,
+        string icon,
+        string color,
+        DateTime now,
+        string? manufacturer = null,
+        string? i2CAddress = null,
+        int? sdaPin = null,
+        int? sclPin = null,
+        int? oneWirePin = null,
+        int? analogPin = null,
+        int? digitalPin = null,
+        int? triggerPin = null,
+        int? echoPin = null,
+        int intervalSeconds = 60,
+        int minIntervalSeconds = 1,
+        SensorCapability[]? capabilities = null)
+    {
+        var sensorId = Guid.NewGuid();
+        var sensor = new Sensor
+        {
+            Id = sensorId,
+            TenantId = tenantId,
+            Code = code,
+            Name = name,
+            Manufacturer = manufacturer,
+            Protocol = protocol,
+            I2CAddress = i2CAddress,
+            SdaPin = sdaPin,
+            SclPin = sclPin,
+            OneWirePin = oneWirePin,
+            AnalogPin = analogPin,
+            DigitalPin = digitalPin,
+            TriggerPin = triggerPin,
+            EchoPin = echoPin,
+            IntervalSeconds = intervalSeconds,
+            MinIntervalSeconds = minIntervalSeconds,
+            Category = category,
+            Icon = icon,
+            Color = color,
+            IsActive = true,
+            CreatedAt = now,
+            UpdatedAt = now
+        };
+
+        if (capabilities != null)
+        {
+            foreach (var cap in capabilities)
+            {
+                cap.SensorId = sensorId;
+                sensor.Capabilities.Add(cap);
+            }
+        }
+
+        return sensor;
+    }
+
+    private static SensorCapability CreateCapability(
+        string measurementType,
+        string displayName,
+        string unit,
+        double? minValue,
+        double? maxValue,
+        double resolution,
+        double accuracy,
+        uint? matterClusterId = null,
+        string? matterClusterName = null)
+    {
+        return new SensorCapability
+        {
+            Id = Guid.NewGuid(),
+            MeasurementType = measurementType,
+            DisplayName = displayName,
+            Unit = unit,
+            MinValue = minValue,
+            MaxValue = maxValue,
+            Resolution = resolution,
+            Accuracy = accuracy,
+            MatterClusterId = matterClusterId,
+            MatterClusterName = matterClusterName,
+            IsActive = true
+        };
     }
 }

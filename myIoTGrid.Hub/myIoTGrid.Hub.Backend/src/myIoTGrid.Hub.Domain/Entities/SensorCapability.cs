@@ -3,17 +3,17 @@ using myIoTGrid.Hub.Domain.Interfaces;
 namespace myIoTGrid.Hub.Domain.Entities;
 
 /// <summary>
-/// Defines a measurement capability of a SensorType.
-/// One SensorType can have multiple capabilities (e.g., BME280: temperature, humidity, pressure).
+/// Defines a measurement capability of a Sensor.
+/// One Sensor can have multiple capabilities (e.g., BME280: temperature, humidity, pressure).
 /// Matter-konform: Corresponds to a Matter Cluster.
 /// </summary>
-public class SensorTypeCapability : IEntity
+public class SensorCapability : IEntity
 {
     /// <summary>Primary key</summary>
     public Guid Id { get; set; }
 
-    /// <summary>FK to the parent SensorType</summary>
-    public Guid SensorTypeId { get; set; }
+    /// <summary>FK to the parent Sensor</summary>
+    public Guid SensorId { get; set; }
 
     /// <summary>Type of measurement (e.g., "temperature", "humidity", "pressure")</summary>
     public string MeasurementType { get; set; } = string.Empty;
@@ -50,6 +50,6 @@ public class SensorTypeCapability : IEntity
 
     // === Navigation Properties ===
 
-    /// <summary>Parent sensor type</summary>
-    public SensorType SensorType { get; set; } = null!;
+    /// <summary>Parent sensor</summary>
+    public Sensor Sensor { get; set; } = null!;
 }

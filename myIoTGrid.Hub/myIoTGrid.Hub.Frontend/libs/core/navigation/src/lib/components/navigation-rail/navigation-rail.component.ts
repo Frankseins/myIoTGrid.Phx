@@ -89,15 +89,14 @@ export class NavigationRailComponent implements OnInit, OnDestroy {
 
   /**
    * Main navigation destinations for myIoTGrid Hub
-   * Updated for Matter-konforme Terminologie:
+   * Updated for v3.0 Two-Tier Model (Matter-konform):
    * - Nodes = ESP32/LoRa32 Hardware-Geräte
-   * - Sensors = Physische Sensor-Chips (DHT22, BME280, etc.)
+   * - Sensors = Physische Sensor-Instanzen mit Hardware-Konfiguration
    */
   private mainDestinations: NavigationDestination[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', disabled: false },
     { icon: 'router', label: 'Nodes', route: '/nodes', disabled: false },
     { icon: 'memory', label: 'Sensoren', route: '/sensors', disabled: false },
-    { icon: 'category', label: 'Sensortypen', route: '/sensor-types', disabled: false },
     { icon: 'warning', label: 'Warnungen', route: '/alerts', disabled: false }
   ];
 

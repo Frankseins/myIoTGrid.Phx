@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Logging;
 using Moq;
 using myIoTGrid.Hub.Domain.Entities;
@@ -7,13 +8,14 @@ using myIoTGrid.Hub.Infrastructure.Repositories;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Service.Services;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.Enums;
 
 namespace myIoTGrid.Hub.Service.Tests.Services;
 
 /// <summary>
-/// Tests for SensorService (Concrete sensor instances with calibration).
-/// The new Sensor entity represents a concrete sensor instance that can be assigned to nodes.
-/// Three-tier model: SensorType (Library) → Sensor (Instance) → NodeSensorAssignment (Binding)
+/// Tests for SensorService (v3.0 Two-Tier Model).
+/// The Sensor entity now contains all configuration (previously split between SensorType and Sensor).
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class SensorServiceTests : IDisposable
 {
@@ -21,80 +23,26 @@ public class SensorServiceTests : IDisposable
     private readonly SensorService _sut;
     private readonly Mock<ITenantService> _tenantServiceMock;
     private readonly Mock<ILogger<SensorService>> _loggerMock;
+    private readonly IMemoryCache _memoryCache;
     private readonly Guid _tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
-    private readonly Guid _sensorTypeId;
 
     public SensorServiceTests()
     {
         _context = TestDbContextFactory.Create();
         _tenantServiceMock = new Mock<ITenantService>();
         _loggerMock = new Mock<ILogger<SensorService>>();
+        _memoryCache = new MemoryCache(new MemoryCacheOptions());
         var unitOfWork = new UnitOfWork(_context);
 
         _tenantServiceMock.Setup(x => x.GetCurrentTenantId()).Returns(_tenantId);
 
-        // Create a SensorType (DHT22 with temperature + humidity capabilities)
-        _sensorTypeId = Guid.NewGuid();
-        var sensorType = new SensorType
-        {
-            Id = _sensorTypeId,
-            Code = "dht22",
-            Name = "DHT22 Temperature & Humidity Sensor",
-            Protocol = CommunicationProtocol.OneWire,
-            Category = "climate",
-            Description = "Digital temperature and humidity sensor",
-            DefaultIntervalSeconds = 60,
-            IsActive = true,
-            IsGlobal = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        var tempCapability = new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = _sensorTypeId,
-            MeasurementType = "temperature",
-            DisplayName = "Temperature",
-            Unit = "°C",
-            MinValue = -40,
-            MaxValue = 80,
-            Resolution = 0.1,
-            Accuracy = 0.5,
-            MatterClusterId = 0x0402,
-            MatterClusterName = "TemperatureMeasurement",
-            SortOrder = 0,
-            IsActive = true
-        };
-
-        var humCapability = new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = _sensorTypeId,
-            MeasurementType = "humidity",
-            DisplayName = "Humidity",
-            Unit = "%",
-            MinValue = 0,
-            MaxValue = 100,
-            Resolution = 0.1,
-            Accuracy = 2.0,
-            MatterClusterId = 0x0405,
-            MatterClusterName = "RelativeHumidityMeasurement",
-            SortOrder = 1,
-            IsActive = true
-        };
-
-        sensorType.Capabilities.Add(tempCapability);
-        sensorType.Capabilities.Add(humCapability);
-
-        _context.SensorTypes.Add(sensorType);
-        _context.SaveChanges();
-
-        _sut = new SensorService(_context, unitOfWork, _tenantServiceMock.Object, _loggerMock.Object);
+        _sut = new SensorService(_context, unitOfWork, _tenantServiceMock.Object, _memoryCache, _loggerMock.Object);
     }
 
     public void Dispose()
     {
         _context.Dispose();
+        _memoryCache.Dispose();
     }
 
     #region GetAllAsync Tests
@@ -179,8 +127,8 @@ public class SensorServiceTests : IDisposable
         // Assert
         result.Should().NotBeNull();
         result!.Name.Should().Be("Living Room DHT22");
-        result.SensorTypeCode.Should().Be("dht22");
-        result.SensorTypeName.Should().Be("DHT22 Temperature & Humidity Sensor");
+        result.Code.Should().StartWith("dht22-test");
+        result.Category.Should().Be("climate");
     }
 
     [Fact]
@@ -195,55 +143,69 @@ public class SensorServiceTests : IDisposable
 
     #endregion
 
-    #region GetBySensorTypeAsync Tests
+    #region GetByCodeAsync Tests
 
     [Fact]
-    public async Task GetBySensorTypeAsync_ReturnsSensorsOfType()
+    public async Task GetByCodeAsync_WithExistingCode_ReturnsSensor()
     {
-        // Arrange
-        _context.Sensors.Add(CreateTestSensor(name: "Sensor 1"));
-        _context.Sensors.Add(CreateTestSensor(name: "Sensor 2"));
+        // Arrange - Create sensor with fixed code (no random suffix for this test)
+        var fixedCode = "unique-sensor-code";
+        var sensor = new Sensor
+        {
+            Id = Guid.NewGuid(),
+            TenantId = _tenantId,
+            Code = fixedCode,
+            Name = "Test Sensor",
+            Protocol = CommunicationProtocol.OneWire,
+            Category = "climate",
+            IntervalSeconds = 60,
+            MinIntervalSeconds = 2,
+            OffsetCorrection = 0,
+            GainCorrection = 1.0,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow
+        };
+        _context.Sensors.Add(sensor);
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetBySensorTypeAsync(_sensorTypeId);
+        var result = await _sut.GetByCodeAsync(fixedCode);
 
         // Assert
-        result.Should().HaveCount(2);
+        result.Should().NotBeNull();
+        result!.Code.Should().Be(fixedCode);
     }
 
     [Fact]
-    public async Task GetBySensorTypeAsync_DoesNotReturnOtherTypeSensors()
+    public async Task GetByCodeAsync_WithNonExistingCode_ReturnsNull()
+    {
+        // Act
+        var result = await _sut.GetByCodeAsync("nonexistent");
+
+        // Assert
+        result.Should().BeNull();
+    }
+
+    #endregion
+
+    #region GetByCategoryAsync Tests
+
+    [Fact]
+    public async Task GetByCategoryAsync_ReturnsSensorsOfCategory()
     {
         // Arrange
-        var otherSensorTypeId = Guid.NewGuid();
-        var otherSensorType = new SensorType
-        {
-            Id = otherSensorTypeId,
-            Code = "bme280",
-            Name = "BME280 Sensor",
-            Protocol = CommunicationProtocol.I2C,
-            Category = "climate",
-            IsActive = true,
-            IsGlobal = true,
-            CreatedAt = DateTime.UtcNow
-        };
-        _context.SensorTypes.Add(otherSensorType);
-
-        var sensor1 = CreateTestSensor(name: "DHT22 Sensor");
-        var sensor2 = CreateTestSensor(name: "BME280 Sensor");
-        sensor2.SensorTypeId = otherSensorTypeId;
-
-        _context.Sensors.Add(sensor1);
-        _context.Sensors.Add(sensor2);
+        _context.Sensors.Add(CreateTestSensor(name: "Climate 1", category: "climate"));
+        _context.Sensors.Add(CreateTestSensor(name: "Climate 2", category: "climate"));
+        _context.Sensors.Add(CreateTestSensor(name: "Water 1", category: "water"));
         await _context.SaveChangesAsync();
 
         // Act
-        var result = await _sut.GetBySensorTypeAsync(_sensorTypeId);
+        var result = await _sut.GetByCategoryAsync("climate");
 
         // Assert
-        result.Should().ContainSingle();
-        result.First().Name.Should().Be("DHT22 Sensor");
+        result.Should().HaveCount(2);
+        result.Should().OnlyContain(s => s.Category == "climate");
     }
 
     #endregion
@@ -253,13 +215,15 @@ public class SensorServiceTests : IDisposable
     [Fact]
     public async Task CreateAsync_WithValidDto_CreatesSensor()
     {
-        // Arrange
+        // Arrange - v3.0: CreateSensorDto has Code, Name, Protocol, Category
         var dto = new CreateSensorDto(
-            SensorTypeId: _sensorTypeId,
+            Code: "kitchen-sensor",
             Name: "Kitchen Temperature Sensor",
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate",
             Description: "Measures temperature in the kitchen",
             SerialNumber: "DHT22-001",
-            IntervalSecondsOverride: 30
+            IntervalSeconds: 30
         );
 
         // Act
@@ -267,12 +231,12 @@ public class SensorServiceTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
+        result.Code.Should().Be("kitchen-sensor");
         result.Name.Should().Be("Kitchen Temperature Sensor");
         result.Description.Should().Be("Measures temperature in the kitchen");
         result.SerialNumber.Should().Be("DHT22-001");
-        result.IntervalSecondsOverride.Should().Be(30);
-        result.SensorTypeCode.Should().Be("dht22");
-        result.SensorTypeName.Should().Be("DHT22 Temperature & Humidity Sensor");
+        result.IntervalSeconds.Should().Be(30);
+        result.Category.Should().Be("climate");
         result.IsActive.Should().BeTrue();
         result.OffsetCorrection.Should().Be(0);
         result.GainCorrection.Should().Be(1.0);
@@ -281,10 +245,12 @@ public class SensorServiceTests : IDisposable
     [Fact]
     public async Task CreateAsync_WithMinimalDto_CreatesSensorWithDefaults()
     {
-        // Arrange
+        // Arrange - v3.0: Only Code, Name, Protocol, Category required
         var dto = new CreateSensorDto(
-            SensorTypeId: _sensorTypeId,
-            Name: "Simple Sensor"
+            Code: "simple-sensor",
+            Name: "Simple Sensor",
+            Protocol: CommunicationProtocolDto.Analog,
+            Category: "custom"
         );
 
         // Act
@@ -292,26 +258,12 @@ public class SensorServiceTests : IDisposable
 
         // Assert
         result.Should().NotBeNull();
+        result.Code.Should().Be("simple-sensor");
         result.Name.Should().Be("Simple Sensor");
         result.Description.Should().BeNull();
         result.SerialNumber.Should().BeNull();
-        result.IntervalSecondsOverride.Should().BeNull();
+        result.IntervalSeconds.Should().Be(60); // Default
         result.IsActive.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task CreateAsync_WithNonExistingSensorType_ThrowsException()
-    {
-        // Arrange
-        var dto = new CreateSensorDto(
-            SensorTypeId: Guid.NewGuid(),
-            Name: "Invalid Sensor"
-        );
-
-        // Act & Assert
-        var act = () => _sut.CreateAsync(dto);
-        await act.Should().ThrowAsync<InvalidOperationException>()
-            .WithMessage("*not found*");
     }
 
     [Fact]
@@ -319,8 +271,10 @@ public class SensorServiceTests : IDisposable
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _sensorTypeId,
-            Name: "Tenant Sensor"
+            Code: "tenant-sensor",
+            Name: "Tenant Sensor",
+            Protocol: CommunicationProtocolDto.I2C,
+            Category: "climate"
         );
 
         // Act
@@ -328,6 +282,33 @@ public class SensorServiceTests : IDisposable
 
         // Assert
         result.TenantId.Should().Be(_tenantId);
+    }
+
+    [Fact]
+    public async Task CreateAsync_WithCapabilities_CreatesCapabilities()
+    {
+        // Arrange
+        var capabilities = new[]
+        {
+            new CreateSensorCapabilityDto("temperature", "Temperature", "°C"),
+            new CreateSensorCapabilityDto("humidity", "Humidity", "%")
+        };
+
+        var dto = new CreateSensorDto(
+            Code: "multi-sensor",
+            Name: "Multi Sensor",
+            Protocol: CommunicationProtocolDto.I2C,
+            Category: "climate",
+            Capabilities: capabilities
+        );
+
+        // Act
+        var result = await _sut.CreateAsync(dto);
+
+        // Assert
+        result.Capabilities.Should().HaveCount(2);
+        result.Capabilities.Should().Contain(c => c.MeasurementType == "temperature");
+        result.Capabilities.Should().Contain(c => c.MeasurementType == "humidity");
     }
 
     #endregion
@@ -395,20 +376,20 @@ public class SensorServiceTests : IDisposable
     }
 
     [Fact]
-    public async Task UpdateAsync_WithIntervalOverride_UpdatesInterval()
+    public async Task UpdateAsync_WithIntervalSeconds_UpdatesInterval()
     {
         // Arrange
         var sensor = CreateTestSensor();
         _context.Sensors.Add(sensor);
         await _context.SaveChangesAsync();
 
-        var dto = new UpdateSensorDto(IntervalSecondsOverride: 120);
+        var dto = new UpdateSensorDto(IntervalSeconds: 120);
 
         // Act
         var result = await _sut.UpdateAsync(sensor.Id, dto);
 
         // Assert
-        result.IntervalSecondsOverride.Should().Be(120);
+        result.IntervalSeconds.Should().Be(120);
     }
 
     #endregion
@@ -573,14 +554,21 @@ public class SensorServiceTests : IDisposable
 
     #region Helper Methods
 
-    private Sensor CreateTestSensor(string name = "Test Sensor")
+    private Sensor CreateTestSensor(
+        string name = "Test Sensor",
+        string code = "dht22-test",
+        string category = "climate")
     {
         return new Sensor
         {
             Id = Guid.NewGuid(),
             TenantId = _tenantId,
-            SensorTypeId = _sensorTypeId,
+            Code = code + "-" + Guid.NewGuid().ToString("N")[..8], // Ensure unique code
             Name = name,
+            Protocol = CommunicationProtocol.OneWire,
+            Category = category,
+            IntervalSeconds = 60,
+            MinIntervalSeconds = 2,
             OffsetCorrection = 0,
             GainCorrection = 1.0,
             IsActive = true,

@@ -10,8 +10,9 @@ using myIoTGrid.Hub.Shared.Options;
 namespace myIoTGrid.Hub.Interface.BackgroundServices;
 
 /// <summary>
-/// Background service that initializes Matter Bridge with existing nodes and sensors.
+/// Background service that initializes Matter Bridge with existing nodes and sensors (v3.0).
 /// Matter-konform: Registriert Matter Nodes und Endpoints.
+/// Two-tier model: Uses Sensor.Code instead of SensorType.Code
 /// </summary>
 public class MatterBridgeService : BackgroundService
 {
@@ -105,12 +106,11 @@ public class MatterBridgeService : BackgroundService
 
         try
         {
-            // Get all nodes with their Hub and SensorAssignments
+            // Get all nodes with their Hub and SensorAssignments (v3.0: direct Sensor reference)
             var nodes = await context.Nodes
                 .Include(n => n.Hub)
                 .Include(n => n.SensorAssignments)
                     .ThenInclude(a => a.Sensor)
-                        .ThenInclude(s => s.SensorType)
                 .AsNoTracking()
                 .ToListAsync(ct);
 
@@ -121,26 +121,27 @@ public class MatterBridgeService : BackgroundService
                 // Each assignment on the node represents a Matter Endpoint
                 foreach (var assignment in node.SensorAssignments)
                 {
-                    var sensorTypeCode = assignment.Sensor?.SensorType?.Code ?? string.Empty;
+                    // v3.0: Use Sensor.Code directly instead of SensorType.Code
+                    var sensorCode = assignment.Sensor?.Code ?? string.Empty;
 
-                    if (!MatterDeviceMapping.IsSupportedSensorType(sensorTypeCode))
+                    if (!MatterDeviceMapping.IsSupportedSensorType(sensorCode))
                     {
                         continue;
                     }
 
-                    if (!_options.EnabledSensorTypes.Contains(sensorTypeCode, StringComparer.OrdinalIgnoreCase))
+                    if (!_options.EnabledSensorTypes.Contains(sensorCode, StringComparer.OrdinalIgnoreCase))
                     {
                         continue;
                     }
 
-                    var matterType = MatterDeviceMapping.GetMatterDeviceType(sensorTypeCode);
+                    var matterType = MatterDeviceMapping.GetMatterDeviceType(sensorCode);
                     if (matterType == null) continue;
 
-                    var deviceId = MatterDeviceMapping.GenerateMatterDeviceId(node.NodeId, sensorTypeCode);
+                    var deviceId = MatterDeviceMapping.GenerateMatterDeviceId(node.NodeId, sensorCode);
                     var displayName = MatterDeviceMapping.CreateDeviceDisplayName(
                         node.Name,
                         node.Location?.Name,
-                        sensorTypeCode
+                        sensorCode
                     );
 
                     await _matterBridgeClient.RegisterDeviceAsync(

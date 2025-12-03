@@ -1,10 +1,10 @@
 // ================================
-// Sensor Form Component
-// Bearbeiten/Erstellen von Sensoren
-// Mit SensorType-Auswahl, Kalibrierung und Vererbung
+// Sensor Form Component (v3.0 Two-Tier Model)
+// Erstellen/Bearbeiten von Sensoren
+// Alle Eigenschaften sind direkt im Sensor (kein SensorType mehr)
 // ================================
 
-import { Component, OnInit, inject, signal, computed, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
@@ -19,11 +19,10 @@ import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatChipsModule } from '@angular/material/chips';
-import { SensorApiService, SensorTypeApiService } from '@myiotgrid/shared/data-access';
+import { SensorApiService } from '@myiotgrid/shared/data-access';
 import {
   Sensor,
-  SensorType,
-  SensorTypeCapability,
+  SensorCapability,
   CreateSensorDto,
   UpdateSensorDto,
   CommunicationProtocol,
@@ -60,15 +59,12 @@ export class SensorFormComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly fb = inject(FormBuilder);
   private readonly sensorApiService = inject(SensorApiService);
-  private readonly sensorTypeApiService = inject(SensorTypeApiService);
   private readonly snackBar = inject(MatSnackBar);
 
   readonly isLoading = signal(true);
   readonly isSaving = signal(false);
   readonly mode = signal<FormMode>('view');
   readonly sensor = signal<Sensor | null>(null);
-  readonly sensorTypes = signal<SensorType[]>([]);
-  readonly currentSensorTypeId = signal<string>('');
 
   readonly isViewMode = computed(() => this.mode() === 'view');
   readonly isEditMode = computed(() => this.mode() === 'edit');
@@ -82,48 +78,40 @@ export class SensorFormComponent implements OnInit {
     }
   });
 
-  // Der ausgewählte SensorType (mit allen Details)
-  readonly selectedSensorType = computed(() => {
-    const typeId = this.currentSensorTypeId();
-    if (!typeId) return null;
-    return this.sensorTypes().find(t => t.id === typeId) || null;
-  });
+  // Protocol options for select
+  readonly protocolOptions = Object.entries(CommunicationProtocol)
+    .filter(([key]) => isNaN(Number(key)))
+    .map(([key, value]) => ({
+      value: value as CommunicationProtocol,
+      label: COMMUNICATION_PROTOCOL_LABELS[value as CommunicationProtocol] || key
+    }));
 
-  // Verfügbare Capabilities des ausgewählten SensorTypes
-  readonly availableCapabilities = computed(() => {
-    const type = this.selectedSensorType();
-    if (!type) return [];
-    return type.capabilities?.filter(c => c.isActive) || [];
-  });
+  // Category options
+  readonly categoryOptions = [
+    { value: 'climate', label: 'Klima (Temperatur, Luftfeuchtigkeit)' },
+    { value: 'water', label: 'Wasser (Füllstand, Temperatur)' },
+    { value: 'air', label: 'Luft (CO2, Feinstaub)' },
+    { value: 'light', label: 'Licht (Helligkeit, UV)' },
+    { value: 'motion', label: 'Bewegung (PIR, Radar)' },
+    { value: 'distance', label: 'Entfernung (Ultraschall)' },
+    { value: 'soil', label: 'Boden (Feuchtigkeit)' },
+    { value: 'custom', label: 'Benutzerdefiniert' }
+  ];
 
-  // Protokoll-Label für Anzeige
+  // Selected protocol for showing correct pin fields
+  readonly selectedProtocol = signal<CommunicationProtocol | null>(null);
+
+  // Protocol label for display
   readonly protocolLabel = computed(() => {
-    const type = this.selectedSensorType();
-    if (!type) return '';
-    return COMMUNICATION_PROTOCOL_LABELS[type.protocol] || 'Unbekannt';
+    const protocol = this.selectedProtocol();
+    if (protocol === null) return '';
+    return COMMUNICATION_PROTOCOL_LABELS[protocol] || 'Unbekannt';
   });
 
   form!: FormGroup;
 
-  // Für die Chip-Auswahl der aktiven Capabilities
-  selectedCapabilityIds: string[] = [];
-
-  constructor() {
-    // Effect um auf SensorType-Änderungen zu reagieren
-    effect(() => {
-      const type = this.selectedSensorType();
-      if (type && this.isCreateMode()) {
-        // Bei neuem Sensor: Alle Capabilities standardmäßig aktivieren
-        this.selectedCapabilityIds = type.capabilities
-          ?.filter(c => c.isActive)
-          .map(c => c.id) || [];
-      }
-    });
-  }
-
   ngOnInit(): void {
     this.initForm();
-    this.loadSensorTypes();
 
     const id = this.route.snapshot.paramMap.get('id');
     const queryMode = this.route.snapshot.queryParamMap.get('mode');
@@ -139,50 +127,60 @@ export class SensorFormComponent implements OnInit {
 
   private initForm(): void {
     this.form = this.fb.group({
-      // Basic Information
-      sensorTypeId: ['', [Validators.required]],
+      // Core Properties
+      code: ['', [Validators.required, Validators.minLength(2), Validators.pattern(/^[a-z0-9-]+$/)]],
       name: ['', [Validators.required, Validators.minLength(2)]],
+      protocol: [CommunicationProtocol.I2C, [Validators.required]],
+      category: ['climate'],
+      manufacturer: [''],
+      model: [''],
       description: [''],
       serialNumber: [''],
 
-      // Intervall Override (null = vom SensorType erben)
-      intervalSecondsOverride: [null],
+      // Hardware Configuration - I2C
+      i2cAddress: [''],
+      sdaPin: [null],
+      sclPin: [null],
 
-      // Pin Configuration Override (null = vom SensorType erben)
-      i2cAddressOverride: [null],
-      sdaPinOverride: [null],
-      sclPinOverride: [null],
-      oneWirePinOverride: [null],
-      analogPinOverride: [null],
-      digitalPinOverride: [null],
-      triggerPinOverride: [null],
-      echoPinOverride: [null],
+      // Hardware Configuration - OneWire
+      oneWirePin: [null],
 
-      // Kalibrierung (wird vom SensorType vererbt, kann überschrieben werden)
+      // Hardware Configuration - Analog
+      analogPin: [null],
+
+      // Hardware Configuration - Digital
+      digitalPin: [null],
+
+      // Hardware Configuration - UltraSonic
+      triggerPin: [null],
+      echoPin: [null],
+
+      // Timing Configuration
+      intervalSeconds: [60, [Validators.required, Validators.min(1)]],
+      minIntervalSeconds: [1, [Validators.required, Validators.min(1)]],
+      warmupTimeMs: [0],
+
+      // Calibration
       offsetCorrection: [0],
       gainCorrection: [1.0],
       calibrationNotes: [''],
+
+      // Metadata
+      icon: ['sensors'],
+      color: ['#607d8b'],
+      datasheetUrl: [''],
 
       // Status
       isActive: [true]
     });
 
-    // Signal updaten wenn sich sensorTypeId ändert
-    this.form.get('sensorTypeId')?.valueChanges.subscribe(value => {
-      this.currentSensorTypeId.set(value || '');
+    // Update selectedProtocol when protocol changes
+    this.form.get('protocol')?.valueChanges.subscribe(value => {
+      this.selectedProtocol.set(value);
     });
-  }
 
-  private loadSensorTypes(): void {
-    this.sensorTypeApiService.getAll().subscribe({
-      next: (types) => {
-        this.sensorTypes.set(types);
-      },
-      error: (error) => {
-        console.error('Error loading sensor types:', error);
-        this.snackBar.open('Fehler beim Laden der Sensortypen', 'Schließen', { duration: 5000 });
-      }
-    });
+    // Set initial protocol
+    this.selectedProtocol.set(this.form.get('protocol')?.value);
   }
 
   private loadSensor(id: string): void {
@@ -191,7 +189,6 @@ export class SensorFormComponent implements OnInit {
       next: (sensor) => {
         this.sensor.set(sensor);
         this.patchForm(sensor);
-        this.selectedCapabilityIds = sensor.activeCapabilityIds || [];
         this.isLoading.set(false);
       },
       error: (error) => {
@@ -204,29 +201,45 @@ export class SensorFormComponent implements OnInit {
 
   private patchForm(sensor: Sensor): void {
     this.form.patchValue({
-      sensorTypeId: sensor.sensorTypeId,
+      code: sensor.code,
       name: sensor.name,
+      protocol: sensor.protocol,
+      category: sensor.category || 'climate',
+      manufacturer: sensor.manufacturer || '',
+      model: sensor.model || '',
       description: sensor.description || '',
       serialNumber: sensor.serialNumber || '',
-      intervalSecondsOverride: sensor.intervalSecondsOverride ?? null,
-      // Pin Configuration Override
-      i2cAddressOverride: sensor.i2cAddressOverride || null,
-      sdaPinOverride: sensor.sdaPinOverride ?? null,
-      sclPinOverride: sensor.sclPinOverride ?? null,
-      oneWirePinOverride: sensor.oneWirePinOverride ?? null,
-      analogPinOverride: sensor.analogPinOverride ?? null,
-      digitalPinOverride: sensor.digitalPinOverride ?? null,
-      triggerPinOverride: sensor.triggerPinOverride ?? null,
-      echoPinOverride: sensor.echoPinOverride ?? null,
+
+      // Hardware Configuration
+      i2cAddress: sensor.i2cAddress || '',
+      sdaPin: sensor.sdaPin ?? null,
+      sclPin: sensor.sclPin ?? null,
+      oneWirePin: sensor.oneWirePin ?? null,
+      analogPin: sensor.analogPin ?? null,
+      digitalPin: sensor.digitalPin ?? null,
+      triggerPin: sensor.triggerPin ?? null,
+      echoPin: sensor.echoPin ?? null,
+
+      // Timing
+      intervalSeconds: sensor.intervalSeconds ?? 60,
+      minIntervalSeconds: sensor.minIntervalSeconds ?? 1,
+      warmupTimeMs: sensor.warmupTimeMs ?? 0,
+
       // Calibration
       offsetCorrection: sensor.offsetCorrection ?? 0,
       gainCorrection: sensor.gainCorrection ?? 1.0,
       calibrationNotes: sensor.calibrationNotes || '',
+
+      // Metadata
+      icon: sensor.icon || 'sensors',
+      color: sensor.color || '#607d8b',
+      datasheetUrl: sensor.datasheetUrl || '',
+
+      // Status
       isActive: sensor.isActive ?? true
     });
 
-    // Signal für SensorType setzen
-    this.currentSensorTypeId.set(sensor.sensorTypeId);
+    this.selectedProtocol.set(sensor.protocol);
   }
 
   onSave(): void {
@@ -240,21 +253,38 @@ export class SensorFormComponent implements OnInit {
 
     if (this.isCreateMode()) {
       const createDto: CreateSensorDto = {
-        sensorTypeId: formValue.sensorTypeId,
+        code: formValue.code,
         name: formValue.name,
+        protocol: formValue.protocol,
+        category: formValue.category || undefined,
+        manufacturer: formValue.manufacturer || undefined,
+        model: formValue.model || undefined,
         description: formValue.description || undefined,
         serialNumber: formValue.serialNumber || undefined,
-        intervalSecondsOverride: formValue.intervalSecondsOverride || undefined,
-        // Pin Configuration Override
-        i2cAddressOverride: formValue.i2cAddressOverride || undefined,
-        sdaPinOverride: formValue.sdaPinOverride ?? undefined,
-        sclPinOverride: formValue.sclPinOverride ?? undefined,
-        oneWirePinOverride: formValue.oneWirePinOverride ?? undefined,
-        analogPinOverride: formValue.analogPinOverride ?? undefined,
-        digitalPinOverride: formValue.digitalPinOverride ?? undefined,
-        triggerPinOverride: formValue.triggerPinOverride ?? undefined,
-        echoPinOverride: formValue.echoPinOverride ?? undefined,
-        activeCapabilityIds: this.selectedCapabilityIds.length > 0 ? this.selectedCapabilityIds : undefined
+
+        // Hardware Configuration
+        i2cAddress: formValue.i2cAddress || undefined,
+        sdaPin: formValue.sdaPin ?? undefined,
+        sclPin: formValue.sclPin ?? undefined,
+        oneWirePin: formValue.oneWirePin ?? undefined,
+        analogPin: formValue.analogPin ?? undefined,
+        digitalPin: formValue.digitalPin ?? undefined,
+        triggerPin: formValue.triggerPin ?? undefined,
+        echoPin: formValue.echoPin ?? undefined,
+
+        // Timing
+        intervalSeconds: formValue.intervalSeconds ?? undefined,
+        minIntervalSeconds: formValue.minIntervalSeconds ?? undefined,
+        warmupTimeMs: formValue.warmupTimeMs ?? undefined,
+
+        // Calibration
+        offsetCorrection: formValue.offsetCorrection ?? undefined,
+        gainCorrection: formValue.gainCorrection ?? undefined,
+
+        // Metadata
+        icon: formValue.icon || undefined,
+        color: formValue.color || undefined,
+        datasheetUrl: formValue.datasheetUrl || undefined
       };
 
       this.sensorApiService.create(createDto).subscribe({
@@ -264,7 +294,7 @@ export class SensorFormComponent implements OnInit {
         },
         error: (error) => {
           console.error('Error creating sensor:', error);
-          const message = error?.error?.detail || 'Fehler beim Erstellen des Sensors';
+          const message = error?.error?.detail || error?.error?.title || 'Fehler beim Erstellen des Sensors';
           this.snackBar.open(message, 'Schließen', { duration: 5000 });
           this.isSaving.set(false);
         }
@@ -272,19 +302,37 @@ export class SensorFormComponent implements OnInit {
     } else {
       const updateDto: UpdateSensorDto = {
         name: formValue.name,
+        manufacturer: formValue.manufacturer || undefined,
+        model: formValue.model || undefined,
         description: formValue.description || undefined,
         serialNumber: formValue.serialNumber || undefined,
-        intervalSecondsOverride: formValue.intervalSecondsOverride || undefined,
-        // Pin Configuration Override
-        i2cAddressOverride: formValue.i2cAddressOverride || undefined,
-        sdaPinOverride: formValue.sdaPinOverride ?? undefined,
-        sclPinOverride: formValue.sclPinOverride ?? undefined,
-        oneWirePinOverride: formValue.oneWirePinOverride ?? undefined,
-        analogPinOverride: formValue.analogPinOverride ?? undefined,
-        digitalPinOverride: formValue.digitalPinOverride ?? undefined,
-        triggerPinOverride: formValue.triggerPinOverride ?? undefined,
-        echoPinOverride: formValue.echoPinOverride ?? undefined,
-        activeCapabilityIds: this.selectedCapabilityIds.length > 0 ? this.selectedCapabilityIds : undefined,
+
+        // Hardware Configuration
+        i2cAddress: formValue.i2cAddress || undefined,
+        sdaPin: formValue.sdaPin ?? undefined,
+        sclPin: formValue.sclPin ?? undefined,
+        oneWirePin: formValue.oneWirePin ?? undefined,
+        analogPin: formValue.analogPin ?? undefined,
+        digitalPin: formValue.digitalPin ?? undefined,
+        triggerPin: formValue.triggerPin ?? undefined,
+        echoPin: formValue.echoPin ?? undefined,
+
+        // Timing
+        intervalSeconds: formValue.intervalSeconds ?? undefined,
+        minIntervalSeconds: formValue.minIntervalSeconds ?? undefined,
+        warmupTimeMs: formValue.warmupTimeMs ?? undefined,
+
+        // Calibration
+        offsetCorrection: formValue.offsetCorrection ?? undefined,
+        gainCorrection: formValue.gainCorrection ?? undefined,
+        calibrationNotes: formValue.calibrationNotes || undefined,
+
+        // Metadata
+        icon: formValue.icon || undefined,
+        color: formValue.color || undefined,
+        datasheetUrl: formValue.datasheetUrl || undefined,
+
+        // Status
         isActive: formValue.isActive
       };
 
@@ -297,7 +345,7 @@ export class SensorFormComponent implements OnInit {
           },
           error: (error) => {
             console.error('Error updating sensor:', error);
-            const message = error?.error?.detail || 'Fehler beim Aktualisieren des Sensors';
+            const message = error?.error?.detail || error?.error?.title || 'Fehler beim Aktualisieren des Sensors';
             this.snackBar.open(message, 'Schließen', { duration: 5000 });
             this.isSaving.set(false);
           }
@@ -306,17 +354,14 @@ export class SensorFormComponent implements OnInit {
     }
   }
 
-  /** Toggle zwischen View und Edit Mode (Lock-Button) */
   toggleEditMode(): void {
     if (this.isViewMode()) {
       this.mode.set('edit');
     } else {
       this.mode.set('view');
-      // Reset form to original values when switching back to view
       const s = this.sensor();
       if (s) {
         this.patchForm(s);
-        this.selectedCapabilityIds = s.activeCapabilityIds || [];
       }
     }
   }
@@ -329,342 +374,55 @@ export class SensorFormComponent implements OnInit {
     this.router.navigate(['/sensors']);
   }
 
-  // ===== Capability Selection =====
+  // ===== Pin Configuration Visibility =====
 
-  toggleCapability(capabilityId: string): void {
-    if (this.isViewMode()) return;
-
-    const index = this.selectedCapabilityIds.indexOf(capabilityId);
-    if (index >= 0) {
-      this.selectedCapabilityIds = this.selectedCapabilityIds.filter(id => id !== capabilityId);
-    } else {
-      this.selectedCapabilityIds = [...this.selectedCapabilityIds, capabilityId];
-    }
-  }
-
-  isCapabilitySelected(capabilityId: string): boolean {
-    return this.selectedCapabilityIds.includes(capabilityId);
-  }
-
-  // ===== Helper Methoden für SensorType-Vererbung =====
-
-  getSensorTypeIcon(typeId: string): string {
-    const type = this.sensorTypes().find(t => t.id === typeId);
-    return type?.icon || 'sensors';
-  }
-
-  getSensorTypeColor(typeId: string): string {
-    const type = this.sensorTypes().find(t => t.id === typeId);
-    return type?.color || '#607d8b';
-  }
-
-  getSensorTypeName(typeId: string): string {
-    const type = this.sensorTypes().find(t => t.id === typeId);
-    return type?.name || '';
-  }
-
-  /**
-   * Gibt den effektiven Wert zurück (Override oder Default vom SensorType)
-   */
-  getEffectiveInterval(): number {
-    const override = this.form?.get('intervalSecondsOverride')?.value;
-    if (override !== null && override !== undefined && override !== '') {
-      return override;
-    }
-    const type = this.selectedSensorType();
-    return type?.defaultIntervalSeconds || 60;
-  }
-
-  getEffectiveOffset(): number {
-    const override = this.form?.get('offsetCorrection')?.value;
-    if (override !== null && override !== undefined && override !== 0) {
-      return override;
-    }
-    const type = this.selectedSensorType();
-    return type?.defaultOffsetCorrection || 0;
-  }
-
-  getEffectiveGain(): number {
-    const override = this.form?.get('gainCorrection')?.value;
-    if (override !== null && override !== undefined && override !== 1.0) {
-      return override;
-    }
-    const type = this.selectedSensorType();
-    return type?.defaultGainCorrection || 1.0;
-  }
-
-  /**
-   * Placeholder-Text für Override-Felder
-   */
-  getIntervalPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: ${type.defaultIntervalSeconds}s`;
-  }
-
-  getOffsetPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: ${type.defaultOffsetCorrection}`;
-  }
-
-  getGainPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: ${type.defaultGainCorrection}`;
-  }
-
-  /**
-   * Zeigt Hinweis ob Wert überschrieben oder vererbt wird
-   */
-  isIntervalOverridden(): boolean {
-    const override = this.form?.get('intervalSecondsOverride')?.value;
-    return override !== null && override !== undefined && override !== '';
-  }
-
-  isOffsetOverridden(): boolean {
-    const override = this.form?.get('offsetCorrection')?.value;
-    return override !== null && override !== undefined && override !== 0;
-  }
-
-  isGainOverridden(): boolean {
-    const override = this.form?.get('gainCorrection')?.value;
-    return override !== null && override !== undefined && override !== 1.0;
-  }
-
-  /**
-   * Setzt Override-Wert zurück auf den SensorType-Default
-   */
-  resetInterval(): void {
-    this.form.get('intervalSecondsOverride')?.setValue(null);
-  }
-
-  resetOffset(): void {
-    const type = this.selectedSensorType();
-    this.form.get('offsetCorrection')?.setValue(type?.defaultOffsetCorrection || 0);
-  }
-
-  resetGain(): void {
-    const type = this.selectedSensorType();
-    this.form.get('gainCorrection')?.setValue(type?.defaultGainCorrection || 1.0);
-  }
-
-  // ===== Pin-Konfiguration =====
-
-  /**
-   * Zeigt Pin-Konfiguration basierend auf Protokoll
-   */
   showI2CPins(): boolean {
-    return this.selectedSensorType()?.protocol === CommunicationProtocol.I2C;
+    return this.selectedProtocol() === CommunicationProtocol.I2C;
   }
 
   showOneWirePin(): boolean {
-    return this.selectedSensorType()?.protocol === CommunicationProtocol.OneWire;
+    return this.selectedProtocol() === CommunicationProtocol.OneWire;
   }
 
   showAnalogPin(): boolean {
-    return this.selectedSensorType()?.protocol === CommunicationProtocol.Analog;
+    return this.selectedProtocol() === CommunicationProtocol.Analog;
   }
 
   showDigitalPin(): boolean {
-    return this.selectedSensorType()?.protocol === CommunicationProtocol.Digital;
+    return this.selectedProtocol() === CommunicationProtocol.Digital;
   }
 
   showUltraSonicPins(): boolean {
-    return this.selectedSensorType()?.protocol === CommunicationProtocol.UltraSonic;
+    return this.selectedProtocol() === CommunicationProtocol.UltraSonic;
   }
 
-  /**
-   * Prüft ob überhaupt Pin-Konfiguration angezeigt werden soll
-   * Zeigt Sektion immer wenn ein SensorType ausgewählt ist
-   */
   showPinConfiguration(): boolean {
-    return this.selectedSensorType() !== null;
+    return this.selectedProtocol() !== null;
   }
 
-  /**
-   * Prüft ob spezifische Pin-Felder vorhanden sind
-   */
   hasPinFields(): boolean {
     return this.showI2CPins() || this.showOneWirePin() || this.showAnalogPin() ||
            this.showDigitalPin() || this.showUltraSonicPins();
   }
 
-  // ===== I2C Pin Helper =====
+  // ===== Helper Methods =====
 
-  getEffectiveI2CAddress(): string {
-    const override = this.form?.get('i2cAddressOverride')?.value;
-    if (override) return override;
-    return this.selectedSensorType()?.defaultI2CAddress || '0x76';
+  getIcon(): string {
+    return this.form?.get('icon')?.value || 'sensors';
   }
 
-  getI2CAddressPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: ${type.defaultI2CAddress || '0x76'}`;
+  getColor(): string {
+    return this.form?.get('color')?.value || '#607d8b';
   }
 
-  isI2CAddressOverridden(): boolean {
-    const override = this.form?.get('i2cAddressOverride')?.value;
-    return override !== null && override !== undefined && override !== '';
+  getCalibrationFormula(): string {
+    const gain = this.form?.get('gainCorrection')?.value ?? 1.0;
+    const offset = this.form?.get('offsetCorrection')?.value ?? 0;
+    return `(Rohwert × ${gain}) + ${offset}`;
   }
 
-  resetI2CAddress(): void {
-    this.form.get('i2cAddressOverride')?.setValue(null);
-  }
-
-  getEffectiveSdaPin(): number {
-    const override = this.form?.get('sdaPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultSdaPin ?? 21;
-  }
-
-  getSdaPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultSdaPin ?? 21}`;
-  }
-
-  isSdaPinOverridden(): boolean {
-    const override = this.form?.get('sdaPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetSdaPin(): void {
-    this.form.get('sdaPinOverride')?.setValue(null);
-  }
-
-  getEffectiveSclPin(): number {
-    const override = this.form?.get('sclPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultSclPin ?? 22;
-  }
-
-  getSclPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultSclPin ?? 22}`;
-  }
-
-  isSclPinOverridden(): boolean {
-    const override = this.form?.get('sclPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetSclPin(): void {
-    this.form.get('sclPinOverride')?.setValue(null);
-  }
-
-  // ===== OneWire Pin Helper =====
-
-  getEffectiveOneWirePin(): number {
-    const override = this.form?.get('oneWirePinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultOneWirePin ?? 4;
-  }
-
-  getOneWirePinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultOneWirePin ?? 4}`;
-  }
-
-  isOneWirePinOverridden(): boolean {
-    const override = this.form?.get('oneWirePinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetOneWirePin(): void {
-    this.form.get('oneWirePinOverride')?.setValue(null);
-  }
-
-  // ===== Analog Pin Helper =====
-
-  getEffectiveAnalogPin(): number {
-    const override = this.form?.get('analogPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultAnalogPin ?? 34;
-  }
-
-  getAnalogPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultAnalogPin ?? 34}`;
-  }
-
-  isAnalogPinOverridden(): boolean {
-    const override = this.form?.get('analogPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetAnalogPin(): void {
-    this.form.get('analogPinOverride')?.setValue(null);
-  }
-
-  // ===== Digital Pin Helper =====
-
-  getEffectiveDigitalPin(): number {
-    const override = this.form?.get('digitalPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultDigitalPin ?? 5;
-  }
-
-  getDigitalPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultDigitalPin ?? 5}`;
-  }
-
-  isDigitalPinOverridden(): boolean {
-    const override = this.form?.get('digitalPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetDigitalPin(): void {
-    this.form.get('digitalPinOverride')?.setValue(null);
-  }
-
-  // ===== UltraSonic Pin Helper =====
-
-  getEffectiveTriggerPin(): number {
-    const override = this.form?.get('triggerPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultTriggerPin ?? 12;
-  }
-
-  getTriggerPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultTriggerPin ?? 12}`;
-  }
-
-  isTriggerPinOverridden(): boolean {
-    const override = this.form?.get('triggerPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetTriggerPin(): void {
-    this.form.get('triggerPinOverride')?.setValue(null);
-  }
-
-  getEffectiveEchoPin(): number {
-    const override = this.form?.get('echoPinOverride')?.value;
-    if (override !== null && override !== undefined) return override;
-    return this.selectedSensorType()?.defaultEchoPin ?? 14;
-  }
-
-  getEchoPinPlaceholder(): string {
-    const type = this.selectedSensorType();
-    if (!type) return 'Wähle zuerst einen Sensortyp';
-    return `Standard: GPIO ${type.defaultEchoPin ?? 14}`;
-  }
-
-  isEchoPinOverridden(): boolean {
-    const override = this.form?.get('echoPinOverride')?.value;
-    return override !== null && override !== undefined;
-  }
-
-  resetEchoPin(): void {
-    this.form.get('echoPinOverride')?.setValue(null);
+  // Capabilities display (read-only from sensor)
+  getCapabilities(): SensorCapability[] {
+    return this.sensor()?.capabilities || [];
   }
 }

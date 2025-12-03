@@ -18,7 +18,6 @@
       "@myiotgrid/hubs/feature": ["libs/features/hubs/src/index.ts"],
       "@myiotgrid/nodes/feature": ["libs/features/nodes/src/index.ts"],
       "@myiotgrid/sensors/feature": ["libs/features/sensors/src/index.ts"],
-      "@myiotgrid/sensor-types/feature": ["libs/features/sensor-types/src/index.ts"],
       "@myiotgrid/alerts/feature": ["libs/features/alerts/src/index.ts"],
       "@myiotgrid/settings/feature": ["libs/features/settings/src/index.ts"]
     },

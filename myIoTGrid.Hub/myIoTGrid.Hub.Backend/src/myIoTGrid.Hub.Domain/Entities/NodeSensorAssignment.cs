@@ -6,7 +6,8 @@ namespace myIoTGrid.Hub.Domain.Entities;
 /// Assignment of a Sensor to a Node with specific pin configuration.
 /// This is the "assignment" level - physical hardware binding.
 /// Matter-konform: Corresponds to a Matter Endpoint.
-/// Can override Sensor and SensorType defaults (pins, interval).
+/// Can override Sensor defaults (pins, interval).
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class NodeSensorAssignment : IEntity
 {
@@ -25,7 +26,7 @@ public class NodeSensorAssignment : IEntity
     /// <summary>Optional alias for this assignment (e.g., "Außentemperatur")</summary>
     public string? Alias { get; set; }
 
-    // === Pin Overrides (null = use Sensor or SensorType defaults) ===
+    // === Pin Overrides (null = use Sensor defaults) ===
 
     /// <summary>Override I2C address</summary>
     public string? I2CAddressOverride { get; set; }
@@ -53,7 +54,7 @@ public class NodeSensorAssignment : IEntity
 
     // === Timing Override ===
 
-    /// <summary>Override measurement interval (null = use Sensor or SensorType default)</summary>
+    /// <summary>Override measurement interval (null = use Sensor default)</summary>
     public int? IntervalSecondsOverride { get; set; }
 
     // === Status ===

@@ -8,21 +8,21 @@
   <mat-card-content>
     @if (primaryReading()) {
       <div class="primary-reading">
-        <mat-icon class="reading-icon" [style.color]="getColorForSensorType(primaryReading()!.sensorTypeId)">
-          {{ getIconForSensorType(primaryReading()!.sensorTypeId) }}
+        <mat-icon class="reading-icon" [style.color]="getColorForReading(primaryReading()!)">
+          {{ getIconForReading(primaryReading()!) }}
         </mat-icon>
         <div class="reading-value">
           <span class="value">{{ primaryReading()!.value | sensorUnit:primaryReading()!.unit }}</span>
-          <span class="type-name">{{ primaryReading()!.sensorTypeName }}</span>
+          <span class="type-name">{{ primaryReading()!.displayName }}</span>
         </div>
       </div>
 
       @if (secondaryReadings().length > 0) {
         <div class="secondary-readings">
-          @for (reading of secondaryReadings(); track reading.sensorTypeId) {
-            <div class="secondary-reading" [matTooltip]="reading.sensorTypeName">
-              <mat-icon [style.color]="getColorForSensorType(reading.sensorTypeId)">
-                {{ getIconForSensorType(reading.sensorTypeId) }}
+          @for (reading of secondaryReadings(); track reading.measurementType) {
+            <div class="secondary-reading" [matTooltip]="reading.displayName">
+              <mat-icon [style.color]="getColorForReading(reading)">
+                {{ getIconForReading(reading) }}
               </mat-icon>
               <span class="value">{{ reading.value | sensorUnit:reading.unit }}</span>
             </div>

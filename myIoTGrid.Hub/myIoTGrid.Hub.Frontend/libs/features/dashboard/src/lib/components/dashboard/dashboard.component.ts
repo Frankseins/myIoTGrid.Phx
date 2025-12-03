@@ -11,8 +11,7 @@ import {
   HubApiService,
   NodeApiService,
   ReadingApiService,
-  AlertApiService,
-  SensorTypeApiService
+  AlertApiService
 } from '@myiotgrid/shared/data-access';
 import { Hub, Node, Reading, Alert, AlertLevel } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, ConnectionStatusComponent, EmptyStateComponent } from '@myiotgrid/shared/ui';
@@ -45,7 +44,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly nodeApiService = inject(NodeApiService);
   private readonly readingApiService = inject(ReadingApiService);
   private readonly alertApiService = inject(AlertApiService);
-  private readonly sensorTypeApiService = inject(SensorTypeApiService);
 
   readonly isLoading = signal(true);
   readonly hubs = signal<Hub[]>([]);
@@ -78,8 +76,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   );
 
   async ngOnInit(): Promise<void> {
-    // Load SensorTypes for icons/colors
-    this.sensorTypeApiService.getAll().subscribe();
     await this.loadData();
     await this.setupSignalR();
   }
@@ -132,8 +128,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
           const newMap = new Map(map);
           const nodeId = reading.nodeId;
           const existing = newMap.get(nodeId) || [];
-          // Update or add the reading for this sensor type
-          const index = existing.findIndex(r => r.sensorTypeId === reading.sensorTypeId);
+          // Update or add the reading for this measurement type
+          const index = existing.findIndex(r => r.measurementType === reading.measurementType);
           if (index >= 0) {
             existing[index] = reading;
           } else {

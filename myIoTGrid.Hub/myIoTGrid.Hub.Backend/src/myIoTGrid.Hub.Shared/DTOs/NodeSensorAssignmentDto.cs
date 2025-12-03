@@ -1,18 +1,17 @@
 namespace myIoTGrid.Hub.Shared.DTOs;
 
 /// <summary>
-/// DTO for NodeSensorAssignment information.
+/// DTO for NodeSensorAssignment information (v3.0).
 /// Hardware binding of a Sensor to a Node.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public record NodeSensorAssignmentDto(
     Guid Id,
     Guid NodeId,
     string NodeName,
     Guid SensorId,
+    string SensorCode,
     string SensorName,
-    Guid SensorTypeId,
-    string SensorTypeCode,
-    string SensorTypeName,
     int EndpointId,
     string? Alias,
     string? I2CAddressOverride,
@@ -66,8 +65,9 @@ public record UpdateNodeSensorAssignmentDto(
 );
 
 /// <summary>
-/// DTO for effective configuration after inheritance resolution.
-/// EffectiveValue = Assignment ?? Sensor ?? SensorType
+/// DTO for effective configuration after inheritance resolution (v3.0).
+/// EffectiveValue = Assignment ?? Sensor
+/// Two-tier inheritance model.
 /// </summary>
 public record EffectiveConfigDto(
     int IntervalSeconds,

@@ -9,8 +9,9 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Services;
 
 /// <summary>
-/// Service for NodeSensorAssignment management.
+/// Service for NodeSensorAssignment management (v3.0).
 /// Hardware binding of Sensors to Nodes with pin configuration.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class NodeSensorAssignmentService : INodeSensorAssignmentService
 {
@@ -38,7 +39,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
             .AsNoTracking()
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .Where(a => a.NodeId == nodeId)
             .OrderBy(a => a.EndpointId)
             .ToListAsync(ct);
@@ -53,7 +53,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
             .AsNoTracking()
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .Where(a => a.SensorId == sensorId)
             .OrderBy(a => a.Node.Name)
             .ToListAsync(ct);
@@ -68,7 +67,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
             .AsNoTracking()
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .FirstOrDefaultAsync(a => a.Id == id, ct);
 
         return assignment?.ToDto(_effectiveConfigService);
@@ -81,7 +79,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
             .AsNoTracking()
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .FirstOrDefaultAsync(a => a.NodeId == nodeId && a.EndpointId == endpointId, ct);
 
         return assignment?.ToDto(_effectiveConfigService);
@@ -129,7 +126,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
         assignment = await _context.NodeSensorAssignments
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .FirstAsync(a => a.Id == assignment.Id, ct);
 
         _logger.LogInformation("Assignment created: Sensor {SensorId} -> Node {NodeId} (Endpoint {EndpointId})",
@@ -144,7 +140,6 @@ public class NodeSensorAssignmentService : INodeSensorAssignmentService
         var assignment = await _context.NodeSensorAssignments
             .Include(a => a.Node)
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
             .FirstOrDefaultAsync(a => a.Id == id, ct);
 
         if (assignment == null)

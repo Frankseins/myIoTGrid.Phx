@@ -1,12 +1,13 @@
-using System.Text.Json;
 using myIoTGrid.Hub.Domain.Entities;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.Enums;
 
 namespace myIoTGrid.Hub.Service.Extensions;
 
 /// <summary>
-/// Mapping Extensions for Sensor Entity.
-/// Concrete sensor instance with calibration settings and pin configuration overrides.
+/// Mapping Extensions for Sensor Entity (v3.0).
+/// Complete sensor definition with hardware configuration and calibration.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public static class SensorMappingExtensions
 {
@@ -18,37 +19,52 @@ public static class SensorMappingExtensions
         return new SensorDto(
             Id: sensor.Id,
             TenantId: sensor.TenantId,
-            SensorTypeId: sensor.SensorTypeId,
-            SensorTypeCode: sensor.SensorType?.Code ?? string.Empty,
-            SensorTypeName: sensor.SensorType?.Name ?? string.Empty,
+
+            // === Identification ===
+            Code: sensor.Code,
             Name: sensor.Name,
             Description: sensor.Description,
             SerialNumber: sensor.SerialNumber,
 
-            // Interval Override
-            IntervalSecondsOverride: sensor.IntervalSecondsOverride,
+            // === Hardware Info ===
+            Manufacturer: sensor.Manufacturer,
+            Model: sensor.Model,
+            DatasheetUrl: sensor.DatasheetUrl,
 
-            // Pin Configuration Override
-            I2CAddressOverride: sensor.I2CAddressOverride,
-            SdaPinOverride: sensor.SdaPinOverride,
-            SclPinOverride: sensor.SclPinOverride,
-            OneWirePinOverride: sensor.OneWirePinOverride,
-            AnalogPinOverride: sensor.AnalogPinOverride,
-            DigitalPinOverride: sensor.DigitalPinOverride,
-            TriggerPinOverride: sensor.TriggerPinOverride,
-            EchoPinOverride: sensor.EchoPinOverride,
+            // === Communication Protocol ===
+            Protocol: (CommunicationProtocolDto)sensor.Protocol,
 
-            // Calibration
+            // === Pin Configuration ===
+            I2CAddress: sensor.I2CAddress,
+            SdaPin: sensor.SdaPin,
+            SclPin: sensor.SclPin,
+            OneWirePin: sensor.OneWirePin,
+            AnalogPin: sensor.AnalogPin,
+            DigitalPin: sensor.DigitalPin,
+            TriggerPin: sensor.TriggerPin,
+            EchoPin: sensor.EchoPin,
+
+            // === Timing Configuration ===
+            IntervalSeconds: sensor.IntervalSeconds,
+            MinIntervalSeconds: sensor.MinIntervalSeconds,
+            WarmupTimeMs: sensor.WarmupTimeMs,
+
+            // === Calibration ===
             OffsetCorrection: sensor.OffsetCorrection,
             GainCorrection: sensor.GainCorrection,
             LastCalibratedAt: sensor.LastCalibratedAt,
             CalibrationNotes: sensor.CalibrationNotes,
             CalibrationDueAt: sensor.CalibrationDueAt,
 
-            // Capabilities
-            ActiveCapabilityIds: sensor.GetActiveCapabilityIds(),
+            // === Categorization ===
+            Category: sensor.Category,
+            Icon: sensor.Icon,
+            Color: sensor.Color,
 
-            // Status
+            // === Capabilities ===
+            Capabilities: sensor.Capabilities.Select(c => c.ToDto()),
+
+            // === Status ===
             IsActive: sensor.IsActive,
             CreatedAt: sensor.CreatedAt,
             UpdatedAt: sensor.UpdatedAt
@@ -56,37 +72,25 @@ public static class SensorMappingExtensions
     }
 
     /// <summary>
-    /// Gets active capability IDs from JSON
+    /// Converts a SensorCapability entity to a SensorCapabilityDto
     /// </summary>
-    public static IEnumerable<Guid> GetActiveCapabilityIds(this Sensor sensor)
+    public static SensorCapabilityDto ToDto(this SensorCapability capability)
     {
-        if (string.IsNullOrEmpty(sensor.ActiveCapabilityIdsJson))
-            return Enumerable.Empty<Guid>();
-
-        try
-        {
-            return JsonSerializer.Deserialize<List<Guid>>(sensor.ActiveCapabilityIdsJson)
-                   ?? Enumerable.Empty<Guid>();
-        }
-        catch
-        {
-            return Enumerable.Empty<Guid>();
-        }
-    }
-
-    /// <summary>
-    /// Sets active capability IDs as JSON
-    /// </summary>
-    public static void SetActiveCapabilityIds(this Sensor sensor, IEnumerable<Guid>? capabilityIds)
-    {
-        if (capabilityIds == null || !capabilityIds.Any())
-        {
-            sensor.ActiveCapabilityIdsJson = null;
-        }
-        else
-        {
-            sensor.ActiveCapabilityIdsJson = JsonSerializer.Serialize(capabilityIds.ToList());
-        }
+        return new SensorCapabilityDto(
+            Id: capability.Id,
+            SensorId: capability.SensorId,
+            MeasurementType: capability.MeasurementType,
+            DisplayName: capability.DisplayName,
+            Unit: capability.Unit,
+            MinValue: capability.MinValue,
+            MaxValue: capability.MaxValue,
+            Resolution: capability.Resolution,
+            Accuracy: capability.Accuracy,
+            MatterClusterId: capability.MatterClusterId,
+            MatterClusterName: capability.MatterClusterName,
+            SortOrder: capability.SortOrder,
+            IsActive: capability.IsActive
+        );
     }
 
     /// <summary>
@@ -99,35 +103,76 @@ public static class SensorMappingExtensions
         {
             Id = Guid.NewGuid(),
             TenantId = tenantId,
-            SensorTypeId = dto.SensorTypeId,
+
+            // === Identification ===
+            Code = dto.Code.ToLowerInvariant(),
             Name = dto.Name,
             Description = dto.Description,
             SerialNumber = dto.SerialNumber,
 
-            // Interval Override
-            IntervalSecondsOverride = dto.IntervalSecondsOverride,
+            // === Hardware Info ===
+            Manufacturer = dto.Manufacturer,
+            Model = dto.Model,
+            DatasheetUrl = dto.DatasheetUrl,
 
-            // Pin Configuration Override
-            I2CAddressOverride = dto.I2CAddressOverride,
-            SdaPinOverride = dto.SdaPinOverride,
-            SclPinOverride = dto.SclPinOverride,
-            OneWirePinOverride = dto.OneWirePinOverride,
-            AnalogPinOverride = dto.AnalogPinOverride,
-            DigitalPinOverride = dto.DigitalPinOverride,
-            TriggerPinOverride = dto.TriggerPinOverride,
-            EchoPinOverride = dto.EchoPinOverride,
+            // === Communication Protocol ===
+            Protocol = (Domain.Enums.CommunicationProtocol)dto.Protocol,
 
-            // Calibration (use provided values or defaults)
-            OffsetCorrection = dto.OffsetCorrection ?? 0,
-            GainCorrection = dto.GainCorrection ?? 1.0,
+            // === Pin Configuration ===
+            I2CAddress = dto.I2CAddress,
+            SdaPin = dto.SdaPin,
+            SclPin = dto.SclPin,
+            OneWirePin = dto.OneWirePin,
+            AnalogPin = dto.AnalogPin,
+            DigitalPin = dto.DigitalPin,
+            TriggerPin = dto.TriggerPin,
+            EchoPin = dto.EchoPin,
 
-            // Status
+            // === Timing Configuration ===
+            IntervalSeconds = dto.IntervalSeconds,
+            MinIntervalSeconds = dto.MinIntervalSeconds,
+            WarmupTimeMs = dto.WarmupTimeMs,
+
+            // === Calibration ===
+            OffsetCorrection = dto.OffsetCorrection,
+            GainCorrection = dto.GainCorrection,
+
+            // === Categorization ===
+            Category = dto.Category.ToLowerInvariant(),
+            Icon = dto.Icon,
+            Color = dto.Color,
+
+            // === Status ===
             IsActive = true,
             CreatedAt = now,
             UpdatedAt = now
         };
 
-        sensor.SetActiveCapabilityIds(dto.ActiveCapabilityIds);
+        // Add capabilities
+        if (dto.Capabilities != null)
+        {
+            var sortOrder = 0;
+            foreach (var cap in dto.Capabilities)
+            {
+                sensor.Capabilities.Add(new SensorCapability
+                {
+                    Id = Guid.NewGuid(),
+                    SensorId = sensor.Id,
+                    MeasurementType = cap.MeasurementType.ToLowerInvariant(),
+                    DisplayName = cap.DisplayName,
+                    Unit = cap.Unit,
+                    MinValue = cap.MinValue,
+                    MaxValue = cap.MaxValue,
+                    Resolution = cap.Resolution,
+                    Accuracy = cap.Accuracy,
+                    MatterClusterId = cap.MatterClusterId,
+                    MatterClusterName = cap.MatterClusterName,
+                    SortOrder = cap.SortOrder != 0 ? cap.SortOrder : sortOrder++,
+                    IsActive = true
+                });
+            }
+        }
+
         return sensor;
     }
 
@@ -136,6 +181,7 @@ public static class SensorMappingExtensions
     /// </summary>
     public static void ApplyUpdate(this Sensor sensor, UpdateSensorDto dto)
     {
+        // === Identification ===
         if (!string.IsNullOrEmpty(dto.Name))
             sensor.Name = dto.Name;
 
@@ -145,36 +191,52 @@ public static class SensorMappingExtensions
         if (dto.SerialNumber != null)
             sensor.SerialNumber = dto.SerialNumber;
 
-        // Interval Override
-        if (dto.IntervalSecondsOverride.HasValue)
-            sensor.IntervalSecondsOverride = dto.IntervalSecondsOverride;
+        // === Hardware Info ===
+        if (dto.Manufacturer != null)
+            sensor.Manufacturer = dto.Manufacturer;
 
-        // Pin Configuration Override
-        if (dto.I2CAddressOverride != null)
-            sensor.I2CAddressOverride = dto.I2CAddressOverride;
+        if (dto.Model != null)
+            sensor.Model = dto.Model;
 
-        if (dto.SdaPinOverride.HasValue)
-            sensor.SdaPinOverride = dto.SdaPinOverride;
+        if (dto.DatasheetUrl != null)
+            sensor.DatasheetUrl = dto.DatasheetUrl;
 
-        if (dto.SclPinOverride.HasValue)
-            sensor.SclPinOverride = dto.SclPinOverride;
+        // === Pin Configuration ===
+        if (dto.I2CAddress != null)
+            sensor.I2CAddress = dto.I2CAddress;
 
-        if (dto.OneWirePinOverride.HasValue)
-            sensor.OneWirePinOverride = dto.OneWirePinOverride;
+        if (dto.SdaPin.HasValue)
+            sensor.SdaPin = dto.SdaPin;
 
-        if (dto.AnalogPinOverride.HasValue)
-            sensor.AnalogPinOverride = dto.AnalogPinOverride;
+        if (dto.SclPin.HasValue)
+            sensor.SclPin = dto.SclPin;
 
-        if (dto.DigitalPinOverride.HasValue)
-            sensor.DigitalPinOverride = dto.DigitalPinOverride;
+        if (dto.OneWirePin.HasValue)
+            sensor.OneWirePin = dto.OneWirePin;
 
-        if (dto.TriggerPinOverride.HasValue)
-            sensor.TriggerPinOverride = dto.TriggerPinOverride;
+        if (dto.AnalogPin.HasValue)
+            sensor.AnalogPin = dto.AnalogPin;
 
-        if (dto.EchoPinOverride.HasValue)
-            sensor.EchoPinOverride = dto.EchoPinOverride;
+        if (dto.DigitalPin.HasValue)
+            sensor.DigitalPin = dto.DigitalPin;
 
-        // Calibration
+        if (dto.TriggerPin.HasValue)
+            sensor.TriggerPin = dto.TriggerPin;
+
+        if (dto.EchoPin.HasValue)
+            sensor.EchoPin = dto.EchoPin;
+
+        // === Timing Configuration ===
+        if (dto.IntervalSeconds.HasValue)
+            sensor.IntervalSeconds = dto.IntervalSeconds.Value;
+
+        if (dto.MinIntervalSeconds.HasValue)
+            sensor.MinIntervalSeconds = dto.MinIntervalSeconds.Value;
+
+        if (dto.WarmupTimeMs.HasValue)
+            sensor.WarmupTimeMs = dto.WarmupTimeMs.Value;
+
+        // === Calibration ===
         if (dto.OffsetCorrection.HasValue)
             sensor.OffsetCorrection = dto.OffsetCorrection.Value;
 
@@ -184,11 +246,17 @@ public static class SensorMappingExtensions
         if (dto.CalibrationNotes != null)
             sensor.CalibrationNotes = dto.CalibrationNotes;
 
-        // Capabilities
-        if (dto.ActiveCapabilityIds != null)
-            sensor.SetActiveCapabilityIds(dto.ActiveCapabilityIds);
+        // === Categorization ===
+        if (dto.Category != null)
+            sensor.Category = dto.Category.ToLowerInvariant();
 
-        // Status
+        if (dto.Icon != null)
+            sensor.Icon = dto.Icon;
+
+        if (dto.Color != null)
+            sensor.Color = dto.Color;
+
+        // === Status ===
         if (dto.IsActive.HasValue)
             sensor.IsActive = dto.IsActive.Value;
 
@@ -214,5 +282,13 @@ public static class SensorMappingExtensions
     public static IEnumerable<SensorDto> ToDtos(this IEnumerable<Sensor> sensors)
     {
         return sensors.Select(s => s.ToDto());
+    }
+
+    /// <summary>
+    /// Converts a list of SensorCapability Entities to DTOs
+    /// </summary>
+    public static IEnumerable<SensorCapabilityDto> ToDtos(this IEnumerable<SensorCapability> capabilities)
+    {
+        return capabilities.Select(c => c.ToDto());
     }
 }

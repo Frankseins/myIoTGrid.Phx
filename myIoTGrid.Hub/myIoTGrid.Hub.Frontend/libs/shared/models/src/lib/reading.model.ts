@@ -9,8 +9,11 @@ export interface Reading {
   id: number;
   tenantId: string;
   nodeId: string;
-  sensorTypeId: string;
-  sensorTypeName: string;
+  sensorId: string;
+  sensorCode: string;
+  sensorName: string;
+  measurementType: string;
+  displayName: string;
   value: number;
   unit: string;
   timestamp: string;
@@ -30,7 +33,8 @@ export interface ReadingFilter {
   nodeId?: string;
   nodeIdentifier?: string;
   hubId?: string;
-  sensorTypeId?: string;
+  sensorId?: string;
+  measurementType?: string;
   from?: string;
   to?: string;
   isSyncedToCloud?: boolean;
@@ -48,5 +52,5 @@ export interface PaginatedResult<T> {
 
 export interface LatestReadingDto {
   nodeId: string;
-  readings: { [sensorTypeId: string]: Reading };
+  readings: { [measurementType: string]: Reading };
 }

@@ -5,20 +5,21 @@ using myIoTGrid.Hub.Domain.Entities;
 namespace myIoTGrid.Hub.Infrastructure.Data.Configurations;
 
 /// <summary>
-/// EF Core Configuration for SensorTypeCapability Entity.
-/// Defines measurement capabilities of a SensorType.
+/// EF Core Configuration for SensorCapability Entity.
+/// Defines measurement capabilities of a Sensor (v3.0).
+/// Matter-konform: Corresponds to a Matter Cluster.
 /// </summary>
-public class SensorTypeCapabilityConfiguration : IEntityTypeConfiguration<SensorTypeCapability>
+public class SensorCapabilityConfiguration : IEntityTypeConfiguration<SensorCapability>
 {
-    public void Configure(EntityTypeBuilder<SensorTypeCapability> builder)
+    public void Configure(EntityTypeBuilder<SensorCapability> builder)
     {
-        builder.ToTable("SensorTypeCapabilities");
+        builder.ToTable("SensorCapabilities");
 
         // Primary Key
         builder.HasKey(c => c.Id);
 
         // Properties
-        builder.Property(c => c.SensorTypeId)
+        builder.Property(c => c.SensorId)
             .IsRequired();
 
         builder.Property(c => c.MeasurementType)
@@ -50,9 +51,9 @@ public class SensorTypeCapabilityConfiguration : IEntityTypeConfiguration<Sensor
             .HasDefaultValue(true);
 
         // Indexes
-        builder.HasIndex(c => c.SensorTypeId);
+        builder.HasIndex(c => c.SensorId);
         builder.HasIndex(c => c.MeasurementType);
-        builder.HasIndex(c => new { c.SensorTypeId, c.MeasurementType }).IsUnique();
+        builder.HasIndex(c => new { c.SensorId, c.MeasurementType }).IsUnique();
         builder.HasIndex(c => c.MatterClusterId);
     }
 }

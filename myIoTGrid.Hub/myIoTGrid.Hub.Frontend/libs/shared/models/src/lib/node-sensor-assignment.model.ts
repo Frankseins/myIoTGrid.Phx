@@ -7,10 +7,8 @@ export interface NodeSensorAssignment {
   nodeId: string;
   nodeName: string;
   sensorId: string;
+  sensorCode: string;
   sensorName: string;
-  sensorTypeId: string;
-  sensorTypeCode: string;
-  sensorTypeName: string;
   endpointId: number;
   alias?: string;
   i2cAddressOverride?: string;
@@ -65,7 +63,7 @@ export interface UpdateNodeSensorAssignmentDto {
 
 /**
  * Effective configuration after inheritance resolution.
- * EffectiveValue = Assignment ?? Sensor ?? SensorType
+ * EffectiveValue = Assignment ?? Sensor
  */
 export interface EffectiveConfig {
   intervalSeconds: number;

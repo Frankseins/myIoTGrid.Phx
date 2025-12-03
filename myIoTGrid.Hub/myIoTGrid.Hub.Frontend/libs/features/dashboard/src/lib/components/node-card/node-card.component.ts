@@ -6,7 +6,6 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Node, Reading, Protocol } from '@myiotgrid/shared/models';
-import { SensorTypeApiService } from '@myiotgrid/shared/data-access';
 import { RelativeTimePipe, SensorUnitPipe } from '@myiotgrid/shared/utils';
 
 @Component({
@@ -26,8 +25,6 @@ import { RelativeTimePipe, SensorUnitPipe } from '@myiotgrid/shared/utils';
   styleUrl: './node-card.component.scss'
 })
 export class NodeCardComponent {
-  private readonly sensorTypeService = inject(SensorTypeApiService);
-
   node = input.required<Node>();
   latestReadings = input<Reading[]>([]);
 
@@ -74,21 +71,27 @@ export class NodeCardComponent {
     this.node().sensors?.length || 0
   );
 
-  getIconForSensorType(sensorTypeId: string): string {
-    const icon = this.sensorTypeService.getIcon(sensorTypeId);
-    if (icon && icon !== 'sensors') return icon;
-
-    // Fallback based on common sensor types
-    const displayName = this.sensorTypeService.getDisplayName(sensorTypeId)?.toLowerCase() || '';
-    if (displayName.includes('temp')) return 'thermostat';
-    if (displayName.includes('humid') || displayName.includes('feucht')) return 'water_drop';
-    if (displayName.includes('co2')) return 'air';
-    if (displayName.includes('druck') || displayName.includes('press')) return 'speed';
-    if (displayName.includes('licht') || displayName.includes('light')) return 'light_mode';
+  getIconForReading(reading: Reading): string {
+    // Fallback based on measurement type
+    const measurementType = reading.measurementType.toLowerCase();
+    if (measurementType.includes('temp')) return 'thermostat';
+    if (measurementType.includes('humid') || measurementType.includes('feucht')) return 'water_drop';
+    if (measurementType.includes('co2')) return 'air';
+    if (measurementType.includes('pressure') || measurementType.includes('druck')) return 'speed';
+    if (measurementType.includes('light') || measurementType.includes('licht')) return 'light_mode';
+    if (measurementType.includes('pm25') || measurementType.includes('pm10')) return 'cloud';
     return 'sensors';
   }
 
-  getColorForSensorType(sensorTypeId: string): string {
-    return this.sensorTypeService.getColor(sensorTypeId);
+  getColorForReading(reading: Reading): string {
+    // Fallback based on measurement type
+    const measurementType = reading.measurementType.toLowerCase();
+    if (measurementType.includes('temp')) return '#ff6b6b';
+    if (measurementType.includes('humid') || measurementType.includes('feucht')) return '#4dabf7';
+    if (measurementType.includes('co2')) return '#a9e34b';
+    if (measurementType.includes('pressure') || measurementType.includes('druck')) return '#9775fa';
+    if (measurementType.includes('light') || measurementType.includes('licht')) return '#ffd43b';
+    if (measurementType.includes('pm')) return '#868e96';
+    return '#495057';
   }
 }

@@ -6,8 +6,9 @@ using myIoTGrid.Hub.Shared.DTOs.Common;
 namespace myIoTGrid.Hub.Interface.Controllers;
 
 /// <summary>
-/// REST API Controller for Sensors (Concrete Instances).
-/// Individual sensor instances with calibration settings.
+/// REST API Controller for Sensors (v3.0).
+/// Complete sensor definition with hardware configuration and calibration.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
@@ -68,21 +69,54 @@ public class SensorsController : ControllerBase
     }
 
     /// <summary>
-    /// Returns Sensors by SensorType
+    /// Returns a Sensor by Code
     /// </summary>
-    /// <param name="sensorTypeId">SensorType-ID</param>
+    /// <param name="code">Sensor Code (e.g. "dht22", "bme280")</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>List of Sensors</returns>
-    [HttpGet("by-type/{sensorTypeId:guid}")]
-    [ProducesResponseType(typeof(IEnumerable<SensorDto>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> GetBySensorType(Guid sensorTypeId, CancellationToken ct)
+    /// <returns>The Sensor</returns>
+    [HttpGet("code/{code}")]
+    [ProducesResponseType(typeof(SensorDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByCode(string code, CancellationToken ct)
     {
-        var sensors = await _sensorService.GetBySensorTypeAsync(sensorTypeId, ct);
+        var sensor = await _sensorService.GetByCodeAsync(code, ct);
+
+        if (sensor == null)
+            return NotFound();
+
+        return Ok(sensor);
+    }
+
+    /// <summary>
+    /// Returns Sensors by Category
+    /// </summary>
+    /// <param name="category">Category (e.g. "climate", "water", "location")</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>List of Sensors in category</returns>
+    [HttpGet("category/{category}")]
+    [ProducesResponseType(typeof(IEnumerable<SensorDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetByCategory(string category, CancellationToken ct)
+    {
+        var sensors = await _sensorService.GetByCategoryAsync(category, ct);
         return Ok(sensors);
     }
 
     /// <summary>
-    /// Creates a new Sensor instance
+    /// Returns all Capabilities for a Sensor
+    /// </summary>
+    /// <param name="id">Sensor-ID</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>List of Capabilities</returns>
+    [HttpGet("{id:guid}/capabilities")]
+    [ProducesResponseType(typeof(IEnumerable<SensorCapabilityDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCapabilities(Guid id, CancellationToken ct)
+    {
+        var capabilities = await _sensorService.GetCapabilitiesAsync(id, ct);
+        return Ok(capabilities);
+    }
+
+    /// <summary>
+    /// Creates a new Sensor
     /// </summary>
     /// <param name="dto">Sensor data</param>
     /// <param name="ct">Cancellation Token</param>
@@ -142,8 +176,6 @@ public class SensorsController : ControllerBase
     /// <param name="dto">Calibration data</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>The calibrated Sensor</returns>
-    /// <response code="200">Sensor successfully calibrated</response>
-    /// <response code="404">Sensor not found</response>
     [HttpPost("{id:guid}/calibrate")]
     [ProducesResponseType(typeof(SensorDto), StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
@@ -170,9 +202,6 @@ public class SensorsController : ControllerBase
     /// <param name="id">Sensor-ID</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>No content</returns>
-    /// <response code="204">Sensor successfully deleted</response>
-    /// <response code="400">Sensor has active assignments</response>
-    /// <response code="404">Sensor not found</response>
     [HttpDelete("{id:guid}")]
     [ProducesResponseType(StatusCodes.Status204NoContent)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
@@ -200,5 +229,18 @@ public class SensorsController : ControllerBase
                 Detail = ex.Message
             });
         }
+    }
+
+    /// <summary>
+    /// Seeds default sensors (standard templates like BME280, DHT22, etc.)
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>No content</returns>
+    [HttpPost("seed")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> SeedDefaultSensors(CancellationToken ct)
+    {
+        await _sensorService.SeedDefaultSensorsAsync(ct);
+        return NoContent();
     }
 }

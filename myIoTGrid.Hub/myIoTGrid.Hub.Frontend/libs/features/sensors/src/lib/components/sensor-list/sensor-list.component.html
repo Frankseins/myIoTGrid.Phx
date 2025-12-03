@@ -23,7 +23,7 @@
         [columns]="columns"
         dataKey="id"
         [stateKey]="'sensors-table'"
-        [globalFilterFields]="['id','name','sensorTypeName','serialNumber']"
+        [globalFilterFields]="['id','name','code','category','serialNumber']"
         createLabel="Neuer Sensor"
         [useGlobalSearch]="false"
         detailTitle="Sensor"
@@ -40,14 +40,14 @@
         <!-- Filter Template -->
         <ng-template #filterTemplate let-filters>
             <div class="filter-fields">
-                <!-- Sensortyp -->
+                <!-- Kategorie -->
                 <mat-form-field appearance="outline" class="full-width">
-                    <mat-label>Sensortyp</mat-label>
-                    <mat-select [ngModel]="filters['sensorTypeId']"
-                                (ngModelChange)="filters['sensorTypeId'] = $event">
+                    <mat-label>Kategorie</mat-label>
+                    <mat-select [ngModel]="filters['category']"
+                                (ngModelChange)="filters['category'] = $event">
                         <mat-option [value]="''">Alle</mat-option>
-                        @for (type of sensorTypes; track type.id) {
-                            <mat-option [value]="type.id">{{ type.name }}</mat-option>
+                        @for (category of sensorCategories; track category) {
+                            <mat-option [value]="category">{{ getCategoryLabel(category) }}</mat-option>
                         }
                     </mat-select>
                 </mat-form-field>
@@ -67,14 +67,19 @@
 
         <!-- Icon Column Template -->
         <ng-template [myiotgridColumnTemplate]="'icon'" let-row>
-            <div class="sensor-icon" [style.background-color]="getSensorTypeColor(row.sensorTypeId)">
-                <mat-icon>{{ getSensorTypeIcon(row.sensorTypeId) }}</mat-icon>
+            <div class="sensor-icon" [style.background-color]="getSensorColor(row)">
+                <mat-icon>{{ getSensorIcon(row) }}</mat-icon>
             </div>
         </ng-template>
 
-        <!-- SensorType Column Template -->
-        <ng-template [myiotgridColumnTemplate]="'sensorTypeId'" let-row>
-            <span>{{ row.sensorTypeName || getSensorTypeName(row.sensorTypeId) }}</span>
+        <!-- Category Column Template -->
+        <ng-template [myiotgridColumnTemplate]="'category'" let-row>
+            <span>{{ getCategoryLabel(row.category) }}</span>
+        </ng-template>
+
+        <!-- Protocol Column Template -->
+        <ng-template [myiotgridColumnTemplate]="'protocol'" let-row>
+            <span>{{ getProtocolLabel(row.protocol) }}</span>
         </ng-template>
 
         <!-- Status Column Template -->

@@ -5,8 +5,9 @@ using myIoTGrid.Hub.Shared.DTOs;
 namespace myIoTGrid.Hub.Service.Extensions;
 
 /// <summary>
-/// Mapping Extensions for NodeSensorAssignment Entity.
+/// Mapping Extensions for NodeSensorAssignment Entity (v3.0).
 /// Hardware binding of Sensors to Nodes.
+/// Two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public static class NodeSensorAssignmentMappingExtensions
 {
@@ -19,18 +20,15 @@ public static class NodeSensorAssignmentMappingExtensions
     {
         var effectiveConfig = effectiveConfigService.GetEffectiveConfig(
             assignment,
-            assignment.Sensor,
-            assignment.Sensor.SensorType);
+            assignment.Sensor);
 
         return new NodeSensorAssignmentDto(
             Id: assignment.Id,
             NodeId: assignment.NodeId,
             NodeName: assignment.Node?.Name ?? string.Empty,
             SensorId: assignment.SensorId,
+            SensorCode: assignment.Sensor?.Code ?? string.Empty,
             SensorName: assignment.Sensor?.Name ?? string.Empty,
-            SensorTypeId: assignment.Sensor?.SensorTypeId ?? Guid.Empty,
-            SensorTypeCode: assignment.Sensor?.SensorType?.Code ?? string.Empty,
-            SensorTypeName: assignment.Sensor?.SensorType?.Name ?? string.Empty,
             EndpointId: assignment.EndpointId,
             Alias: assignment.Alias,
             I2CAddressOverride: assignment.I2CAddressOverride,

@@ -181,12 +181,12 @@
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <div class="assignment-header">
-                            <div class="sensor-icon" [style.background-color]="getSensorTypeColor(assignment.sensorTypeId)">
-                              <mat-icon>{{ getSensorTypeIcon(assignment.sensorTypeId) }}</mat-icon>
+                            <div class="sensor-icon" [style.background-color]="getSensorColor(assignment.sensorCode)">
+                              <mat-icon>{{ getSensorIcon(assignment.sensorCode) }}</mat-icon>
                             </div>
                             <div class="assignment-info">
                               <span class="sensor-name">{{ assignment.alias || assignment.sensorName }}</span>
-                              <span class="sensor-type">{{ assignment.sensorTypeName }}</span>
+                              <span class="sensor-type">{{ assignment.sensorCode }}</span>
                             </div>
                           </div>
                         </mat-panel-title>
@@ -333,7 +333,7 @@
                               } @else {
                                 @for (sensor of getUnassignedSensors(); track sensor.id) {
                                   <mat-option [value]="sensor.id">
-                                    {{ sensor.name }} ({{ sensor.sensorTypeName }})
+                                    {{ sensor.name }} ({{ sensor.code }})
                                   </mat-option>
                                 }
                               }

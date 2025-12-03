@@ -12,9 +12,10 @@ using myIoTGrid.Hub.Shared.Extensions;
 namespace myIoTGrid.Hub.Service.Services;
 
 /// <summary>
-/// Service for Reading (Measurement) management.
+/// Service for Reading (Measurement) management (v3.0).
 /// Matter-konform: Entspricht Attribute Reports.
-/// New model: Uses EndpointId + MeasurementType to find Assignment, applies calibration.
+/// Two-tier model: Sensor → NodeSensorAssignment
+/// Uses EndpointId + MeasurementType to find Assignment, applies calibration from Sensor.
 /// </summary>
 public class ReadingService : IReadingService
 {
@@ -58,11 +59,10 @@ public class ReadingService : IReadingService
         // Find or create Node (auto-registration)
         var node = await _nodeService.GetOrCreateByNodeIdAsync(hub.Id, dto.NodeId, ct);
 
-        // Find Assignment by EndpointId on this Node
+        // Find Assignment by EndpointId on this Node (v3.0: direct Sensor reference with Capabilities)
         var assignment = await _context.NodeSensorAssignments
             .Include(a => a.Sensor)
-                .ThenInclude(s => s.SensorType)
-                    .ThenInclude(st => st.Capabilities)
+                .ThenInclude(s => s.Capabilities)
             .FirstOrDefaultAsync(a => a.NodeId == node.Id && a.EndpointId == dto.EndpointId, ct);
 
         if (assignment == null)
@@ -100,15 +100,14 @@ public class ReadingService : IReadingService
             return unknownReading.ToDto();
         }
 
-        // Get Sensor and SensorType from assignment
+        // Get Sensor from assignment (v3.0: Sensor contains all configuration)
         var sensor = assignment.Sensor!;
-        var sensorType = sensor.SensorType!;
 
         // Apply calibration: CalibratedValue = (RawValue * Gain) + Offset
-        var calibratedValue = _effectiveConfigService.ApplyCalibration(dto.RawValue, sensor, sensorType);
+        var calibratedValue = _effectiveConfigService.ApplyCalibration(dto.RawValue, sensor);
 
-        // Get unit from capability (MeasurementType)
-        var capability = sensorType.Capabilities
+        // Get unit from capability (MeasurementType) - now on Sensor directly
+        var capability = sensor.Capabilities
             .FirstOrDefault(c => c.MeasurementType.Equals(dto.MeasurementType, StringComparison.OrdinalIgnoreCase));
         var unit = capability?.Unit ?? string.Empty;
 

@@ -143,13 +143,13 @@
                   <div class="sensors-list">
                     @for (sensor of node.sensors; track sensor.id) {
                       <div class="sensor-row">
-                        <div class="sensor-icon" [style.background-color]="sensor.sensorType?.color || getSensorColor(sensor.sensorTypeId)">
-                          <mat-icon>{{ sensor.sensorType?.icon || getSensorIcon(sensor.sensorTypeId) }}</mat-icon>
+                        <div class="sensor-icon" [style.background-color]="getSensorColor(sensor)">
+                          <mat-icon>{{ getSensorIcon(sensor) }}</mat-icon>
                         </div>
-                        <span class="sensor-name">{{ sensor.name || sensor.sensorTypeName }}</span>
+                        <span class="sensor-name">{{ sensor.name }}</span>
                         <span class="sensor-value">
-                          @if (getSensorReading(node.id, sensor.sensorTypeId); as reading) {
-                            {{ reading.value | number:'1.1-1' }} {{ reading.unit || getSensorUnit(sensor.sensorTypeId) }}
+                          @if (getSensorReading(node.id, sensor.id); as reading) {
+                            {{ reading.value | number:'1.1-1' }} {{ reading.unit }}
                           } @else {
                             <span class="no-data">--</span>
                           }
@@ -169,14 +169,14 @@
 
                 @if (isSensorsExpanded(node.id)) {
                   <div class="sensors-list">
-                    @for (reading of getLatestReadings(node.id); track reading.sensorTypeId) {
+                    @for (reading of getLatestReadings(node.id); track reading.id) {
                       <div class="sensor-row">
-                        <div class="sensor-icon" [style.background-color]="getSensorColor(reading.sensorTypeId)">
-                          <mat-icon>{{ getSensorIcon(reading.sensorTypeId) }}</mat-icon>
+                        <div class="sensor-icon" [style.background-color]="reading.sensorColor || '#607d8b'">
+                          <mat-icon>{{ reading.sensorIcon || 'sensors' }}</mat-icon>
                         </div>
-                        <span class="sensor-name">{{ reading.sensorTypeName || getSensorTypeName(reading.sensorTypeId) }}</span>
+                        <span class="sensor-name">{{ reading.sensorName }}</span>
                         <span class="sensor-value">
-                          {{ reading.value | number:'1.1-1' }} {{ reading.unit || getSensorUnit(reading.sensorTypeId) }}
+                          {{ reading.value | number:'1.1-1' }} {{ reading.unit }}
                         </span>
                       </div>
                     }

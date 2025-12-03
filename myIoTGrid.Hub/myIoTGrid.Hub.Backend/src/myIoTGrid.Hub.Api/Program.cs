@@ -66,7 +66,6 @@ try
 
     // Services (Scoped)
     builder.Services.AddScoped<ITenantService, TenantService>();
-    builder.Services.AddScoped<ISensorTypeService, SensorTypeService>();
     builder.Services.AddScoped<IAlertTypeService, AlertTypeService>();
     builder.Services.AddScoped<IHubService, HubService>();
     builder.Services.AddScoped<INodeService, NodeService>();
@@ -78,7 +77,7 @@ try
     builder.Services.AddScoped<ISignalRNotificationService, SignalRNotificationService>();
     builder.Services.AddScoped<ISeedDataService, SeedDataService>();
 
-    // Memory Cache for SensorTypes
+    // Memory Cache for Sensors
     builder.Services.AddMemoryCache();
 
     // FluentValidation

@@ -19,7 +19,6 @@ export * from './node-api.service';
 export * from './node-sensor-assignment-api.service';
 export * from './sensor-api.service';
 export * from './reading-api.service';
-export * from './sensor-type-api.service';
 export * from './unified-node-api.service';
 export * from './alert-api.service';
 export * from './alert-type-api.service';

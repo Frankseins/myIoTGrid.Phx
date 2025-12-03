@@ -32,7 +32,6 @@ public class ReadingServiceTests : IDisposable
     private readonly Guid _hubId;
     private readonly Guid _nodeId;
     private readonly Guid _sensorId;
-    private readonly Guid _sensorTypeId;
     private readonly Guid _assignmentId;
 
     public ReadingServiceTests()
@@ -72,71 +71,53 @@ public class ReadingServiceTests : IDisposable
             CreatedAt = DateTime.UtcNow
         });
 
-        // Create SensorType with Capabilities
-        _sensorTypeId = Guid.NewGuid();
-        var sensorType = new SensorType
-        {
-            Id = _sensorTypeId,
-            Code = "dht22",
-            Name = "DHT22 Temperature & Humidity Sensor",
-            Protocol = CommunicationProtocol.OneWire,
-            Category = "climate",
-            DefaultIntervalSeconds = 60,
-            IsActive = true,
-            IsGlobal = true,
-            CreatedAt = DateTime.UtcNow
-        };
-
-        sensorType.Capabilities.Add(new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = _sensorTypeId,
-            MeasurementType = "temperature",
-            DisplayName = "Temperature",
-            Unit = "°C",
-            MinValue = -40,
-            MaxValue = 80,
-            Resolution = 0.1,
-            Accuracy = 0.5,
-            MatterClusterId = 0x0402,
-            MatterClusterName = "TemperatureMeasurement",
-            SortOrder = 0,
-            IsActive = true
-        });
-
-        sensorType.Capabilities.Add(new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = _sensorTypeId,
-            MeasurementType = "humidity",
-            DisplayName = "Humidity",
-            Unit = "%",
-            MinValue = 0,
-            MaxValue = 100,
-            Resolution = 0.1,
-            Accuracy = 2.0,
-            MatterClusterId = 0x0405,
-            MatterClusterName = "RelativeHumidityMeasurement",
-            SortOrder = 1,
-            IsActive = true
-        });
-
-        _context.SensorTypes.Add(sensorType);
-
-        // Create Sensor
+        // Create Sensor with Capabilities (v3.0 Two-Tier: Sensor has Code/Name/Capabilities directly)
         _sensorId = Guid.NewGuid();
         var sensor = new Sensor
         {
             Id = _sensorId,
             TenantId = _tenantId,
-            SensorTypeId = _sensorTypeId,
+            Code = "dht22-living-room",
             Name = "Living Room DHT22",
+            Protocol = CommunicationProtocol.OneWire,
+            Category = "climate",
+            IntervalSeconds = 60,
+            MinIntervalSeconds = 2,
             OffsetCorrection = 0,
             GainCorrection = 1.0,
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow
         };
+
+        sensor.Capabilities.Add(new SensorCapability
+        {
+            Id = Guid.NewGuid(),
+            SensorId = _sensorId,
+            MeasurementType = "temperature",
+            DisplayName = "Temperature",
+            Unit = "°C",
+            MinValue = -40,
+            MaxValue = 80,
+            MatterClusterId = 0x0402,
+            MatterClusterName = "TemperatureMeasurement",
+            IsActive = true
+        });
+
+        sensor.Capabilities.Add(new SensorCapability
+        {
+            Id = Guid.NewGuid(),
+            SensorId = _sensorId,
+            MeasurementType = "humidity",
+            DisplayName = "Humidity",
+            Unit = "%",
+            MinValue = 0,
+            MaxValue = 100,
+            MatterClusterId = 0x0405,
+            MatterClusterName = "RelativeHumidityMeasurement",
+            IsActive = true
+        });
+
         _context.Sensors.Add(sensor);
 
         // Create NodeSensorAssignment
@@ -153,9 +134,9 @@ public class ReadingServiceTests : IDisposable
 
         _context.SaveChanges();
 
-        // Default calibration: return raw value unchanged
-        _effectiveConfigMock.Setup(x => x.ApplyCalibration(It.IsAny<double>(), It.IsAny<Sensor>(), It.IsAny<SensorType>()))
-            .Returns((double raw, Sensor s, SensorType st) => raw);
+        // Default calibration: return raw value unchanged (v3.0 Two-Tier: no SensorType parameter)
+        _effectiveConfigMock.Setup(x => x.ApplyCalibration(It.IsAny<double>(), It.IsAny<Sensor>()))
+            .Returns((double raw, Sensor s) => raw);
 
         _sut = new ReadingService(
             _context,
@@ -649,8 +630,8 @@ public class ReadingServiceTests : IDisposable
         _signalRMock.Setup(x => x.NotifyNewReadingAsync(It.IsAny<ReadingDto>(), It.IsAny<CancellationToken>()))
             .Returns(Task.CompletedTask);
 
-        // Calibration: RawValue * 1.02 + 0.5 = 22.33
-        _effectiveConfigMock.Setup(x => x.ApplyCalibration(21.5, It.IsAny<Sensor>(), It.IsAny<SensorType>()))
+        // Calibration: RawValue * 1.02 + 0.5 = 22.33 (v3.0 Two-Tier: no SensorType parameter)
+        _effectiveConfigMock.Setup(x => x.ApplyCalibration(21.5, It.IsAny<Sensor>()))
             .Returns(22.33);
 
         var dto = new CreateReadingDto(

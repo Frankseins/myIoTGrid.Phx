@@ -1,33 +1,108 @@
-import { SensorType } from './sensor-type.model';
+/**
+ * Communication protocol used by sensors.
+ * Matches backend CommunicationProtocol enum.
+ */
+export enum CommunicationProtocol {
+  I2C = 1,
+  SPI = 2,
+  OneWire = 3,
+  Analog = 4,
+  UART = 5,
+  Digital = 6,
+  UltraSonic = 7
+}
 
 /**
- * Sensor model - corresponds to Backend SensorDto
- * Represents a concrete sensor instance with calibration settings and pin configuration overrides.
- * Inherits defaults from SensorType and can override them.
+ * Communication protocol labels for UI display
+ */
+export const COMMUNICATION_PROTOCOL_LABELS: Record<CommunicationProtocol, string> = {
+  [CommunicationProtocol.I2C]: 'I²C',
+  [CommunicationProtocol.SPI]: 'SPI',
+  [CommunicationProtocol.OneWire]: '1-Wire',
+  [CommunicationProtocol.Analog]: 'Analog',
+  [CommunicationProtocol.UART]: 'UART',
+  [CommunicationProtocol.Digital]: 'Digital',
+  [CommunicationProtocol.UltraSonic]: 'Ultraschall'
+};
+
+/**
+ * SensorCapability - Measurement capability of a sensor
+ * Matches backend SensorCapabilityDto
+ */
+export interface SensorCapability {
+  id: string;
+  measurementType: string;
+  displayName: string;
+  unit: string;
+  minValue?: number;
+  maxValue?: number;
+  resolution: number;
+  accuracy: number;
+  matterClusterId?: number;
+  matterClusterName?: string;
+  sortOrder: number;
+  isActive: boolean;
+}
+
+/**
+ * Standard Matter Cluster IDs
+ */
+export const MATTER_CLUSTERS = {
+  TEMPERATURE: 0x0402,
+  HUMIDITY: 0x0405,
+  PRESSURE: 0x0403,
+  ILLUMINANCE: 0x0400,
+  OCCUPANCY: 0x0406,
+  // Custom myIoTGrid (0xFC00+)
+  WATER_LEVEL: 0xfc00,
+  WATER_TEMPERATURE: 0xfc01,
+  PH_VALUE: 0xfc02,
+  FLOW_VELOCITY: 0xfc03,
+  CO2: 0xfc04,
+  PM25: 0xfc05,
+  PM10: 0xfc06,
+  SOIL_MOISTURE: 0xfc07,
+  UV_INDEX: 0xfc08,
+  WIND_SPEED: 0xfc09,
+  RAINFALL: 0xfc0a,
+  BATTERY: 0xfc0b,
+  RSSI: 0xfc0c,
+} as const;
+
+export type SensorCategory = 'climate' | 'water' | 'location' | 'custom' | string;
+
+/**
+ * Sensor model - corresponds to Backend SensorDto (v3.0 Two-Tier Model)
+ * All properties are now in Sensor (no more SensorType separation).
  */
 export interface Sensor {
   [key: string]: unknown;
   id: string;
   tenantId: string;
-  sensorTypeId: string;
-  sensorTypeCode: string;
-  sensorTypeName: string;
+
+  // Core Properties (formerly in SensorType)
+  code: string;
   name: string;
+  protocol: CommunicationProtocol;
+  category: string;
+  manufacturer?: string;
+  model?: string;
   description?: string;
-  serialNumber?: string;
 
-  // Interval Override (null = inherit from SensorType)
-  intervalSecondsOverride?: number;
+  // Hardware Configuration
+  i2cAddress?: string;
+  sdaPin?: number;
+  sclPin?: number;
+  oneWirePin?: number;
+  analogPin?: number;
+  digitalPin?: number;
+  triggerPin?: number;
+  echoPin?: number;
 
-  // Pin Configuration Override (null = inherit from SensorType)
-  i2cAddressOverride?: string;
-  sdaPinOverride?: number;
-  sclPinOverride?: number;
-  oneWirePinOverride?: number;
-  analogPinOverride?: number;
-  digitalPinOverride?: number;
-  triggerPinOverride?: number;
-  echoPinOverride?: number;
+  // Timing Configuration
+  intervalSeconds: number;
+  minIntervalSeconds: number;
+  warmupTimeMs: number;
 
   // Calibration
   offsetCorrection: number;
@@ -36,75 +111,124 @@ export interface Sensor {
   calibrationNotes?: string;
   calibrationDueAt?: string;
 
+  // Metadata
+  icon?: string;
+  color?: string;
+  datasheetUrl?: string;
+  serialNumber?: string;
+
   // Capabilities
-  activeCapabilityIds: string[];
+  capabilities: SensorCapability[];
 
   // Status
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
-
-  // Optional: populated from SensorType lookup
-  sensorType?: SensorType;
 }
 
+/**
+ * DTO for creating a SensorCapability
+ * Matches backend CreateSensorCapabilityDto
+ */
+export interface CreateSensorCapabilityDto {
+  measurementType: string;
+  displayName: string;
+  unit: string;
+  minValue?: number;
+  maxValue?: number;
+  resolution?: number;
+  accuracy?: number;
+  matterClusterId?: number;
+  matterClusterName?: string;
+  sortOrder?: number;
+}
+
+/**
+ * DTO for creating a Sensor (v3.0)
+ * Matches backend CreateSensorDto
+ */
 export interface CreateSensorDto {
-  sensorTypeId: string;
+  code: string;
   name: string;
+  protocol: CommunicationProtocol;
+  category?: string;
+  manufacturer?: string;
+  model?: string;
   description?: string;
   serialNumber?: string;
 
-  // Interval Override
-  intervalSecondsOverride?: number;
+  // Hardware Configuration
+  i2cAddress?: string;
+  sdaPin?: number;
+  sclPin?: number;
+  oneWirePin?: number;
+  analogPin?: number;
+  digitalPin?: number;
+  triggerPin?: number;
+  echoPin?: number;
 
-  // Pin Configuration Override
-  i2cAddressOverride?: string;
-  sdaPinOverride?: number;
-  sclPinOverride?: number;
-  oneWirePinOverride?: number;
-  analogPinOverride?: number;
-  digitalPinOverride?: number;
-  triggerPinOverride?: number;
-  echoPinOverride?: number;
+  // Timing Configuration
+  intervalSeconds?: number;
+  minIntervalSeconds?: number;
+  warmupTimeMs?: number;
 
-  // Initial Calibration
+  // Calibration
   offsetCorrection?: number;
   gainCorrection?: number;
 
+  // Metadata
+  icon?: string;
+  color?: string;
+  datasheetUrl?: string;
+
   // Capabilities
-  activeCapabilityIds?: string[];
+  capabilities?: CreateSensorCapabilityDto[];
 }
 
+/**
+ * DTO for updating a Sensor (v3.0)
+ * Matches backend UpdateSensorDto
+ */
 export interface UpdateSensorDto {
   name?: string;
+  manufacturer?: string;
+  model?: string;
   description?: string;
   serialNumber?: string;
 
-  // Interval Override
-  intervalSecondsOverride?: number;
+  // Hardware Configuration
+  i2cAddress?: string;
+  sdaPin?: number;
+  sclPin?: number;
+  oneWirePin?: number;
+  analogPin?: number;
+  digitalPin?: number;
+  triggerPin?: number;
+  echoPin?: number;
 
-  // Pin Configuration Override
-  i2cAddressOverride?: string;
-  sdaPinOverride?: number;
-  sclPinOverride?: number;
-  oneWirePinOverride?: number;
-  analogPinOverride?: number;
-  digitalPinOverride?: number;
-  triggerPinOverride?: number;
-  echoPinOverride?: number;
+  // Timing Configuration
+  intervalSeconds?: number;
+  minIntervalSeconds?: number;
+  warmupTimeMs?: number;
 
   // Calibration
   offsetCorrection?: number;
   gainCorrection?: number;
   calibrationNotes?: string;
 
-  // Capabilities
-  activeCapabilityIds?: string[];
+  // Metadata
+  icon?: string;
+  color?: string;
+  datasheetUrl?: string;
 
   // Status
   isActive?: boolean;
 }
 
+/**
+ * DTO for calibrating a Sensor
+ * Matches backend CalibrateSensorDto
+ */
 export interface CalibrateSensorDto {
   offsetCorrection: number;
   gainCorrection?: number;

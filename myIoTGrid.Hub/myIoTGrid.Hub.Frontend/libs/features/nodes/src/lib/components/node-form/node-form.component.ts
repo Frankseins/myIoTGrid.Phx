@@ -14,11 +14,11 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
-import { NodeApiService, HubApiService, NodeSensorAssignmentApiService, SensorApiService, SensorTypeApiService } from '@myiotgrid/shared/data-access';
+import { NodeApiService, HubApiService, NodeSensorAssignmentApiService, SensorApiService } from '@myiotgrid/shared/data-access';
 import {
   Node, CreateNodeDto, UpdateNodeDto, Hub, Protocol,
   NodeSensorAssignment, CreateNodeSensorAssignmentDto, UpdateNodeSensorAssignmentDto,
-  Sensor, SensorType
+  Sensor
 } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent } from '@myiotgrid/shared/ui';
 import { ConfirmDialogComponent } from '@myiotgrid/shared/ui';
@@ -56,7 +56,6 @@ export class NodeFormComponent implements OnInit {
   private readonly hubApiService = inject(HubApiService);
   private readonly assignmentApiService = inject(NodeSensorAssignmentApiService);
   private readonly sensorApiService = inject(SensorApiService);
-  private readonly sensorTypeApiService = inject(SensorTypeApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
 
@@ -69,7 +68,6 @@ export class NodeFormComponent implements OnInit {
   // Sensor Assignment
   readonly assignments = signal<NodeSensorAssignment[]>([]);
   readonly availableSensors = signal<Sensor[]>([]);
-  readonly sensorTypes = signal<SensorType[]>([]);
   readonly isLoadingAssignments = signal(false);
   readonly showAssignmentForm = signal(false);
   readonly editingAssignment = signal<NodeSensorAssignment | null>(null);
@@ -98,7 +96,6 @@ export class NodeFormComponent implements OnInit {
     this.initForm();
     this.initAssignmentForm();
     this.loadHubs();
-    this.loadSensorTypes();
 
     const id = this.route.snapshot.paramMap.get('id');
     const url = this.route.snapshot.url.map(s => s.path).join('/');
@@ -150,13 +147,6 @@ export class NodeFormComponent implements OnInit {
     this.hubApiService.getAll().subscribe({
       next: (hubs) => this.hubs.set(hubs),
       error: (error) => console.error('Error loading hubs:', error)
-    });
-  }
-
-  private loadSensorTypes(): void {
-    this.sensorTypeApiService.getAll().subscribe({
-      next: (types) => this.sensorTypes.set(types),
-      error: (error) => console.error('Error loading sensor types:', error)
     });
   }
 
@@ -320,14 +310,14 @@ export class NodeFormComponent implements OnInit {
     return 1;
   }
 
-  getSensorTypeIcon(typeId: string): string {
-    const type = this.sensorTypes().find(t => t.id === typeId);
-    return type?.icon || 'sensors';
+  getSensorIcon(sensorCode: string): string {
+    const sensor = this.availableSensors().find(s => s.code === sensorCode);
+    return sensor?.icon || 'sensors';
   }
 
-  getSensorTypeColor(typeId: string): string {
-    const type = this.sensorTypes().find(t => t.id === typeId);
-    return type?.color || '#666';
+  getSensorColor(sensorCode: string): string {
+    const sensor = this.availableSensors().find(s => s.code === sensorCode);
+    return sensor?.color || '#666';
   }
 
   getUnassignedSensors(): Sensor[] {

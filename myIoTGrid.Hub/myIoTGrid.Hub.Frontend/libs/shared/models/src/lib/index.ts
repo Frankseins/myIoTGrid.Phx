@@ -12,7 +12,6 @@ export * from './column-config.model';
 // Entities
 export * from './tenant.model';
 export * from './hub.model';
-export * from './sensor-type.model';
 export * from './sensor.model';
 export * from './node.model';
 export * from './node-sensor-assignment.model';

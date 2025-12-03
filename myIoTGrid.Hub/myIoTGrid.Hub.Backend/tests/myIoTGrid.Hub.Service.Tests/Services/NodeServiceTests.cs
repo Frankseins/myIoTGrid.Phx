@@ -42,38 +42,7 @@ public class NodeServiceTests : IDisposable
             CreatedAt = DateTime.UtcNow
         });
 
-        // Create SensorType with Capabilities (New 3-tier model)
-        var sensorTypeId = Guid.NewGuid();
-        var sensorType = new SensorType
-        {
-            Id = sensorTypeId,
-            Code = "temperature",
-            Name = "Temperature Sensor",
-            Protocol = CommunicationProtocol.OneWire,
-            Category = "weather",
-            DefaultIntervalSeconds = 60,
-            IsGlobal = true,
-            IsActive = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        sensorType.Capabilities.Add(new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = sensorTypeId,
-            MeasurementType = "temperature",
-            DisplayName = "Temperatur",
-            Unit = "°C",
-            MatterClusterId = 0x0402,
-            MatterClusterName = "TemperatureMeasurement",
-            Resolution = 0.1,
-            Accuracy = 0.5,
-            SortOrder = 0,
-            IsActive = true
-        });
-
-        _context.SensorTypes.Add(sensorType);
+        // v3.0 Two-Tier: No SensorType setup needed, Sensor has Code/Name directly
         _context.SaveChanges();
 
         _sut = new NodeService(_context, unitOfWork, _signalRMock.Object, _loggerMock.Object);
@@ -170,7 +139,7 @@ public class NodeServiceTests : IDisposable
     [Fact]
     public async Task GetByHubAsync_IncludesAssignmentCount()
     {
-        // Arrange - New 3-tier model: Node has SensorAssignments, not Sensors
+        // Arrange - v3.0 Two-Tier: Node has SensorAssignments, Sensor has Code/Name directly
         var nodeId = Guid.NewGuid();
         _context.Nodes.Add(new Node
         {
@@ -181,15 +150,16 @@ public class NodeServiceTests : IDisposable
             CreatedAt = DateTime.UtcNow
         });
 
-        // Create a Sensor
+        // Create a Sensor with Code/Name directly
         var sensorId = Guid.NewGuid();
-        var sensorTypeId = _context.SensorTypes.First().Id;
         _context.Sensors.Add(new Sensor
         {
             Id = sensorId,
             TenantId = _tenantId,
-            SensorTypeId = sensorTypeId,
-            Name = "Test Sensor",
+            Code = "dht22-01",
+            Name = "DHT22 Test Sensor",
+            Protocol = CommunicationProtocol.OneWire,
+            Category = "climate",
             IsActive = true,
             CreatedAt = DateTime.UtcNow,
             UpdatedAt = DateTime.UtcNow

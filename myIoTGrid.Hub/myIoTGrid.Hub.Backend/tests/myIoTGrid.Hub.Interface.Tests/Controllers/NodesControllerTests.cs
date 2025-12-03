@@ -29,8 +29,7 @@ public class NodesControllerTests
     private readonly Guid _hubId = Guid.Parse("00000000-0000-0000-0000-000000000002");
     private readonly Guid _nodeId = Guid.Parse("00000000-0000-0000-0000-000000000003");
     private readonly Guid _sensorId = Guid.Parse("00000000-0000-0000-0000-000000000004");
-    private readonly Guid _sensorTypeId = Guid.Parse("00000000-0000-0000-0000-000000000005");
-    private readonly Guid _assignmentId = Guid.Parse("00000000-0000-0000-0000-000000000006");
+    private readonly Guid _assignmentId = Guid.Parse("00000000-0000-0000-0000-000000000005");
 
     public NodesControllerTests()
     {
@@ -546,15 +545,14 @@ public class NodesControllerTests
 
     private NodeSensorAssignmentDto CreateAssignmentDto(int endpointId, string measurementType)
     {
+        // v3.0 Two-Tier: NodeSensorAssignmentDto has SensorId, SensorCode, SensorName (no SensorTypeId, SensorTypeCode)
         return new NodeSensorAssignmentDto(
             Id: _assignmentId,
             NodeId: _nodeId,
             NodeName: "Test Node",
             SensorId: _sensorId,
-            SensorName: "Test Sensor",
-            SensorTypeId: _sensorTypeId,
-            SensorTypeCode: measurementType,
-            SensorTypeName: measurementType == "temperature" ? "Temperature" : "Humidity",
+            SensorCode: measurementType == "temperature" ? "dht22-01" : "dht22-02",
+            SensorName: measurementType == "temperature" ? "DHT22 Temperature Sensor" : "DHT22 Humidity Sensor",
             EndpointId: endpointId,
             Alias: null,
             I2CAddressOverride: null,

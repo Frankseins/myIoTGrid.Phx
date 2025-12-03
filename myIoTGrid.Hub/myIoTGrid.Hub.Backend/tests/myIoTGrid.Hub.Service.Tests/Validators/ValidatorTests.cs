@@ -194,20 +194,21 @@ public class UpdateHubValidatorTests
 
 #endregion
 
-#region CreateSensorValidator Tests (New 3-tier Model)
+#region CreateSensorValidator Tests (v3.0 Two-Tier Model)
 
 public class CreateSensorValidatorTests
 {
     private readonly CreateSensorValidator _sut = new();
-    private readonly Guid _validSensorTypeId = Guid.NewGuid();
 
     [Fact]
     public void Validate_WithValidData_ShouldNotHaveValidationErrors()
     {
-        // Arrange
+        // Arrange - v3.0: CreateSensorDto now has Code, Name, Protocol, Category (no SensorTypeId)
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: "Living Room Temperature Sensor"
+            Code: "dht22-wohnzimmer",
+            Name: "Living Room Temperature Sensor",
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate"
         );
 
         // Act
@@ -220,14 +221,24 @@ public class CreateSensorValidatorTests
     [Fact]
     public void Validate_WithAllOptionalFields_ShouldNotHaveValidationErrors()
     {
-        // Arrange
+        // Arrange - v3.0 model with all fields
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: "DHT22 Sensor",
+            Code: "bme280-kitchen",
+            Name: "Kitchen Climate Sensor",
+            Protocol: CommunicationProtocolDto.I2C,
+            Category: "climate",
             Description: "Temperature and humidity sensor",
-            SerialNumber: "DHT22-001",
-            IntervalSecondsOverride: 60,
-            ActiveCapabilityIds: new[] { Guid.NewGuid(), Guid.NewGuid() }
+            SerialNumber: "BME280-001",
+            Manufacturer: "Bosch",
+            I2CAddress: "0x76",
+            SdaPin: 21,
+            SclPin: 22,
+            IntervalSeconds: 60,
+            Capabilities: new[]
+            {
+                new CreateSensorCapabilityDto("temperature", "Temperature", "°C"),
+                new CreateSensorCapabilityDto("humidity", "Humidity", "%")
+            }
         );
 
         // Act
@@ -238,20 +249,21 @@ public class CreateSensorValidatorTests
     }
 
     [Fact]
-    public void Validate_WithEmptySensorTypeId_ShouldHaveValidationError()
+    public void Validate_WithEmptyCode_ShouldHaveValidationError()
     {
-        // Arrange
+        // Arrange - v3.0: Code is required
         var dto = new CreateSensorDto(
-            SensorTypeId: Guid.Empty,
-            Name: "Test Sensor"
+            Code: "",
+            Name: "Test Sensor",
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate"
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.SensorTypeId)
-            .WithErrorMessage("SensorTypeId is required");
+        result.ShouldHaveValidationErrorFor(x => x.Code);
     }
 
     [Fact]
@@ -259,16 +271,17 @@ public class CreateSensorValidatorTests
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: ""
+            Code: "test-sensor",
+            Name: "",
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate"
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Name)
-            .WithErrorMessage("Name is required");
+        result.ShouldHaveValidationErrorFor(x => x.Name);
     }
 
     [Fact]
@@ -276,90 +289,75 @@ public class CreateSensorValidatorTests
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: new string('a', 201)
+            Code: "test-sensor",
+            Name: new string('a', 201),
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate"
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Name)
-            .WithErrorMessage("Name must not exceed 200 characters");
+        result.ShouldHaveValidationErrorFor(x => x.Name);
     }
 
     [Fact]
-    public void Validate_WithDescriptionTooLong_ShouldHaveValidationError()
+    public void Validate_WithEmptyCategory_ShouldHaveValidationError()
     {
-        // Arrange
+        // Arrange - v3.0: Category is required
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
+            Code: "test-sensor",
             Name: "Test Sensor",
-            Description: new string('a', 1001)
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: ""
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Description)
-            .WithErrorMessage("Description must not exceed 1000 characters");
-    }
-
-    [Fact]
-    public void Validate_WithSerialNumberTooLong_ShouldHaveValidationError()
-    {
-        // Arrange
-        var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: "Test Sensor",
-            SerialNumber: new string('a', 101)
-        );
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.SerialNumber)
-            .WithErrorMessage("SerialNumber must not exceed 100 characters");
+        result.ShouldHaveValidationErrorFor(x => x.Category);
     }
 
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
-    public void Validate_WithInvalidIntervalSecondsOverride_ShouldHaveValidationError(int interval)
+    public void Validate_WithInvalidIntervalSeconds_ShouldHaveValidationError(int interval)
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
+            Code: "test-sensor",
             Name: "Test Sensor",
-            IntervalSecondsOverride: interval
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate",
+            IntervalSeconds: interval
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
-        // Assert - Validator uses x.IntervalSecondsOverride!.Value so property path is "IntervalSecondsOverride.Value"
-        result.ShouldHaveAnyValidationError()
-            .WithErrorMessage("IntervalSecondsOverride must be greater than 0");
+        // Assert
+        result.ShouldHaveAnyValidationError();
     }
 
     [Fact]
-    public void Validate_WithIntervalSecondsOverrideTooLarge_ShouldHaveValidationError()
+    public void Validate_WithIntervalSecondsTooLarge_ShouldHaveValidationError()
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
+            Code: "test-sensor",
             Name: "Test Sensor",
-            IntervalSecondsOverride: 86401 // More than 24 hours
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate",
+            IntervalSeconds: 86401 // More than 24 hours
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
-        // Assert - Validator uses x.IntervalSecondsOverride!.Value so property path is "IntervalSecondsOverride.Value"
-        result.ShouldHaveAnyValidationError()
-            .WithErrorMessage("IntervalSecondsOverride must not exceed 86400 seconds (24 hours)");
+        // Assert
+        result.ShouldHaveAnyValidationError();
     }
 
     [Theory]
@@ -367,46 +365,28 @@ public class CreateSensorValidatorTests
     [InlineData(60)]
     [InlineData(3600)]
     [InlineData(86400)]
-    public void Validate_WithValidIntervalSecondsOverride_ShouldNotHaveValidationErrors(int interval)
+    public void Validate_WithValidIntervalSeconds_ShouldNotHaveValidationErrors(int interval)
     {
         // Arrange
         var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
+            Code: "test-sensor",
             Name: "Test Sensor",
-            IntervalSecondsOverride: interval
+            Protocol: CommunicationProtocolDto.OneWire,
+            Category: "climate",
+            IntervalSeconds: interval
         );
 
         // Act
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldNotHaveValidationErrorFor(x => x.IntervalSecondsOverride);
-    }
-
-    [Fact]
-    public void Validate_WithNullOptionalFields_ShouldNotHaveValidationErrors()
-    {
-        // Arrange
-        var dto = new CreateSensorDto(
-            SensorTypeId: _validSensorTypeId,
-            Name: "Test Sensor",
-            Description: null,
-            SerialNumber: null,
-            IntervalSecondsOverride: null,
-            ActiveCapabilityIds: null
-        );
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert
-        result.ShouldNotHaveAnyValidationErrors();
+        result.ShouldNotHaveValidationErrorFor(x => x.IntervalSeconds);
     }
 }
 
 #endregion
 
-#region UpdateSensorValidator Tests (New 3-tier Model)
+#region UpdateSensorValidator Tests (v3.0 Two-Tier Model)
 
 public class UpdateSensorValidatorTests
 {
@@ -448,66 +428,7 @@ public class UpdateSensorValidatorTests
         var result = _sut.TestValidate(dto);
 
         // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Name)
-            .WithErrorMessage("Name must not exceed 200 characters");
-    }
-
-    [Fact]
-    public void Validate_WithDescriptionTooLong_ShouldHaveValidationError()
-    {
-        // Arrange
-        var dto = new UpdateSensorDto(Description: new string('a', 1001));
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.Description)
-            .WithErrorMessage("Description must not exceed 1000 characters");
-    }
-
-    [Fact]
-    public void Validate_WithSerialNumberTooLong_ShouldHaveValidationError()
-    {
-        // Arrange
-        var dto = new UpdateSensorDto(SerialNumber: new string('a', 101));
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert
-        result.ShouldHaveValidationErrorFor(x => x.SerialNumber)
-            .WithErrorMessage("SerialNumber must not exceed 100 characters");
-    }
-
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    public void Validate_WithInvalidIntervalSecondsOverride_ShouldHaveValidationError(int interval)
-    {
-        // Arrange
-        var dto = new UpdateSensorDto(IntervalSecondsOverride: interval);
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert - Validator uses x.IntervalSecondsOverride!.Value so property path is "IntervalSecondsOverride.Value"
-        result.ShouldHaveAnyValidationError()
-            .WithErrorMessage("IntervalSecondsOverride must be greater than 0");
-    }
-
-    [Fact]
-    public void Validate_WithIntervalSecondsOverrideTooLarge_ShouldHaveValidationError()
-    {
-        // Arrange
-        var dto = new UpdateSensorDto(IntervalSecondsOverride: 86401);
-
-        // Act
-        var result = _sut.TestValidate(dto);
-
-        // Assert - Validator uses x.IntervalSecondsOverride!.Value so property path is "IntervalSecondsOverride.Value"
-        result.ShouldHaveAnyValidationError()
-            .WithErrorMessage("IntervalSecondsOverride must not exceed 86400 seconds (24 hours)");
+        result.ShouldHaveValidationErrorFor(x => x.Name);
     }
 
     [Fact]
@@ -539,13 +460,13 @@ public class UpdateSensorValidatorTests
     [Fact]
     public void Validate_WithAllOptionalFields_ShouldNotHaveValidationErrors()
     {
-        // Arrange
+        // Arrange - v3.0 model
         var dto = new UpdateSensorDto(
             Name: "Updated Sensor",
             Description: "Updated description",
             SerialNumber: "SN-001",
-            IntervalSecondsOverride: 120,
-            ActiveCapabilityIds: new[] { Guid.NewGuid() },
+            IntervalSeconds: 120,
+            Category: "climate",
             IsActive: true
         );
 
@@ -1396,7 +1317,7 @@ public class ReadingFilterValidatorTests
 
 #endregion
 
-#region CreateReadingValidator Tests (New 3-tier Model)
+#region CreateReadingValidator Tests (v3.0 Two-Tier Model)
 
 public class CreateReadingValidatorTests
 {

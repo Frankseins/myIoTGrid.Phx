@@ -18,8 +18,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { FormsModule } from '@angular/forms';
 
 // Services & DTOs
-import { SensorApiService, SensorTypeApiService } from '@myiotgrid/shared/data-access';
-import { Sensor, SensorType } from '@myiotgrid/shared/models';
+import { SensorApiService } from '@myiotgrid/shared/data-access';
+import { Sensor } from '@myiotgrid/shared/models';
 
 // GenericTable
 import {
@@ -36,7 +36,7 @@ interface SensorQueryDto {
   size: number;
   sort: string;
   search?: string;
-  sensorTypeId?: string;
+  category?: string;
   isActive?: string;
 }
 
@@ -68,13 +68,15 @@ export class SensorListComponent implements OnInit {
   initialLoadDone = false;
   globalFilter = '';
 
-  // SensorTypes für Filter-Dropdown
-  sensorTypes: SensorType[] = [];
+  // Available categories for filter dropdown
+  sensorCategories: string[] = ['climate', 'water', 'location', 'custom'];
 
   columns: GenericTableColumn[] = [
     { field: 'icon', header: '', width: '60px', sortable: false },
     { field: 'name', header: 'Name', sortable: true },
-    { field: 'sensorTypeId', header: 'Sensortyp', sortable: true },
+    { field: 'code', header: 'Code', sortable: true },
+    { field: 'category', header: 'Kategorie', sortable: true },
+    { field: 'protocol', header: 'Protokoll', sortable: true },
     { field: 'serialNumber', header: 'Seriennummer', width: '150px', sortable: true },
     { field: 'isActive', header: 'Status', width: '100px', sortable: true },
     {
@@ -103,7 +105,9 @@ export class SensorListComponent implements OnInit {
   private readonly fieldMapping: Record<string, string> = {
     id: 'Id',
     name: 'Name',
-    sensorTypeId: 'SensorTypeId',
+    code: 'Code',
+    category: 'Category',
+    protocol: 'Protocol',
     serialNumber: 'SerialNumber',
     isActive: 'IsActive',
     createdAt: 'CreatedAt',
@@ -113,33 +117,17 @@ export class SensorListComponent implements OnInit {
   constructor(
     private router: Router,
     private sensorApiService: SensorApiService,
-    private sensorTypeApiService: SensorTypeApiService,
     private snackBar: MatSnackBar,
     private cd: ChangeDetectorRef
   ) {}
 
   ngOnInit(): void {
-    // Load SensorTypes for filter dropdown
-    this.loadSensorTypes();
-
     this.loadSensorsLazy({
       first: 0,
       rows: 10,
       sortField: 'name',
       sortOrder: 1,
       globalFilter: this.globalFilter,
-    });
-  }
-
-  private loadSensorTypes(): void {
-    this.sensorTypeApiService.getAll().subscribe({
-      next: (types) => {
-        this.sensorTypes = types;
-        this.cd.markForCheck();
-      },
-      error: (error) => {
-        console.error('Error loading sensor types:', error);
-      }
     });
   }
 
@@ -179,8 +167,8 @@ export class SensorListComponent implements OnInit {
 
     // Filters für QueryParams vorbereiten (lowercase Keys für Backend)
     const filters: Record<string, string> = {};
-    if (eventFilters['sensorTypeId']) {
-      filters['sensorTypeId'] = String(eventFilters['sensorTypeId']);
+    if (eventFilters['category']) {
+      filters['category'] = String(eventFilters['category']);
     }
     if (eventFilters['isActive'] !== undefined && eventFilters['isActive'] !== '') {
       filters['isActive'] = String(eventFilters['isActive']);
@@ -300,27 +288,46 @@ export class SensorListComponent implements OnInit {
   }
 
   /**
-   * Hilfsmethode: SensorType Icon
+   * Hilfsmethode: Sensor Icon
    */
-  getSensorTypeIcon(sensorTypeId: string): string {
-    const type = this.sensorTypes.find(t => t.id === sensorTypeId);
-    return type?.icon || 'sensors';
+  getSensorIcon(sensor: Sensor): string {
+    return sensor.icon || 'sensors';
   }
 
   /**
-   * Hilfsmethode: SensorType Color
+   * Hilfsmethode: Sensor Color
    */
-  getSensorTypeColor(sensorTypeId: string): string {
-    const type = this.sensorTypes.find(t => t.id === sensorTypeId);
-    return type?.color || '#607d8b';
+  getSensorColor(sensor: Sensor): string {
+    return sensor.color || '#607d8b';
   }
 
   /**
-   * Hilfsmethode: SensorType Name
+   * Hilfsmethode: Category Label
    */
-  getSensorTypeName(sensorTypeId: string): string {
-    const type = this.sensorTypes.find(t => t.id === sensorTypeId);
-    return type?.name || 'Unbekannt';
+  getCategoryLabel(category: string): string {
+    const labels: Record<string, string> = {
+      climate: 'Klima',
+      water: 'Wasser',
+      location: 'Standort',
+      custom: 'Benutzerdefiniert'
+    };
+    return labels[category] || category;
+  }
+
+  /**
+   * Hilfsmethode: Protocol Label
+   */
+  getProtocolLabel(protocol: number): string {
+    const labels: Record<number, string> = {
+      1: 'I²C',
+      2: 'SPI',
+      3: '1-Wire',
+      4: 'Analog',
+      5: 'UART',
+      6: 'Digital',
+      7: 'Ultraschall'
+    };
+    return labels[protocol] || 'Unbekannt';
   }
 
   /**

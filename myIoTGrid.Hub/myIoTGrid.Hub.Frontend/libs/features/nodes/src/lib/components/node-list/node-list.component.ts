@@ -16,7 +16,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { HubApiService, NodeApiService, ReadingApiService, SensorTypeApiService, SignalRService } from '@myiotgrid/shared/data-access';
+import { HubApiService, NodeApiService, ReadingApiService, SignalRService } from '@myiotgrid/shared/data-access';
 import { Hub, Node, Reading } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, EmptyStateComponent, ConfirmDialogService } from '@myiotgrid/shared/ui';
 import { RelativeTimePipe } from '@myiotgrid/shared/utils';
@@ -61,7 +61,6 @@ export class NodeListComponent implements OnInit, OnDestroy {
   private readonly hubApiService = inject(HubApiService);
   private readonly nodeApiService = inject(NodeApiService);
   private readonly readingApiService = inject(ReadingApiService);
-  private readonly sensorTypeApiService = inject(SensorTypeApiService);
   private readonly signalRService = inject(SignalRService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly snackBar = inject(MatSnackBar);
@@ -182,8 +181,8 @@ export class NodeListComponent implements OnInit, OnDestroy {
       const newMap = new Map(readingMap);
       const nodeReadings = newMap.get(reading.nodeId) || [];
 
-      // Existierendes Reading für diesen SensorType ersetzen oder hinzufügen
-      const existingIndex = nodeReadings.findIndex(r => r.sensorTypeId === reading.sensorTypeId);
+      // Existierendes Reading für diesen Sensor ersetzen oder hinzufügen
+      const existingIndex = nodeReadings.findIndex(r => r.sensorId === reading.sensorId);
       if (existingIndex >= 0) {
         nodeReadings[existingIndex] = reading;
       } else {
@@ -236,10 +235,7 @@ export class NodeListComponent implements OnInit, OnDestroy {
   private async loadData(): Promise<void> {
     this.isLoading.set(true);
     try {
-      // SensorTypes zuerst laden (für Icons/Farben)
-      await this.sensorTypeApiService.getAll().toPromise();
-
-      // Dann parallel: Hubs, Nodes und Readings
+      // Parallel: Hubs, Nodes und Readings
       const [hubs, nodes, readings] = await Promise.all([
         this.hubApiService.getAll().toPromise(),
         this.nodeApiService.getAll().toPromise(),
@@ -270,9 +266,9 @@ export class NodeListComponent implements OnInit, OnDestroy {
     return this.latestReadings().get(nodeId) || [];
   }
 
-  getSensorReading(nodeId: string, sensorTypeId: string): Reading | undefined {
+  getSensorReading(nodeId: string, sensorId: string): Reading | undefined {
     const readings = this.getLatestReadings(nodeId);
-    return readings.find(r => r.sensorTypeId === sensorTypeId);
+    return readings.find(r => r.sensorId === sensorId);
   }
 
   getHubName(hubId: string): string {
@@ -289,20 +285,12 @@ export class NodeListComponent implements OnInit, OnDestroy {
     }
   }
 
-  getSensorIcon(typeId: string): string {
-    return this.sensorTypeApiService.getIcon(typeId);
+  getSensorIcon(sensor: { icon?: string }): string {
+    return sensor.icon || 'sensors';
   }
 
-  getSensorColor(typeId: string): string {
-    return this.sensorTypeApiService.getColor(typeId);
-  }
-
-  getSensorTypeName(typeId: string): string {
-    return this.sensorTypeApiService.getDisplayName(typeId);
-  }
-
-  getSensorUnit(typeId: string): string {
-    return this.sensorTypeApiService.getUnit(typeId);
+  getSensorColor(sensor: { color?: string }): string {
+    return sensor.color || '#607d8b';
   }
 
   // Toolbar Actions

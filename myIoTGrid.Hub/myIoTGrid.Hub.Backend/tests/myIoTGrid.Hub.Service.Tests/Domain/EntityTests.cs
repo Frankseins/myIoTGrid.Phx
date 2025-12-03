@@ -271,35 +271,38 @@ public class EntityTests
 
     #endregion
 
-    #region Sensor Entity Tests (Concrete sensor instance with calibration)
+    #region Sensor Entity Tests (v3.0 Two-Tier: Sensor has Code/Name directly, no SensorType)
 
     [Fact]
     public void Sensor_DefaultValues_ShouldBeCorrect()
     {
-        // Arrange & Act - New 3-tier model: Sensor is instance, no NodeId/EndpointId
+        // Arrange & Act - v3.0 Two-Tier: Sensor has Code, Name, Protocol, Category directly
         var sensor = new Sensor();
 
         // Assert
         sensor.Id.Should().Be(Guid.Empty);
         sensor.TenantId.Should().Be(Guid.Empty);
-        sensor.SensorTypeId.Should().Be(Guid.Empty);
+        sensor.Code.Should().BeEmpty();
         sensor.Name.Should().BeEmpty();
+        sensor.Protocol.Should().Be(default);
+        sensor.Category.Should().BeEmpty();
         sensor.Description.Should().BeNull();
         sensor.SerialNumber.Should().BeNull();
-        sensor.IntervalSecondsOverride.Should().BeNull();
+        sensor.IntervalSeconds.Should().Be(60);
+        sensor.MinIntervalSeconds.Should().Be(1); // Default is 1 in v3.0
         sensor.OffsetCorrection.Should().Be(0);
         sensor.GainCorrection.Should().Be(1.0);
         sensor.LastCalibratedAt.Should().BeNull();
         sensor.CalibrationNotes.Should().BeNull();
         sensor.CalibrationDueAt.Should().BeNull();
-        sensor.ActiveCapabilityIdsJson.Should().BeNull();
         sensor.IsActive.Should().BeTrue();
         sensor.CreatedAt.Should().Be(default);
         sensor.UpdatedAt.Should().Be(default);
         sensor.Tenant.Should().BeNull();
-        sensor.SensorType.Should().BeNull();
         sensor.NodeAssignments.Should().NotBeNull();
         sensor.NodeAssignments.Should().BeEmpty();
+        sensor.Capabilities.Should().NotBeNull();
+        sensor.Capabilities.Should().BeEmpty();
     }
 
     [Fact]
@@ -308,22 +311,24 @@ public class EntityTests
         // Arrange
         var id = Guid.NewGuid();
         var tenantId = Guid.NewGuid();
-        var sensorTypeId = Guid.NewGuid();
         var createdAt = DateTime.UtcNow;
         var updatedAt = DateTime.UtcNow;
         var lastCalibratedAt = DateTime.UtcNow.AddMonths(-1);
         var calibrationDueAt = DateTime.UtcNow.AddMonths(5);
 
-        // Act - New model: Sensor has calibration settings
+        // Act - v3.0 Two-Tier: Sensor has Code, Name, Protocol, Category, IntervalSeconds
         var sensor = new Sensor
         {
             Id = id,
             TenantId = tenantId,
-            SensorTypeId = sensorTypeId,
+            Code = "dht22-living-room",
             Name = "Living Room DHT22",
+            Protocol = CommunicationProtocol.OneWire,
+            Category = "climate",
             Description = "Temperature and humidity sensor",
             SerialNumber = "DHT22-001",
-            IntervalSecondsOverride = 30,
+            IntervalSeconds = 30,
+            MinIntervalSeconds = 2,
             OffsetCorrection = 0.5,
             GainCorrection = 1.02,
             LastCalibratedAt = lastCalibratedAt,
@@ -337,11 +342,14 @@ public class EntityTests
         // Assert
         sensor.Id.Should().Be(id);
         sensor.TenantId.Should().Be(tenantId);
-        sensor.SensorTypeId.Should().Be(sensorTypeId);
+        sensor.Code.Should().Be("dht22-living-room");
         sensor.Name.Should().Be("Living Room DHT22");
+        sensor.Protocol.Should().Be(CommunicationProtocol.OneWire);
+        sensor.Category.Should().Be("climate");
         sensor.Description.Should().Be("Temperature and humidity sensor");
         sensor.SerialNumber.Should().Be("DHT22-001");
-        sensor.IntervalSecondsOverride.Should().Be(30);
+        sensor.IntervalSeconds.Should().Be(30);
+        sensor.MinIntervalSeconds.Should().Be(2);
         sensor.OffsetCorrection.Should().Be(0.5);
         sensor.GainCorrection.Should().Be(1.02);
         sensor.LastCalibratedAt.Should().Be(lastCalibratedAt);
@@ -355,7 +363,7 @@ public class EntityTests
     [Fact]
     public void Sensor_Calibration_ShouldAllowDifferentValues()
     {
-        // Arrange & Act - New model: Test different calibration settings
+        // Arrange & Act - v3.0 Two-Tier: Test calibration settings
         var sensor1 = new Sensor { OffsetCorrection = -0.5, GainCorrection = 0.98 };
         var sensor2 = new Sensor { OffsetCorrection = 0, GainCorrection = 1.0 };
         var sensor3 = new Sensor { OffsetCorrection = 2.0, GainCorrection = 1.05 };
@@ -383,7 +391,7 @@ public class EntityTests
         reading.Id.Should().Be(0);  // long type, default is 0
         reading.TenantId.Should().Be(Guid.Empty);
         reading.NodeId.Should().Be(Guid.Empty);
-        reading.AssignmentId.Should().Be(Guid.Empty);
+        reading.AssignmentId.Should().BeNull();  // AssignmentId is nullable in v3.0
         reading.MeasurementType.Should().BeEmpty();
         reading.RawValue.Should().Be(0);
         reading.Value.Should().Be(0);
@@ -465,112 +473,16 @@ public class EntityTests
 
     #endregion
 
-    #region SensorType Entity Tests (New 3-tier Model)
+    #region SensorCapability Entity Tests (v3.0 Two-Tier: belongs to Sensor, not SensorType)
 
     [Fact]
-    public void SensorType_DefaultValues_ShouldBeCorrect()
+    public void SensorCapability_ContainsMatterClusterInfo()
     {
-        // Arrange & Act
-        var sensorType = new SensorType();
-
-        // Assert - New model uses Guid Id, Code, Name instead of TypeId, DisplayName
-        sensorType.Id.Should().Be(Guid.Empty);
-        sensorType.Code.Should().BeEmpty();
-        sensorType.Name.Should().BeEmpty();
-        sensorType.Protocol.Should().Be(default);
-        sensorType.Category.Should().BeEmpty();
-        sensorType.Description.Should().BeNull();
-        sensorType.DefaultIntervalSeconds.Should().Be(60);
-        sensorType.DefaultGainCorrection.Should().Be(1.0);
-        sensorType.DefaultOffsetCorrection.Should().Be(0);
-        sensorType.IsGlobal.Should().BeTrue();
-        sensorType.IsActive.Should().BeTrue();
-        sensorType.Icon.Should().BeNull();
-        sensorType.Color.Should().BeNull();
-        sensorType.CreatedAt.Should().Be(default);
-        sensorType.Capabilities.Should().NotBeNull();
-        sensorType.Capabilities.Should().BeEmpty();
-        sensorType.Sensors.Should().NotBeNull();
-        sensorType.Sensors.Should().BeEmpty();
-    }
-
-    [Fact]
-    public void SensorType_ShouldSetAllProperties()
-    {
-        // Arrange
-        var id = Guid.NewGuid();
-        var createdAt = DateTime.UtcNow;
-
-        // Act - New model: SensorType defines hardware, Capabilities define measurements
-        var sensorType = new SensorType
-        {
-            Id = id,
-            Code = "dht22",
-            Name = "DHT22 Temperature & Humidity Sensor",
-            Manufacturer = "Aosong",
-            DatasheetUrl = "https://example.com/dht22.pdf",
-            Protocol = CommunicationProtocol.OneWire,
-            DefaultOneWirePin = 4,
-            DefaultIntervalSeconds = 30,
-            MinIntervalSeconds = 2,
-            WarmupTimeMs = 1000,
-            Category = "climate",
-            Description = "Digital temperature and humidity sensor",
-            Icon = "thermostat",
-            Color = "#FF5722",
-            IsGlobal = true,
-            IsActive = true,
-            CreatedAt = createdAt
-        };
-
-        // Assert
-        sensorType.Id.Should().Be(id);
-        sensorType.Code.Should().Be("dht22");
-        sensorType.Name.Should().Be("DHT22 Temperature & Humidity Sensor");
-        sensorType.Manufacturer.Should().Be("Aosong");
-        sensorType.Protocol.Should().Be(CommunicationProtocol.OneWire);
-        sensorType.DefaultOneWirePin.Should().Be(4);
-        sensorType.DefaultIntervalSeconds.Should().Be(30);
-        sensorType.MinIntervalSeconds.Should().Be(2);
-        sensorType.Category.Should().Be("climate");
-        sensorType.Description.Should().Be("Digital temperature and humidity sensor");
-        sensorType.Icon.Should().Be("thermostat");
-        sensorType.Color.Should().Be("#FF5722");
-        sensorType.IsGlobal.Should().BeTrue();
-        sensorType.CreatedAt.Should().Be(createdAt);
-    }
-
-    [Fact]
-    public void SensorType_NavigationProperties_ShouldAllowAddingItems()
-    {
-        // Arrange
-        var sensorType = new SensorType { Id = Guid.NewGuid(), Code = "dht22" };
-        var sensor = new Sensor { Id = Guid.NewGuid(), SensorTypeId = sensorType.Id };
-        var capability = new SensorTypeCapability
+        // Arrange & Act - v3.0 Two-Tier: SensorCapability belongs to Sensor
+        var capability = new SensorCapability
         {
             Id = Guid.NewGuid(),
-            SensorTypeId = sensorType.Id,
-            MeasurementType = "temperature",
-            Unit = "°C"
-        };
-
-        // Act
-        sensorType.Sensors.Add(sensor);
-        sensorType.Capabilities.Add(capability);
-
-        // Assert
-        sensorType.Sensors.Should().HaveCount(1);
-        sensorType.Capabilities.Should().HaveCount(1);
-    }
-
-    [Fact]
-    public void SensorTypeCapability_ContainsMatterClusterInfo()
-    {
-        // Arrange & Act - New model: SensorTypeCapability has Resolution, Accuracy, no DefaultGain/DefaultOffset
-        var capability = new SensorTypeCapability
-        {
-            Id = Guid.NewGuid(),
-            SensorTypeId = Guid.NewGuid(),
+            SensorId = Guid.NewGuid(),
             MeasurementType = "temperature",
             DisplayName = "Temperature",
             Unit = "°C",
@@ -578,9 +490,6 @@ public class EntityTests
             MatterClusterName = "TemperatureMeasurement",
             MinValue = -40,
             MaxValue = 80,
-            Resolution = 0.1,
-            Accuracy = 0.5,
-            SortOrder = 0,
             IsActive = true
         };
 
@@ -592,24 +501,26 @@ public class EntityTests
         capability.Unit.Should().Be("°C");
         capability.MinValue.Should().Be(-40);
         capability.MaxValue.Should().Be(80);
-        capability.Resolution.Should().Be(0.1);
-        capability.Accuracy.Should().Be(0.5);
     }
 
     [Fact]
-    public void SensorType_Id_IsPrimaryKey()
+    public void Sensor_Capabilities_ShouldAllowAddingItems()
     {
-        // Arrange & Act - New model uses Guid Id as primary key
-        var id = Guid.NewGuid();
-        var sensorType = new SensorType
+        // Arrange - v3.0 Two-Tier: Sensor has Capabilities directly
+        var sensor = new Sensor { Id = Guid.NewGuid(), Code = "dht22" };
+        var capability = new SensorCapability
         {
-            Id = id,
-            Code = "dht22"
+            Id = Guid.NewGuid(),
+            SensorId = sensor.Id,
+            MeasurementType = "temperature",
+            Unit = "°C"
         };
 
-        // Assert - Id is the primary key (Guid), Code is unique identifier string
-        sensorType.Id.Should().Be(id);
-        sensorType.Code.Should().Be("dht22");
+        // Act
+        sensor.Capabilities.Add(capability);
+
+        // Assert
+        sensor.Capabilities.Should().HaveCount(1);
     }
 
     [Theory]
@@ -620,10 +531,10 @@ public class EntityTests
     [InlineData(CommunicationProtocol.UART)]
     [InlineData(CommunicationProtocol.Digital)]
     [InlineData(CommunicationProtocol.UltraSonic)]
-    public void SensorType_Protocol_SupportsDifferentProtocols(CommunicationProtocol protocol)
+    public void Sensor_Protocol_SupportsDifferentProtocols(CommunicationProtocol protocol)
     {
-        // Arrange & Act
-        var sensorType = new SensorType
+        // Arrange & Act - v3.0 Two-Tier: Sensor has Protocol directly
+        var sensor = new Sensor
         {
             Id = Guid.NewGuid(),
             Code = "test",
@@ -631,7 +542,7 @@ public class EntityTests
         };
 
         // Assert
-        sensorType.Protocol.Should().Be(protocol);
+        sensor.Protocol.Should().Be(protocol);
     }
 
     #endregion
@@ -873,10 +784,16 @@ public class EntityTests
     [Fact]
     public void Node_SensorAssignment_Relationship_ShouldWork()
     {
-        // Arrange - New 3-tier model: Node has SensorAssignments, not direct Sensors
+        // Arrange - v3.0 Two-Tier: Node has SensorAssignments, Sensor has Code/Name directly
         var node = new Node { Id = Guid.NewGuid(), NodeId = "test-node" };
-        var sensorTypeId = Guid.NewGuid();
-        var sensor = new Sensor { Id = Guid.NewGuid(), SensorTypeId = sensorTypeId };
+        var sensor = new Sensor
+        {
+            Id = Guid.NewGuid(),
+            Code = "dht22-01",
+            Name = "DHT22 Sensor",
+            Protocol = CommunicationProtocol.OneWire,
+            Category = "climate"
+        };
         var assignment = new NodeSensorAssignment
         {
             Id = Guid.NewGuid(),
@@ -914,19 +831,26 @@ public class EntityTests
     }
 
     [Fact]
-    public void SensorType_Sensor_Relationship_ShouldWork()
+    public void Sensor_Capability_Relationship_ShouldWork()
     {
-        // Arrange - New 3-tier model: SensorType has Guid Id, not string TypeId
-        var sensorTypeId = Guid.NewGuid();
-        var sensorType = new SensorType { Id = sensorTypeId, Code = "dht22", Name = "DHT22" };
-        var sensor = new Sensor { Id = Guid.NewGuid(), SensorTypeId = sensorTypeId, SensorType = sensorType };
+        // Arrange - v3.0 Two-Tier: Sensor has Capabilities directly (no SensorType)
+        var sensorId = Guid.NewGuid();
+        var sensor = new Sensor { Id = sensorId, Code = "dht22", Name = "DHT22" };
+        var capability = new SensorCapability
+        {
+            Id = Guid.NewGuid(),
+            SensorId = sensorId,
+            Sensor = sensor,
+            MeasurementType = "temperature",
+            Unit = "°C"
+        };
 
         // Act
-        sensorType.Sensors.Add(sensor);
+        sensor.Capabilities.Add(capability);
 
         // Assert
-        sensorType.Sensors.Should().Contain(sensor);
-        sensor.SensorType.Should().Be(sensorType);
+        sensor.Capabilities.Should().Contain(capability);
+        capability.Sensor.Should().Be(sensor);
     }
 
     [Fact]

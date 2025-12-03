@@ -21,16 +21,13 @@ public class HubDbContext : DbContext
     /// <summary>Nodes (ESP32/LoRa32 Devices) - Matter Nodes</summary>
     public DbSet<Node> Nodes => Set<Node>();
 
-    // === Dreistufiges Sensor-Modell ===
+    // === Zweistufiges Sensor-Modell (v3.0) ===
 
-    /// <summary>Sensor Types (Hardware Library) - e.g., DHT22, BME280</summary>
-    public DbSet<SensorType> SensorTypes => Set<SensorType>();
-
-    /// <summary>Sensor Type Capabilities (Measurement types per SensorType)</summary>
-    public DbSet<SensorTypeCapability> SensorTypeCapabilities => Set<SensorTypeCapability>();
-
-    /// <summary>Sensors (Instances with calibration)</summary>
+    /// <summary>Sensors (Complete hardware definition with calibration)</summary>
     public DbSet<Sensor> Sensors => Set<Sensor>();
+
+    /// <summary>Sensor Capabilities (Measurement types per Sensor)</summary>
+    public DbSet<SensorCapability> SensorCapabilities => Set<SensorCapability>();
 
     /// <summary>Node Sensor Assignments (Hardware Binding) - Matter Endpoints</summary>
     public DbSet<NodeSensorAssignment> NodeSensorAssignments => Set<NodeSensorAssignment>();

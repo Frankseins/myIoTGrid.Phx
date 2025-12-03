@@ -254,31 +254,6 @@
         </mat-card-content>
       </mat-card>
 
-      <!-- Sensor Types Card -->
-      <mat-card class="sensor-types-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>category</mat-icon>
-            Sensor-Typen
-          </mat-card-title>
-          <mat-card-subtitle>{{ sensorTypes().length }} Typen verfügbar</mat-card-subtitle>
-        </mat-card-header>
-        <mat-card-content>
-          @if (sensorTypes().length === 0) {
-            <p class="no-data">Keine Sensor-Typen vorhanden</p>
-          } @else {
-            <mat-list class="sensor-types-list">
-              @for (type of sensorTypes(); track type.id) {
-                <mat-list-item>
-                  <mat-icon matListItemIcon>{{ type.icon || 'sensors' }}</mat-icon>
-                  <span matListItemTitle>{{ type.name }}</span>
-                  <span matListItemLine>{{ type.unit }} · {{ type.code }}</span>
-                </mat-list-item>
-              }
-            </mat-list>
-          }
-        </mat-card-content>
-      </mat-card>
     </div>
   }
 </div>

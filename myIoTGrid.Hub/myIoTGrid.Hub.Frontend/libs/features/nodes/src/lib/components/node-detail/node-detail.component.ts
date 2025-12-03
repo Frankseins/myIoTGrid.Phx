@@ -13,7 +13,6 @@ import { FormsModule } from '@angular/forms';
 import {
   NodeApiService,
   ReadingApiService,
-  SensorTypeApiService,
   SignalRService
 } from '@myiotgrid/shared/data-access';
 import { Node, Reading, ReadingFilter } from '@myiotgrid/shared/models';
@@ -47,7 +46,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly nodeApiService = inject(NodeApiService);
   private readonly readingApiService = inject(ReadingApiService);
-  private readonly sensorTypeApiService = inject(SensorTypeApiService);
   private readonly signalRService = inject(SignalRService);
 
   id = input.required<string>();
@@ -72,8 +70,6 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
   });
 
   async ngOnInit(): Promise<void> {
-    // Load SensorTypes for icons/colors
-    this.sensorTypeApiService.getAll().subscribe();
     await this.loadNode();
     this.setupSignalR();
   }
@@ -124,12 +120,12 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
       const data = result?.items || [];
       this.readings.set(data);
 
-      // Get latest reading per sensor type
+      // Get latest reading per measurement type
       const latest = new Map<string, Reading>();
       data.forEach(r => {
-        const existing = latest.get(r.sensorTypeId);
+        const existing = latest.get(r.measurementType);
         if (!existing || new Date(r.timestamp) > new Date(existing.timestamp)) {
-          latest.set(r.sensorTypeId, r);
+          latest.set(r.measurementType, r);
         }
       });
       this.latestReadings.set(Array.from(latest.values()));
@@ -147,7 +143,7 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
         // Update latest readings
         this.latestReadings.update(latest => {
           const newLatest = [...latest];
-          const index = newLatest.findIndex(r => r.sensorTypeId === reading.sensorTypeId);
+          const index = newLatest.findIndex(r => r.measurementType === reading.measurementType);
           if (index >= 0) {
             newLatest[index] = reading;
           } else {
@@ -159,16 +155,28 @@ export class NodeDetailComponent implements OnInit, OnDestroy {
     });
   }
 
-  getSensorIcon(typeId: string): string {
-    return this.sensorTypeApiService.getIcon(typeId);
+  getSensorIcon(reading: Reading): string {
+    // Use icon from sensor or fallback based on measurement type
+    const measurementType = reading.measurementType.toLowerCase();
+    if (measurementType.includes('temp')) return 'thermostat';
+    if (measurementType.includes('humid') || measurementType.includes('feucht')) return 'water_drop';
+    if (measurementType.includes('co2')) return 'air';
+    if (measurementType.includes('pressure') || measurementType.includes('druck')) return 'speed';
+    if (measurementType.includes('light') || measurementType.includes('licht')) return 'light_mode';
+    if (measurementType.includes('pm25') || measurementType.includes('pm10')) return 'cloud';
+    return 'sensors';
   }
 
-  getSensorColor(typeId: string): string {
-    return this.sensorTypeApiService.getColor(typeId);
-  }
-
-  getSensorDisplayName(typeId: string): string {
-    return this.sensorTypeApiService.getDisplayName(typeId);
+  getSensorColor(reading: Reading): string {
+    // Use color from sensor or fallback based on measurement type
+    const measurementType = reading.measurementType.toLowerCase();
+    if (measurementType.includes('temp')) return '#ff6b6b';
+    if (measurementType.includes('humid') || measurementType.includes('feucht')) return '#4dabf7';
+    if (measurementType.includes('co2')) return '#a9e34b';
+    if (measurementType.includes('pressure') || measurementType.includes('druck')) return '#9775fa';
+    if (measurementType.includes('light') || measurementType.includes('licht')) return '#ffd43b';
+    if (measurementType.includes('pm')) return '#868e96';
+    return '#495057';
   }
 
   onTimeRangeChange(): void {

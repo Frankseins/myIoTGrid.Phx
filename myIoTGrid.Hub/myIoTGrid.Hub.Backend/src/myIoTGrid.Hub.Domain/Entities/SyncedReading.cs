@@ -1,7 +1,7 @@
 namespace myIoTGrid.Hub.Domain.Entities;
 
 /// <summary>
-/// Reading synchronized from Cloud.
+/// Reading synchronized from Cloud (v3.0).
 /// These are measurements from nodes not directly connected to this Hub.
 /// Uses long Id for high-performance time-series storage (no IEntity interface due to different PK type).
 /// </summary>
@@ -13,11 +13,17 @@ public class SyncedReading
     /// <summary>FK to SyncedNode</summary>
     public Guid SyncedNodeId { get; set; }
 
-    /// <summary>FK to SensorType (e.g., "temperature")</summary>
-    public string SensorTypeId { get; set; } = string.Empty;
+    /// <summary>Sensor code (e.g., "dht22", "bme280")</summary>
+    public string SensorCode { get; set; } = string.Empty;
+
+    /// <summary>Measurement type (e.g., "temperature", "humidity")</summary>
+    public string MeasurementType { get; set; } = string.Empty;
 
     /// <summary>Measurement value</summary>
     public double Value { get; set; }
+
+    /// <summary>Unit of measurement (e.g., "°C", "%")</summary>
+    public string Unit { get; set; } = string.Empty;
 
     /// <summary>Original timestamp of the measurement</summary>
     public DateTime Timestamp { get; set; }
@@ -27,5 +33,4 @@ public class SyncedReading
 
     // Navigation Properties
     public SyncedNode? SyncedNode { get; set; }
-    public SensorType? SensorType { get; set; }
 }

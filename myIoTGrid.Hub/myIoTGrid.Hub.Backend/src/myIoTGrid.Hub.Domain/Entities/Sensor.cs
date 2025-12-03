@@ -1,11 +1,12 @@
+using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Domain.Interfaces;
 
 namespace myIoTGrid.Hub.Domain.Entities;
 
 /// <summary>
-/// Concrete sensor instance with calibration settings.
-/// This is the "instance" level - a specific physical sensor with its configuration.
-/// Can override SensorType defaults (interval, calibration).
+/// Complete sensor definition with hardware configuration and calibration.
+/// This is the unified "sensor" level - contains ALL properties (previously split between SensorType and Sensor).
+/// Simplified two-tier model: Sensor → NodeSensorAssignment
 /// </summary>
 public class Sensor : ITenantEntity
 {
@@ -15,10 +16,12 @@ public class Sensor : ITenantEntity
     /// <summary>Tenant ID for multi-tenant support</summary>
     public Guid TenantId { get; set; }
 
-    /// <summary>FK to the SensorType (hardware definition)</summary>
-    public Guid SensorTypeId { get; set; }
+    // === Identification ===
 
-    /// <summary>Display name (e.g., "Temperatursensor Wohnzimmer")</summary>
+    /// <summary>Unique code (e.g., "bme280-wohnzimmer", "dht22-garten")</summary>
+    public string Code { get; set; } = string.Empty;
+
+    /// <summary>Display name (e.g., "Klimasensor Wohnzimmer")</summary>
     public string Name { get; set; } = string.Empty;
 
     /// <summary>Optional description</summary>
@@ -27,36 +30,58 @@ public class Sensor : ITenantEntity
     /// <summary>Serial number of this physical sensor</summary>
     public string? SerialNumber { get; set; }
 
-    // === Interval Override ===
+    // === Hardware Info (previously in SensorType) ===
 
-    /// <summary>Override measurement interval (null = use SensorType default)</summary>
-    public int? IntervalSecondsOverride { get; set; }
+    /// <summary>Manufacturer (e.g., "Bosch", "Aosong")</summary>
+    public string? Manufacturer { get; set; }
 
-    // === Pin Configuration Override (null = use SensorType default) ===
+    /// <summary>Model name (e.g., "BME280", "DHT22")</summary>
+    public string? Model { get; set; }
 
-    /// <summary>Override I2C address (e.g., "0x77" for second BME280 on bus)</summary>
-    public string? I2CAddressOverride { get; set; }
+    /// <summary>Link to datasheet</summary>
+    public string? DatasheetUrl { get; set; }
 
-    /// <summary>Override SDA pin for I2C</summary>
-    public int? SdaPinOverride { get; set; }
+    // === Communication Protocol (previously in SensorType) ===
 
-    /// <summary>Override SCL pin for I2C</summary>
-    public int? SclPinOverride { get; set; }
+    /// <summary>How the sensor communicates (I2C, SPI, OneWire, etc.)</summary>
+    public CommunicationProtocol Protocol { get; set; }
 
-    /// <summary>Override OneWire data pin</summary>
-    public int? OneWirePinOverride { get; set; }
+    // === Pin Configuration ===
 
-    /// <summary>Override analog input pin</summary>
-    public int? AnalogPinOverride { get; set; }
+    /// <summary>I2C address (e.g., "0x76")</summary>
+    public string? I2CAddress { get; set; }
 
-    /// <summary>Override digital GPIO pin</summary>
-    public int? DigitalPinOverride { get; set; }
+    /// <summary>SDA pin for I2C</summary>
+    public int? SdaPin { get; set; }
 
-    /// <summary>Override trigger pin for ultrasonic sensors</summary>
-    public int? TriggerPinOverride { get; set; }
+    /// <summary>SCL pin for I2C</summary>
+    public int? SclPin { get; set; }
 
-    /// <summary>Override echo pin for ultrasonic sensors</summary>
-    public int? EchoPinOverride { get; set; }
+    /// <summary>OneWire data pin</summary>
+    public int? OneWirePin { get; set; }
+
+    /// <summary>Analog input pin</summary>
+    public int? AnalogPin { get; set; }
+
+    /// <summary>Digital GPIO pin</summary>
+    public int? DigitalPin { get; set; }
+
+    /// <summary>Trigger pin for ultrasonic sensors</summary>
+    public int? TriggerPin { get; set; }
+
+    /// <summary>Echo pin for ultrasonic sensors</summary>
+    public int? EchoPin { get; set; }
+
+    // === Timing Configuration (previously in SensorType) ===
+
+    /// <summary>Measurement interval in seconds</summary>
+    public int IntervalSeconds { get; set; } = 60;
+
+    /// <summary>Minimum allowed interval in seconds</summary>
+    public int MinIntervalSeconds { get; set; } = 1;
+
+    /// <summary>Warmup time in milliseconds before first reading</summary>
+    public int WarmupTimeMs { get; set; }
 
     // === Calibration ===
 
@@ -75,10 +100,16 @@ public class Sensor : ITenantEntity
     /// <summary>When the next calibration is due</summary>
     public DateTime? CalibrationDueAt { get; set; }
 
-    // === Active Capabilities ===
+    // === Categorization (previously in SensorType) ===
 
-    /// <summary>JSON array of active capability IDs (null = all capabilities active)</summary>
-    public string? ActiveCapabilityIdsJson { get; set; }
+    /// <summary>Category (climate, water, air, soil, location, custom)</summary>
+    public string Category { get; set; } = string.Empty;
+
+    /// <summary>Material icon name for UI</summary>
+    public string? Icon { get; set; }
+
+    /// <summary>Hex color for UI (e.g., "#FF5722")</summary>
+    public string? Color { get; set; }
 
     // === Status ===
 
@@ -96,8 +127,8 @@ public class Sensor : ITenantEntity
     /// <summary>Tenant this sensor belongs to</summary>
     public Tenant Tenant { get; set; } = null!;
 
-    /// <summary>Hardware type definition</summary>
-    public SensorType SensorType { get; set; } = null!;
+    /// <summary>Capabilities (measurement types this sensor can provide)</summary>
+    public ICollection<SensorCapability> Capabilities { get; set; } = new List<SensorCapability>();
 
     /// <summary>Node assignments (where this sensor is installed)</summary>
     public ICollection<NodeSensorAssignment> NodeAssignments { get; set; } = new List<NodeSensorAssignment>();

@@ -5,7 +5,7 @@ using myIoTGrid.Hub.Domain.Entities;
 namespace myIoTGrid.Hub.Infrastructure.Data.Configurations;
 
 /// <summary>
-/// EF Core Configuration for SyncedReading Entity.
+/// EF Core Configuration for SyncedReading Entity (v3.0).
 /// Readings synchronized from Cloud.
 /// </summary>
 public class SyncedReadingConfiguration : IEntityTypeConfiguration<SyncedReading>
@@ -24,12 +24,20 @@ public class SyncedReadingConfiguration : IEntityTypeConfiguration<SyncedReading
         builder.Property(sr => sr.SyncedNodeId)
             .IsRequired();
 
-        builder.Property(sr => sr.SensorTypeId)
+        builder.Property(sr => sr.SensorCode)
+            .IsRequired()
+            .HasMaxLength(50);
+
+        builder.Property(sr => sr.MeasurementType)
             .IsRequired()
             .HasMaxLength(50);
 
         builder.Property(sr => sr.Value)
             .IsRequired();
+
+        builder.Property(sr => sr.Unit)
+            .IsRequired()
+            .HasMaxLength(20);
 
         builder.Property(sr => sr.Timestamp)
             .IsRequired();
@@ -43,16 +51,13 @@ public class SyncedReadingConfiguration : IEntityTypeConfiguration<SyncedReading
             .HasForeignKey(sr => sr.SyncedNodeId)
             .OnDelete(DeleteBehavior.Cascade);
 
-        // Note: SensorType relationship is now by Code, navigation not configured
-        // SensorTypeId refers to the sensor type code (e.g., "temperature")
-        builder.Ignore(sr => sr.SensorType);
-
         // Indexes for Performance (time-series queries)
         builder.HasIndex(sr => sr.SyncedNodeId);
-        builder.HasIndex(sr => sr.SensorTypeId);
+        builder.HasIndex(sr => sr.SensorCode);
+        builder.HasIndex(sr => sr.MeasurementType);
         builder.HasIndex(sr => sr.Timestamp);
         builder.HasIndex(sr => sr.SyncedAt);
         builder.HasIndex(sr => new { sr.SyncedNodeId, sr.Timestamp });
-        builder.HasIndex(sr => new { sr.SyncedNodeId, sr.SensorTypeId, sr.Timestamp });
+        builder.HasIndex(sr => new { sr.SyncedNodeId, sr.SensorCode, sr.Timestamp });
     }
 }

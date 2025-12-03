@@ -4,12 +4,11 @@ using myIoTGrid.Hub.Service.Interfaces;
 namespace myIoTGrid.Hub.Service.Services;
 
 /// <summary>
-/// Service for seeding default data
+/// Service for seeding default data (v3.0)
 /// </summary>
 public class SeedDataService : ISeedDataService
 {
     private readonly ITenantService _tenantService;
-    private readonly ISensorTypeService _sensorTypeService;
     private readonly IAlertTypeService _alertTypeService;
     private readonly ISensorService _sensorService;
     private readonly IHubService _hubService;
@@ -17,14 +16,12 @@ public class SeedDataService : ISeedDataService
 
     public SeedDataService(
         ITenantService tenantService,
-        ISensorTypeService sensorTypeService,
         IAlertTypeService alertTypeService,
         ISensorService sensorService,
         IHubService hubService,
         ILogger<SeedDataService> logger)
     {
         _tenantService = tenantService;
-        _sensorTypeService = sensorTypeService;
         _alertTypeService = alertTypeService;
         _sensorService = sensorService;
         _hubService = hubService;
@@ -38,7 +35,6 @@ public class SeedDataService : ISeedDataService
 
         await SeedTenantAsync(ct);
         await SeedHubAsync(ct);
-        await SeedSensorTypesAsync(ct);
         await SeedAlertTypesAsync(ct);
         await SeedSensorsAsync(ct);
 
@@ -54,14 +50,6 @@ public class SeedDataService : ISeedDataService
     }
 
     /// <inheritdoc />
-    public async Task SeedSensorTypesAsync(CancellationToken ct = default)
-    {
-        _logger.LogDebug("Seeding default sensor types...");
-        await _sensorTypeService.SeedDefaultTypesAsync(ct);
-        _logger.LogInformation("Default sensor types seeded");
-    }
-
-    /// <inheritdoc />
     public async Task SeedAlertTypesAsync(CancellationToken ct = default)
     {
         _logger.LogDebug("Seeding default alert types...");
@@ -72,7 +60,7 @@ public class SeedDataService : ISeedDataService
     /// <inheritdoc />
     public async Task SeedSensorsAsync(CancellationToken ct = default)
     {
-        _logger.LogDebug("Seeding default sensors (one per SensorType)...");
+        _logger.LogDebug("Seeding default sensors (standard templates)...");
         await _sensorService.SeedDefaultSensorsAsync(ct);
         _logger.LogInformation("Default sensors seeded");
     }
