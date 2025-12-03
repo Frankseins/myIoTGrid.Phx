@@ -3,176 +3,424 @@
   margin: 0 auto;
 }
 
-.page-header {
+// O365-Style Toolbar Variables
+.outlook-toolbar {
+  --tbar-icon-size: 40px;
+  --tbar-icon-radius: 999px;
+  --tbar-icon-bg: #fff;
+  --tbar-icon-border: #e6e6e6;
+  --tbar-icon-shadow: 0 1px 2px rgba(0,0,0,.06);
+  --tbar-icon-hover-bg: rgba(0,0,0,.04);
+  --tbar-icon-active-bg: rgba(0,0,0,.08);
+  --tbar-icon-focus: 0 0 0 3px rgba(25,118,210,.25);
+  --tbar-icon-warn: #d32f2f;
+}
+
+// Toolbar Styles (O365 wie GenericTable)
+.toolbar.outlook-toolbar {
   display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
-  flex-wrap: wrap;
-  gap: 16px;
+  align-items: center;
+  gap: .5rem;
+  background: #fff;
+  border-radius: 8px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  min-height: 56px;
+}
 
-  .header-content {
-    .page-title {
-      margin: 0;
-      font-size: 28px;
-      font-weight: 500;
-      color: #212121;
-    }
+.left-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+}
 
-    .page-subtitle {
-      margin: 8px 0 0 0;
-      font-size: 14px;
-      color: #757575;
-    }
+.spacer {
+  flex: 1 1 auto;
+}
+
+// tbar-icon Styling (wie GenericTable)
+.tbar-icon {
+  width: var(--tbar-icon-size);
+  height: var(--tbar-icon-size);
+  border-radius: var(--tbar-icon-radius);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--tbar-icon-bg);
+  border: 1px solid var(--tbar-icon-border);
+  box-shadow: var(--tbar-icon-shadow);
+  padding: 0;
+  transition: background-color .15s, box-shadow .15s, transform .12s, border-color .15s;
+
+  .mat-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    line-height: 20px;
   }
 
-  .header-filters {
-    mat-form-field {
-      width: 150px;
+  &:hover {
+    background: var(--tbar-icon-hover-bg);
+  }
+
+  &:active {
+    background: var(--tbar-icon-active-bg);
+    transform: translateY(-1px);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--tbar-icon-focus);
+  }
+
+  &.warn .mat-icon {
+    color: var(--tbar-icon-warn);
+  }
+
+  // Filter aktiv
+  &.active {
+    border-color: #90caf9;
+    background: rgba(25,118,210,.08);
+    box-shadow: 0 2px 8px rgba(25,118,210,.2);
+
+    .mat-icon {
+      color: #1976d2;
     }
   }
 }
 
+// O365-Style Suche
+.o365-search {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+
+  &__field {
+    display: inline-flex;
+    align-items: center;
+    height: var(--tbar-icon-size);
+    border-radius: var(--tbar-icon-radius);
+    padding: 0 0 0 .5rem;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(0,0,0,.10);
+    border: 1px solid rgba(0,0,0,.06);
+    width: 0;
+    overflow: hidden;
+    opacity: 0;
+    transform: translateX(-8px);
+    transition: width .25s, opacity .2s, transform .25s;
+    gap: .25rem;
+  }
+
+  &__input {
+    border: 0;
+    outline: 0;
+    background: transparent;
+    font: inherit;
+    width: 100%;
+    line-height: 1;
+    padding: 0 .25rem;
+  }
+
+  &__clear {
+    width: 32px !important;
+    height: 32px !important;
+  }
+
+  &.open {
+    .o365-search__btn {
+      transform: translateX(8px);
+    }
+
+    .o365-search__field {
+      width: clamp(220px, 28vw, 420px);
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+}
+
+// Ergebnis-Info
+.results-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding: 0 4px;
+
+  .count {
+    font-size: 13px;
+    color: #757575;
+  }
+
+  .clear-all {
+    font-size: 12px;
+    color: #1976d2;
+  }
+}
+
+// Nodes Grid
 .nodes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 16px;
 }
 
+// Node Card
 .node-card {
   cursor: pointer;
   transition: all 0.2s ease;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 
   &:hover {
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
     transform: translateY(-2px);
   }
 
-  &.offline {
-    opacity: 0.7;
-    background-color: #fafafa;
+  &.deleting {
+    opacity: 0.5;
+    pointer-events: none;
   }
 
-  mat-card-header {
-    padding-bottom: 8px;
-  }
-
-  .node-icon {
-    background-color: #e3f2fd;
-    color: #1976d2;
+  // Card Header
+  .card-header {
     display: flex;
-    align-items: center;
-    justify-content: center;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 16px;
+    background: #fafafa;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 
-    &.offline {
-      background-color: #f5f5f5;
-      color: #9e9e9e;
+    .status-indicator {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: white;
+      }
+
+      &.online {
+        background: linear-gradient(135deg, #43a047, #66bb6a);
+      }
+
+      &.offline {
+        background: linear-gradient(135deg, #e53935, #ef5350);
+      }
+    }
+
+    .node-info {
+      flex: 1;
+      min-width: 0;
+
+      .node-name {
+        margin: 0 0 4px 0;
+        font-size: 16px;
+        font-weight: 500;
+        color: #212121;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .node-id {
+        font-size: 11px;
+        font-family: 'Roboto Mono', monospace;
+        color: #9e9e9e;
+        background: transparent;
+      }
+    }
+
+    .card-actions {
+      display: flex;
+      gap: 2px;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+
+      button {
+        width: 32px;
+        height: 32px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
     }
   }
 
-  mat-card-title {
-    font-size: 16px;
-    font-weight: 500;
+  &:hover .card-actions {
+    opacity: 1;
   }
 
-  mat-card-subtitle {
-    font-size: 12px;
-    font-family: monospace;
-    color: #757575;
-  }
+  // Sensoren Content
+  .sensors-content {
+    flex: 1;
+    padding: 12px 16px;
+    min-height: 48px;
 
-  mat-card-content {
-    padding: 16px;
+    .sensors-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      padding: 4px 0;
+      user-select: none;
+
+      &:hover {
+        .sensors-count {
+          color: #1976d2;
+        }
+      }
+
+      .expand-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #9e9e9e;
+        transition: transform 0.2s ease;
+
+        &.expanded {
+          transform: rotate(90deg);
+        }
+      }
+
+      .sensors-count {
+        font-size: 13px;
+        font-weight: 500;
+        color: #757575;
+        transition: color 0.15s ease;
+      }
+    }
 
     .sensors-list {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 8px;
-      align-items: center;
-      margin-bottom: 12px;
-
-      .sensors-label {
-        font-size: 12px;
-        color: #757575;
-      }
-
-      .sensor-chip {
-        font-size: 11px;
-        padding: 2px 8px;
-        border-radius: 12px;
-        background-color: #f5f5f5;
-        border-left: 3px solid;
-      }
+      margin-top: 8px;
+      padding-left: 28px;
     }
 
-    .readings-grid {
+    .sensor-row {
       display: flex;
-      justify-content: space-around;
-      padding: 16px 0;
+      align-items: center;
+      gap: 10px;
 
-      .reading-item {
+      .sensor-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 6px;
         display: flex;
-        flex-direction: column;
         align-items: center;
-        gap: 4px;
+        justify-content: center;
+        flex-shrink: 0;
 
         mat-icon {
-          font-size: 24px;
-          width: 24px;
-          height: 24px;
-        }
-
-        .reading-value {
-          font-size: 18px;
-          font-weight: 600;
-          color: #212121;
+          font-size: 16px;
+          width: 16px;
+          height: 16px;
+          color: white;
         }
       }
-    }
 
-    .reading-meta {
-      text-align: center;
-
-      .timestamp {
-        font-size: 12px;
-        color: #9e9e9e;
+      .sensor-name {
+        flex: 1;
+        font-size: 13px;
+        color: #616161;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
-    }
 
-    .no-readings {
-      text-align: center;
-      padding: 24px 0;
-
-      .no-data {
+      .sensor-value {
         font-size: 14px;
-        color: #bdbdbd;
+        font-weight: 600;
+        color: #212121;
+        white-space: nowrap;
+
+        .no-data {
+          color: #bdbdbd;
+          font-weight: 400;
+        }
+      }
+    }
+
+    .no-sensors {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      min-height: 40px;
+      color: #bdbdbd;
+
+      mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        margin-bottom: 4px;
+      }
+
+      span {
+        font-size: 12px;
       }
     }
   }
 
-  mat-card-footer {
-    padding: 12px 16px;
-    border-top: 1px solid rgba(0, 0, 0, 0.08);
+  // Card Footer
+  .card-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    background: #fafafa;
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
 
-    .status-row {
+    .status-badge {
       display: flex;
-      justify-content: space-between;
       align-items: center;
-    }
-
-    mat-chip {
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 12px;
       font-size: 11px;
-      min-height: 24px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 14px;
+        width: 14px;
+        height: 14px;
+      }
 
       &.online {
-        background-color: #e8f5e9;
+        background: #e8f5e9;
         color: #2e7d32;
       }
 
       &.offline {
-        background-color: #ffebee;
+        background: #ffebee;
         color: #c62828;
       }
+    }
+
+    .last-seen, .battery, .last-updated {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 11px;
+      color: #9e9e9e;
 
       mat-icon {
         font-size: 14px;
@@ -181,28 +429,116 @@
       }
     }
 
-    .battery {
-      display: flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 12px;
-      color: #757575;
+    .spacer {
+      flex: 1;
+    }
 
-      mat-icon {
-        font-size: 16px;
-        width: 16px;
-        height: 16px;
-      }
+    .last-updated {
+      color: #1976d2;
     }
   }
 }
 
-@media (max-width: 600px) {
-  .page-header {
-    flex-direction: column;
+// Responsive
+@media (max-width: 768px) {
+  .toolbar.outlook-toolbar {
+    flex-wrap: wrap;
+    padding: 12px;
+
+    .left-actions {
+      width: 100%;
+      margin-bottom: 8px;
+
+      button[mat-flat-button] {
+        width: 100%;
+      }
+    }
+  }
+
+  .o365-search.open .o365-search__field {
+    width: clamp(160px, 38vw, 280px);
   }
 
   .nodes-grid {
     grid-template-columns: 1fr;
+  }
+
+  .node-card {
+    .card-actions {
+      opacity: 1;
+    }
+  }
+}
+
+// ===== Drawer (CDK Overlay) =====
+::ng-deep .gt-drawer-backdrop {
+  background: rgba(0,0,0,.25);
+}
+
+::ng-deep .gt-drawer-panel {
+  background: #fff;
+  box-shadow: 0 10px 30px rgba(0,0,0,.12), 0 2px 8px rgba(0,0,0,.08);
+  border-left: 1px solid #ededed;
+  transform: translateX(100%);
+  transition: transform 200ms ease;
+  max-width: 100vw;
+
+  &.open {
+    transform: translateX(0);
+  }
+}
+
+.gt-drawer {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  width: 100%;
+}
+
+.gt-drawer__header {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: .25rem;
+  padding: .75rem 1rem;
+  border-bottom: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.gt-drawer__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #202124;
+}
+
+.gt-drawer__body {
+  padding: 1rem;
+  overflow: auto;
+  flex: 1 1 auto;
+  background: #fff;
+}
+
+.gt-drawer__inner {
+  width: 100%;
+}
+
+.drawer-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: .5rem;
+  padding: .75rem 1rem;
+  border-top: 1px solid #f0f0f0;
+  background: #fff;
+}
+
+.filter-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  .full-width {
+    width: 100%;
   }
 }

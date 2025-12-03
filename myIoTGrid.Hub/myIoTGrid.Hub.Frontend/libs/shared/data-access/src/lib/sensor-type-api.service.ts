@@ -158,6 +158,18 @@ export class SensorTypeApiService extends BaseApiService {
   }
 
   /**
+   * Get default unit for a sensor type (synchronous)
+   * Uses the first capability's unit or empty string
+   */
+  getUnit(id: string): string {
+    const type = this.sensorTypesMap().get(id);
+    if (type?.capabilities?.length) {
+      return type.capabilities[0].unit ?? '';
+    }
+    return '';
+  }
+
+  /**
    * Get full sensor type by ID (synchronous)
    */
   getType(id: string): SensorType | undefined {

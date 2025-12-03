@@ -10,99 +10,271 @@
       (actionClicked)="onCreate()">
     </myiotgrid-empty-state>
   } @else {
-    <header class="page-header">
-      <div class="header-content">
-        <h1 class="page-title">Nodes</h1>
-        <p class="page-subtitle">ESP32/LoRa32 Sensor-Geräte verwalten</p>
-      </div>
-
-      <div class="header-actions">
-        <mat-form-field appearance="outline">
-          <mat-label>Status</mat-label>
-          <mat-select [(ngModel)]="filterStatus">
-            <mat-option value="all">Alle</mat-option>
-            <mat-option value="online">Online</mat-option>
-            <mat-option value="offline">Offline</mat-option>
-          </mat-select>
-        </mat-form-field>
-
-        <button mat-raised-button color="primary" (click)="onCreate()">
+    <!-- Toolbar im O365-Style wie GenericTable -->
+    <mat-toolbar class="toolbar outlook-toolbar">
+      <div class="left-actions">
+        <button mat-flat-button color="primary" (click)="onCreate()">
           <mat-icon>add</mat-icon>
           Neuer Node
         </button>
       </div>
-    </header>
 
-    @if (filteredNodes.length === 0) {
+      <span class="spacer"></span>
+
+      <!-- Sortierung -->
+      <button type="button" mat-icon-button class="tbar-icon"
+              [matMenuTriggerFor]="sortMenu"
+              matTooltip="Sortieren">
+        <mat-icon>sort</mat-icon>
+      </button>
+      <mat-menu #sortMenu="matMenu">
+        @for (option of sortOptions; track option.value) {
+          <button mat-menu-item (click)="sortField = option.value">
+            <mat-icon>{{ sortField === option.value ? 'check' : '' }}</mat-icon>
+            <span>{{ option.label }}</span>
+          </button>
+        }
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="toggleSortDirection()">
+          <mat-icon>{{ sortDirection === 'asc' ? 'arrow_upward' : 'arrow_downward' }}</mat-icon>
+          <span>{{ sortDirection === 'asc' ? 'Aufsteigend' : 'Absteigend' }}</span>
+        </button>
+      </mat-menu>
+
+      <!-- Aktualisieren -->
+      <button type="button" mat-icon-button class="tbar-icon"
+              (click)="onRefresh()"
+              matTooltip="Aktualisieren">
+        <mat-icon>refresh</mat-icon>
+      </button>
+
+      <!-- Filter -->
+      <button type="button" mat-icon-button class="tbar-icon"
+              [class.active]="hasActiveFilters"
+              (click)="toggleFilter()"
+              [matTooltip]="hasActiveFilters ? 'Filter (aktiv)' : 'Filter'">
+        <mat-icon>filter_list</mat-icon>
+      </button>
+
+      <!-- O365-Style Suche -->
+      <div class="o365-search" [class.open]="isSearchOpen">
+        <button type="button" mat-icon-button class="tbar-icon o365-search__btn"
+                (click)="toggleSearch()"
+                matTooltip="Suche">
+          <mat-icon>search</mat-icon>
+        </button>
+        <div class="o365-search__field">
+          <input #searchInput
+                 class="o365-search__input"
+                 type="text"
+                 placeholder="Suche…"
+                 [(ngModel)]="searchTerm"
+                 (keydown.escape)="closeSearch()"
+                 (blur)="onSearchBlur()" />
+          @if (searchTerm.length > 0) {
+            <button type="button" mat-icon-button class="tbar-icon o365-search__clear"
+                    (click)="clearSearch()">
+              <mat-icon>close</mat-icon>
+            </button>
+          }
+        </div>
+      </div>
+    </mat-toolbar>
+
+    <!-- Ergebnis-Info -->
+    <div class="results-info">
+      <span class="count">{{ filteredAndSortedNodes.length }} von {{ nodes().length }} Nodes</span>
+      @if (hasActiveFilters || searchTerm.length >= 2) {
+        <button mat-button class="clear-all" (click)="clearFilters(); searchTerm = ''">
+          <mat-icon>clear</mat-icon>
+          Filter zurücksetzen
+        </button>
+      }
+    </div>
+
+    @if (filteredAndSortedNodes.length === 0) {
       <myiotgrid-empty-state
-        icon="router"
+        icon="search_off"
         title="Keine Nodes gefunden"
-        [message]="'Keine Nodes mit dem Status \'' + filterStatus + '\' gefunden.'">
+        message="Keine Nodes entsprechen den aktuellen Filterkriterien."
+        actionLabel="Filter zurücksetzen"
+        (actionClicked)="clearFilters(); searchTerm = ''">
       </myiotgrid-empty-state>
     } @else {
-    <div class="nodes-grid">
-      @for (node of filteredNodes; track node.id) {
-        <mat-card class="node-card" [class.offline]="!node.isOnline" [routerLink]="['/nodes', node.id]">
-          <mat-card-header>
-            <mat-icon mat-card-avatar class="node-icon" [class.offline]="!node.isOnline">
-              {{ getNodeIcon(node) }}
-            </mat-icon>
-            <mat-card-title>{{ node.location?.name || node.name }}</mat-card-title>
-            <mat-card-subtitle>{{ node.nodeId }}</mat-card-subtitle>
-          </mat-card-header>
-
-          <mat-card-content>
-            <!-- Sensor-Chips auf diesem Node -->
-            @if (node.sensors && node.sensors.length > 0) {
-              <div class="sensors-list">
-                <span class="sensors-label">Sensoren:</span>
-                @for (sensor of node.sensors; track sensor.id) {
-                  <span class="sensor-chip" [style.borderColor]="getSensorColor(sensor.sensorTypeId)">
-                    {{ sensor.name || sensor.sensorTypeId }}
-                  </span>
-                }
+      <div class="nodes-grid">
+        @for (node of filteredAndSortedNodes; track node.id) {
+          <mat-card class="node-card"
+                    [class.deleting]="isDeleting() === node.id"
+                    (click)="onCardClick(node)">
+            <!-- Card Header mit Status-Indikator -->
+            <div class="card-header">
+              <div class="status-indicator" [class.online]="node.isOnline" [class.offline]="!node.isOnline">
+                <mat-icon>{{ getNodeIcon(node) }}</mat-icon>
               </div>
-            }
+              <div class="node-info">
+                <h3 class="node-name">{{ node.location?.name || node.name }}</h3>
+                <code class="node-id">{{ node.nodeId }}</code>
+              </div>
+              <div class="card-actions">
+                <button mat-icon-button matTooltip="Bearbeiten" (click)="onEdit(node, $event)">
+                  <mat-icon>edit</mat-icon>
+                </button>
+                <button mat-icon-button matTooltip="Löschen" color="warn"
+                        [disabled]="isDeleting() === node.id"
+                        (click)="onDelete(node, $event)">
+                  <mat-icon>delete</mat-icon>
+                </button>
+              </div>
+            </div>
 
-            <!-- Latest Readings -->
-            @if (getLatestReadings(node.id).length > 0) {
-              <div class="readings-grid">
-                @for (reading of getLatestReadings(node.id).slice(0, 3); track reading.sensorTypeId) {
-                  <div class="reading-item">
-                    <mat-icon [style.color]="getSensorColor(reading.sensorTypeId)">
-                      {{ getSensorIcon(reading.sensorTypeId) }}
-                    </mat-icon>
-                    <span class="reading-value">{{ reading.value | sensorUnit:reading.unit }}</span>
+            <!-- Sensoren Liste (klappbar) -->
+            <div class="sensors-content">
+              @if (node.sensors && node.sensors.length > 0) {
+                <!-- Klappbarer Header -->
+                <div class="sensors-header" (click)="toggleSensorsExpanded(node.id, $event)">
+                  <mat-icon class="expand-icon" [class.expanded]="isSensorsExpanded(node.id)">
+                    chevron_right
+                  </mat-icon>
+                  <span class="sensors-count">{{ node.sensors.length }} Sensoren</span>
+                </div>
+
+                <!-- Sensoren-Liste (nur wenn ausgeklappt) -->
+                @if (isSensorsExpanded(node.id)) {
+                  <div class="sensors-list">
+                    @for (sensor of node.sensors; track sensor.id) {
+                      <div class="sensor-row">
+                        <div class="sensor-icon" [style.background-color]="sensor.sensorType?.color || getSensorColor(sensor.sensorTypeId)">
+                          <mat-icon>{{ sensor.sensorType?.icon || getSensorIcon(sensor.sensorTypeId) }}</mat-icon>
+                        </div>
+                        <span class="sensor-name">{{ sensor.name || sensor.sensorTypeName }}</span>
+                        <span class="sensor-value">
+                          @if (getSensorReading(node.id, sensor.sensorTypeId); as reading) {
+                            {{ reading.value | number:'1.1-1' }} {{ reading.unit || getSensorUnit(sensor.sensorTypeId) }}
+                          } @else {
+                            <span class="no-data">--</span>
+                          }
+                        </span>
+                      </div>
+                    }
                   </div>
                 }
-              </div>
-              <div class="reading-meta">
-                <span class="timestamp">{{ getLatestReadings(node.id)[0].timestamp | relativeTime }}</span>
-              </div>
-            } @else {
-              <div class="no-readings">
-                <span class="no-data">Keine Messwerte</span>
-              </div>
-            }
-          </mat-card-content>
+              } @else if (getLatestReadings(node.id).length > 0) {
+                <!-- Fallback: Readings ohne Sensor-Objekte -->
+                <div class="sensors-header" (click)="toggleSensorsExpanded(node.id, $event)">
+                  <mat-icon class="expand-icon" [class.expanded]="isSensorsExpanded(node.id)">
+                    chevron_right
+                  </mat-icon>
+                  <span class="sensors-count">{{ getLatestReadings(node.id).length }} Sensoren</span>
+                </div>
 
-          <mat-card-footer>
-            <div class="status-row">
-              <mat-chip [class.online]="node.isOnline" [class.offline]="!node.isOnline">
-                <mat-icon matChipAvatar>{{ node.isOnline ? 'check_circle' : 'cancel' }}</mat-icon>
-                {{ node.isOnline ? 'Online' : 'Offline' }}
-              </mat-chip>
+                @if (isSensorsExpanded(node.id)) {
+                  <div class="sensors-list">
+                    @for (reading of getLatestReadings(node.id); track reading.sensorTypeId) {
+                      <div class="sensor-row">
+                        <div class="sensor-icon" [style.background-color]="getSensorColor(reading.sensorTypeId)">
+                          <mat-icon>{{ getSensorIcon(reading.sensorTypeId) }}</mat-icon>
+                        </div>
+                        <span class="sensor-name">{{ reading.sensorTypeName || getSensorTypeName(reading.sensorTypeId) }}</span>
+                        <span class="sensor-value">
+                          {{ reading.value | number:'1.1-1' }} {{ reading.unit || getSensorUnit(reading.sensorTypeId) }}
+                        </span>
+                      </div>
+                    }
+                  </div>
+                }
+              } @else {
+                <div class="no-sensors">
+                  <mat-icon>sensors_off</mat-icon>
+                  <span>Keine Sensoren</span>
+                </div>
+              }
+            </div>
+
+            <!-- Card Footer -->
+            <div class="card-footer">
+              <div class="status-badge" [class.online]="node.isOnline" [class.offline]="!node.isOnline">
+                <mat-icon>{{ node.isOnline ? 'wifi' : 'wifi_off' }}</mat-icon>
+                <span>{{ node.isOnline ? 'Online' : 'Offline' }}</span>
+              </div>
+              @if (node.lastSeen) {
+                <span class="last-seen">
+                  <mat-icon>visibility</mat-icon>
+                  {{ node.lastSeen | relativeTime }}
+                </span>
+              }
               @if (node.batteryLevel !== null && node.batteryLevel !== undefined) {
                 <span class="battery">
                   <mat-icon>battery_{{ node.batteryLevel > 80 ? 'full' : node.batteryLevel > 20 ? 'std' : 'alert' }}</mat-icon>
                   {{ node.batteryLevel }}%
                 </span>
               }
+              <span class="spacer"></span>
+              @if (getLastUpdated(node.id); as updated) {
+                <span class="last-updated">
+                  <mat-icon>update</mat-icon>
+                  {{ updated | relativeTime }}
+                </span>
+              }
             </div>
-          </mat-card-footer>
-        </mat-card>
-      }
-    </div>
+          </mat-card>
+        }
+      </div>
     }
   }
 </div>
+
+<!-- Filter-Drawer Template -->
+<ng-template #filterDrawer>
+  <div class="gt-drawer gt-filter-drawer">
+    <div class="gt-drawer__header">
+      <h3 class="gt-drawer__title">Nodes filtern</h3>
+      <button mat-icon-button (click)="closeFilter()" aria-label="Schließen">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="gt-drawer__body">
+      <div class="gt-drawer__inner">
+        <div class="filter-fields">
+          <!-- Status Filter -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Status</mat-label>
+            <mat-select [(ngModel)]="filterStatus">
+              <mat-option value="all">Alle</mat-option>
+              <mat-option value="online">Online</mat-option>
+              <mat-option value="offline">Offline</mat-option>
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Sortierung -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sortieren nach</mat-label>
+            <mat-select [(ngModel)]="sortField">
+              @for (option of sortOptions; track option.value) {
+                <mat-option [value]="option.value">{{ option.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Sortierrichtung -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Reihenfolge</mat-label>
+            <mat-select [(ngModel)]="sortDirection">
+              <mat-option value="asc">Aufsteigend</mat-option>
+              <mat-option value="desc">Absteigend</mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <div class="drawer-buttons">
+      <button mat-button (click)="clearFilters()">
+        <mat-icon>clear</mat-icon> Zurücksetzen
+      </button>
+      <button mat-flat-button color="primary" (click)="closeFilter()">
+        <mat-icon>check</mat-icon> Anwenden
+      </button>
+    </div>
+  </div>
+</ng-template>
