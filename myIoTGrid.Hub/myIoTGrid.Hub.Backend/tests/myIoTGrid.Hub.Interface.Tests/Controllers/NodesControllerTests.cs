@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Moq;
 using myIoTGrid.Hub.Interface.Controllers;
 using myIoTGrid.Hub.Interface.Hubs;
@@ -23,6 +24,7 @@ public class NodesControllerTests
     private readonly Mock<IHubService> _hubServiceMock;
     private readonly Mock<IHubContext<SensorHub>> _hubContextMock;
     private readonly Mock<IClientProxy> _clientProxyMock;
+    private readonly Mock<IConfiguration> _configurationMock;
     private readonly NodesController _sut;
 
     private readonly Guid _tenantId = Guid.Parse("00000000-0000-0000-0000-000000000001");
@@ -38,16 +40,19 @@ public class NodesControllerTests
         _hubServiceMock = new Mock<IHubService>();
         _hubContextMock = new Mock<IHubContext<SensorHub>>();
         _clientProxyMock = new Mock<IClientProxy>();
+        _configurationMock = new Mock<IConfiguration>();
 
         var hubClientsMock = new Mock<IHubClients>();
         hubClientsMock.Setup(c => c.Group(It.IsAny<string>())).Returns(_clientProxyMock.Object);
+        hubClientsMock.Setup(c => c.All).Returns(_clientProxyMock.Object);
         _hubContextMock.Setup(c => c.Clients).Returns(hubClientsMock.Object);
 
         _sut = new NodesController(
             _nodeServiceMock.Object,
             _assignmentServiceMock.Object,
             _hubServiceMock.Object,
-            _hubContextMock.Object);
+            _hubContextMock.Object,
+            _configurationMock.Object);
 
         // Setup HttpContext for Register endpoint tests
         var httpContext = new DefaultHttpContext();
@@ -539,7 +544,9 @@ public class NodesControllerTests
             IsOnline: true,
             FirmwareVersion: "1.0.0",
             BatteryLevel: 100,
-            CreatedAt: DateTime.UtcNow
+            CreatedAt: DateTime.UtcNow,
+            MacAddress: "AA:BB:CC:DD:EE:FF",
+            Status: NodeProvisioningStatusDto.Configured
         );
     }
 

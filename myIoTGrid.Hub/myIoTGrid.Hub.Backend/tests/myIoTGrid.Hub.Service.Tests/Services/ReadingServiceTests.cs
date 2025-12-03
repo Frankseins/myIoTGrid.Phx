@@ -828,7 +828,9 @@ public class ReadingServiceTests : IDisposable
             IsOnline: true,
             FirmwareVersion: null,
             BatteryLevel: null,
-            CreatedAt: DateTime.UtcNow
+            CreatedAt: DateTime.UtcNow,
+            MacAddress: "AA:BB:CC:DD:EE:FF",
+            Status: NodeProvisioningStatusDto.Configured
         );
     }
 

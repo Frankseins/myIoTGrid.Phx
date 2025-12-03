@@ -50,4 +50,21 @@ public interface INodeService
 
     /// <summary>Deletes a Node</summary>
     Task<bool> DeleteAsync(Guid id, CancellationToken ct = default);
+
+    // === Node Provisioning (BLE Pairing) ===
+
+    /// <summary>Registers a new node via BLE pairing. Creates node and generates API key.</summary>
+    Task<NodeConfigurationDto> RegisterNodeAsync(NodeRegistrationDto dto, string wifiSsid, string wifiPassword, string hubApiUrl, CancellationToken ct = default);
+
+    /// <summary>Validates node API key and returns node if valid</summary>
+    Task<NodeDto?> ValidateApiKeyAsync(string nodeId, string apiKey, CancellationToken ct = default);
+
+    /// <summary>Processes node heartbeat and updates LastSeen</summary>
+    Task<NodeHeartbeatResponseDto> ProcessHeartbeatAsync(NodeHeartbeatDto dto, CancellationToken ct = default);
+
+    /// <summary>Gets a node by MAC address</summary>
+    Task<NodeDto?> GetByMacAddressAsync(string macAddress, CancellationToken ct = default);
+
+    /// <summary>Regenerates API key for a node (for security purposes)</summary>
+    Task<NodeConfigurationDto?> RegenerateApiKeyAsync(Guid nodeId, string wifiSsid, string wifiPassword, string hubApiUrl, CancellationToken ct = default);
 }

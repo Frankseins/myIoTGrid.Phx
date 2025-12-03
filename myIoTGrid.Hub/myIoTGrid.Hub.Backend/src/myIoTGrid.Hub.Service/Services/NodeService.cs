@@ -5,6 +5,7 @@ using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Domain.Interfaces;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
+using myIoTGrid.Hub.Service.Helpers;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
 using myIoTGrid.Hub.Shared.DTOs.Common;
@@ -364,5 +365,169 @@ public class NodeService : INodeService
             s.Length > 0 ? char.ToUpper(s[0]) + s[1..].ToLower() : s);
 
         return string.Join(" ", formattedParts);
+    }
+
+    // === Node Provisioning (BLE Pairing) ===
+
+    /// <inheritdoc />
+    public async Task<NodeConfigurationDto> RegisterNodeAsync(
+        NodeRegistrationDto dto,
+        string wifiSsid,
+        string wifiPassword,
+        string hubApiUrl,
+        CancellationToken ct = default)
+    {
+        // Check if node already exists by MAC address
+        var existingNode = await _context.Nodes
+            .FirstOrDefaultAsync(n => n.MacAddress == dto.MacAddress.ToUpperInvariant(), ct);
+
+        if (existingNode != null)
+        {
+            _logger.LogInformation("Node with MAC {MacAddress} already registered, regenerating API key",
+                dto.MacAddress);
+
+            // Generate new API key for existing node
+            return await RegenerateApiKeyAsync(existingNode.Id, wifiSsid, wifiPassword, hubApiUrl, ct)
+                ?? throw new InvalidOperationException("Failed to regenerate API key");
+        }
+
+        // Get default hub (first hub in database)
+        var hub = await _context.Hubs.FirstOrDefaultAsync(ct)
+            ?? throw new InvalidOperationException("No Hub configured. Please create a Hub first.");
+
+        // Generate API key
+        var apiKey = ApiKeyGenerator.GenerateApiKey();
+        var apiKeyHash = ApiKeyGenerator.HashApiKey(apiKey);
+
+        // Create new node
+        var node = dto.ToEntity(hub.Id, apiKeyHash);
+
+        _context.Nodes.Add(node);
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("Node registered via BLE: {NodeId} ({Name}) MAC: {MacAddress}",
+            node.NodeId, node.Name, node.MacAddress);
+
+        return new NodeConfigurationDto(
+            NodeId: node.NodeId,
+            ApiKey: apiKey,
+            WifiSsid: wifiSsid,
+            WifiPassword: wifiPassword,
+            HubApiUrl: hubApiUrl
+        );
+    }
+
+    /// <inheritdoc />
+    public async Task<NodeDto?> ValidateApiKeyAsync(string nodeId, string apiKey, CancellationToken ct = default)
+    {
+        if (!ApiKeyGenerator.IsValidFormat(apiKey))
+        {
+            _logger.LogWarning("Invalid API key format for node {NodeId}", nodeId);
+            return null;
+        }
+
+        var node = await _context.Nodes
+            .Include(n => n.SensorAssignments)
+            .FirstOrDefaultAsync(n => n.NodeId == nodeId, ct);
+
+        if (node == null)
+        {
+            _logger.LogWarning("Node not found: {NodeId}", nodeId);
+            return null;
+        }
+
+        if (!ApiKeyGenerator.ValidateApiKey(apiKey, node.ApiKeyHash))
+        {
+            _logger.LogWarning("Invalid API key for node {NodeId}", nodeId);
+            return null;
+        }
+
+        return node.ToDto();
+    }
+
+    /// <inheritdoc />
+    public async Task<NodeHeartbeatResponseDto> ProcessHeartbeatAsync(NodeHeartbeatDto dto, CancellationToken ct = default)
+    {
+        var node = await _context.Nodes
+            .FirstOrDefaultAsync(n => n.NodeId == dto.NodeId, ct);
+
+        if (node == null)
+        {
+            _logger.LogWarning("Heartbeat from unknown node: {NodeId}", dto.NodeId);
+            return new NodeHeartbeatResponseDto(
+                Success: false,
+                ServerTime: DateTime.UtcNow,
+                NextHeartbeatSeconds: 60
+            );
+        }
+
+        // Update node status
+        node.LastSeen = DateTime.UtcNow;
+        node.IsOnline = true;
+
+        if (!string.IsNullOrEmpty(dto.FirmwareVersion))
+            node.FirmwareVersion = dto.FirmwareVersion;
+
+        if (dto.BatteryLevel.HasValue)
+            node.BatteryLevel = dto.BatteryLevel;
+
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogDebug("Heartbeat processed for node {NodeId}", dto.NodeId);
+
+        return new NodeHeartbeatResponseDto(
+            Success: true,
+            ServerTime: DateTime.UtcNow,
+            NextHeartbeatSeconds: 60
+        );
+    }
+
+    /// <inheritdoc />
+    public async Task<NodeDto?> GetByMacAddressAsync(string macAddress, CancellationToken ct = default)
+    {
+        var node = await _context.Nodes
+            .AsNoTracking()
+            .Include(n => n.SensorAssignments)
+            .FirstOrDefaultAsync(n => n.MacAddress == macAddress.ToUpperInvariant(), ct);
+
+        return node?.ToDto();
+    }
+
+    /// <inheritdoc />
+    public async Task<NodeConfigurationDto?> RegenerateApiKeyAsync(
+        Guid nodeId,
+        string wifiSsid,
+        string wifiPassword,
+        string hubApiUrl,
+        CancellationToken ct = default)
+    {
+        var node = await _context.Nodes
+            .FirstOrDefaultAsync(n => n.Id == nodeId, ct);
+
+        if (node == null)
+        {
+            _logger.LogWarning("Cannot regenerate API key: Node not found {NodeId}", nodeId);
+            return null;
+        }
+
+        // Generate new API key
+        var apiKey = ApiKeyGenerator.GenerateApiKey();
+        var apiKeyHash = ApiKeyGenerator.HashApiKey(apiKey);
+
+        node.ApiKeyHash = apiKeyHash;
+        node.Status = NodeStatus.Configured;
+        node.LastSeen = DateTime.UtcNow;
+
+        await _unitOfWork.SaveChangesAsync(ct);
+
+        _logger.LogInformation("API key regenerated for node {NodeId}", node.NodeId);
+
+        return new NodeConfigurationDto(
+            NodeId: node.NodeId,
+            ApiKey: apiKey,
+            WifiSsid: wifiSsid,
+            WifiPassword: wifiPassword,
+            HubApiUrl: hubApiUrl
+        );
     }
 }

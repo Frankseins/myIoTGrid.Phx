@@ -8,6 +8,7 @@ namespace myIoTGrid.Hub.Domain.Entities;
 /// Represents a physical IoT device (ESP32, LoRa32).
 /// Matter-konform: Corresponds to a Matter Node.
 /// One Hub can manage multiple Nodes.
+/// Supports self-provisioning via BLE pairing.
 /// </summary>
 public class Node : IEntity
 {
@@ -43,6 +44,17 @@ public class Node : IEntity
 
     /// <summary>When the node was first registered</summary>
     public DateTime CreatedAt { get; set; }
+
+    // === Node Provisioning ===
+
+    /// <summary>MAC address of the device (unique identifier from hardware)</summary>
+    public string MacAddress { get; set; } = string.Empty;
+
+    /// <summary>SHA256 hash of the API key for authentication</summary>
+    public string ApiKeyHash { get; set; } = string.Empty;
+
+    /// <summary>Current provisioning status of the node</summary>
+    public NodeStatus Status { get; set; } = NodeStatus.Unconfigured;
 
     // === Navigation Properties ===
 

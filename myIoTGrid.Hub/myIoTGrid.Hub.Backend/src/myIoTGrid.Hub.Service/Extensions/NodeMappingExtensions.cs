@@ -1,5 +1,7 @@
 using myIoTGrid.Hub.Domain.Entities;
+using myIoTGrid.Hub.Domain.Enums;
 using myIoTGrid.Hub.Shared.DTOs;
+using myIoTGrid.Hub.Shared.Enums;
 
 namespace myIoTGrid.Hub.Service.Extensions;
 
@@ -25,8 +27,40 @@ public static class NodeMappingExtensions
             IsOnline: node.IsOnline,
             FirmwareVersion: node.FirmwareVersion,
             BatteryLevel: node.BatteryLevel,
-            CreatedAt: node.CreatedAt
+            CreatedAt: node.CreatedAt,
+            MacAddress: node.MacAddress,
+            Status: node.Status.ToDto()
         );
+    }
+
+    /// <summary>
+    /// Converts NodeStatus enum to NodeProvisioningStatusDto
+    /// </summary>
+    public static NodeProvisioningStatusDto ToDto(this NodeStatus status)
+    {
+        return status switch
+        {
+            NodeStatus.Unconfigured => NodeProvisioningStatusDto.Unconfigured,
+            NodeStatus.Pairing => NodeProvisioningStatusDto.Pairing,
+            NodeStatus.Configured => NodeProvisioningStatusDto.Configured,
+            NodeStatus.Error => NodeProvisioningStatusDto.Error,
+            _ => NodeProvisioningStatusDto.Unconfigured
+        };
+    }
+
+    /// <summary>
+    /// Converts NodeProvisioningStatusDto to NodeStatus enum
+    /// </summary>
+    public static NodeStatus ToEntity(this NodeProvisioningStatusDto status)
+    {
+        return status switch
+        {
+            NodeProvisioningStatusDto.Unconfigured => NodeStatus.Unconfigured,
+            NodeProvisioningStatusDto.Pairing => NodeStatus.Pairing,
+            NodeProvisioningStatusDto.Configured => NodeStatus.Configured,
+            NodeProvisioningStatusDto.Error => NodeStatus.Error,
+            _ => NodeStatus.Unconfigured
+        };
     }
 
     /// <summary>
@@ -44,8 +78,54 @@ public static class NodeMappingExtensions
             Location = dto.Location?.ToEntity(),
             IsOnline = true,
             LastSeen = DateTime.UtcNow,
+            CreatedAt = DateTime.UtcNow,
+            MacAddress = string.Empty, // Will be set during provisioning
+            ApiKeyHash = string.Empty, // Will be set during provisioning
+            Status = NodeStatus.Unconfigured
+        };
+    }
+
+    /// <summary>
+    /// Converts a NodeRegistrationDto to a Node entity for provisioning
+    /// </summary>
+    public static Node ToEntity(this NodeRegistrationDto dto, Guid hubId, string apiKeyHash)
+    {
+        return new Node
+        {
+            Id = Guid.NewGuid(),
+            HubId = hubId,
+            NodeId = GenerateNodeIdFromMac(dto.MacAddress),
+            Name = dto.Name ?? GenerateNameFromMac(dto.MacAddress),
+            Protocol = Protocol.WLAN,
+            MacAddress = dto.MacAddress.ToUpperInvariant(),
+            ApiKeyHash = apiKeyHash,
+            FirmwareVersion = dto.FirmwareVersion,
+            Status = NodeStatus.Configured,
+            IsOnline = true,
+            LastSeen = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow
         };
+    }
+
+    /// <summary>
+    /// Generates a NodeId from MAC address
+    /// </summary>
+    private static string GenerateNodeIdFromMac(string macAddress)
+    {
+        // Remove colons and convert to lowercase: "AA:BB:CC:DD:EE:FF" -> "node-aabbccddeeff"
+        var cleanMac = macAddress.Replace(":", "").ToLowerInvariant();
+        return $"node-{cleanMac}";
+    }
+
+    /// <summary>
+    /// Generates a display name from MAC address
+    /// </summary>
+    private static string GenerateNameFromMac(string macAddress)
+    {
+        // Take last 4 chars of MAC: "AA:BB:CC:DD:EE:FF" -> "Node EEFF"
+        var cleanMac = macAddress.Replace(":", "").ToUpperInvariant();
+        var suffix = cleanMac.Length >= 4 ? cleanMac[^4..] : cleanMac;
+        return $"Node {suffix}";
     }
 
     /// <summary>

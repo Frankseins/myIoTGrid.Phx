@@ -18,7 +18,9 @@ public record NodeDto(
     bool IsOnline,
     string? FirmwareVersion,
     int? BatteryLevel,
-    DateTime CreatedAt
+    DateTime CreatedAt,
+    string MacAddress,
+    NodeProvisioningStatusDto Status
 );
 
 /// <summary>
@@ -95,4 +97,48 @@ public record SensorConfigDto(
 public record ConnectionConfigDto(
     string Mode,
     string Endpoint
+);
+
+// === Node Provisioning DTOs ===
+
+/// <summary>
+/// DTO for node registration request (from ESP32 via BLE).
+/// Sent when node first connects to Hub.
+/// </summary>
+public record NodeRegistrationDto(
+    string MacAddress,
+    string? FirmwareVersion = null,
+    string? Name = null
+);
+
+/// <summary>
+/// DTO for node configuration response (sent to ESP32 via BLE).
+/// Contains WiFi credentials and API key for node to connect.
+/// </summary>
+public record NodeConfigurationDto(
+    string NodeId,
+    string ApiKey,
+    string WifiSsid,
+    string WifiPassword,
+    string HubApiUrl
+);
+
+/// <summary>
+/// DTO for node heartbeat request.
+/// Sent periodically by node to Hub via REST API.
+/// </summary>
+public record NodeHeartbeatDto(
+    string NodeId,
+    string? FirmwareVersion = null,
+    int? BatteryLevel = null
+);
+
+/// <summary>
+/// DTO for node heartbeat response.
+/// Returned by Hub to node.
+/// </summary>
+public record NodeHeartbeatResponseDto(
+    bool Success,
+    DateTime ServerTime,
+    int? NextHeartbeatSeconds = null
 );

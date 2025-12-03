@@ -189,6 +189,11 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("ApiKeyHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("TEXT");
+
                     b.Property<int?>("BatteryLevel")
                         .HasColumnType("INTEGER");
 
@@ -210,6 +215,11 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Property<DateTime?>("LastSeen")
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("MacAddress")
+                        .IsRequired()
+                        .HasMaxLength(17)
+                        .HasColumnType("TEXT");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -225,6 +235,11 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("TEXT");
 
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
 
                     b.HasIndex("HubId");
@@ -233,7 +248,12 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
                     b.HasIndex("LastSeen");
 
+                    b.HasIndex("MacAddress")
+                        .IsUnique();
+
                     b.HasIndex("NodeId");
+
+                    b.HasIndex("Status");
 
                     b.HasIndex("HubId", "NodeId")
                         .IsUnique();

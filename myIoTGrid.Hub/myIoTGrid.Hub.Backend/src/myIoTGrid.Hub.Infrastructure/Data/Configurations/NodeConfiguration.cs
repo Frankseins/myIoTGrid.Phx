@@ -44,6 +44,20 @@ public class NodeConfiguration : IEntityTypeConfiguration<Node>
         builder.Property(n => n.CreatedAt)
             .IsRequired();
 
+        // Node Provisioning Fields
+        builder.Property(n => n.MacAddress)
+            .IsRequired()
+            .HasMaxLength(17); // Format: AA:BB:CC:DD:EE:FF
+
+        builder.Property(n => n.ApiKeyHash)
+            .IsRequired()
+            .HasMaxLength(64); // SHA256 hash length
+
+        builder.Property(n => n.Status)
+            .IsRequired()
+            .HasConversion<string>()
+            .HasMaxLength(20);
+
         // Location as Owned Entity
         builder.OwnsOne(n => n.Location, location =>
         {
@@ -80,5 +94,7 @@ public class NodeConfiguration : IEntityTypeConfiguration<Node>
         builder.HasIndex(n => new { n.HubId, n.NodeId }).IsUnique();
         builder.HasIndex(n => n.IsOnline);
         builder.HasIndex(n => n.LastSeen);
+        builder.HasIndex(n => n.MacAddress).IsUnique();
+        builder.HasIndex(n => n.Status);
     }
 }

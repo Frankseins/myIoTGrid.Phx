@@ -30,7 +30,9 @@ public class NodeDtoTests
             IsOnline: true,
             FirmwareVersion: "1.0.0",
             BatteryLevel: 85,
-            CreatedAt: DateTime.UtcNow
+            CreatedAt: DateTime.UtcNow,
+            MacAddress: "AA:BB:CC:DD:EE:FF",
+            Status: NodeProvisioningStatusDto.Configured
         );
 
         // Assert

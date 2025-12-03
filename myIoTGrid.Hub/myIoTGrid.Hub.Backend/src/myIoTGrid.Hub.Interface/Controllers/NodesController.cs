@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using myIoTGrid.Hub.Interface.Hubs;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
@@ -21,17 +22,20 @@ public class NodesController : ControllerBase
     private readonly INodeSensorAssignmentService _assignmentService;
     private readonly IHubService _hubService;
     private readonly IHubContext<SensorHub> _hubContext;
+    private readonly IConfiguration _configuration;
 
     public NodesController(
         INodeService nodeService,
         INodeSensorAssignmentService assignmentService,
         IHubService hubService,
-        IHubContext<SensorHub> hubContext)
+        IHubContext<SensorHub> hubContext,
+        IConfiguration configuration)
     {
         _nodeService = nodeService;
         _assignmentService = assignmentService;
         _hubService = hubService;
         _hubContext = hubContext;
+        _configuration = configuration;
     }
 
     /// <summary>
@@ -279,5 +283,187 @@ public class NodesController : ControllerBase
             return NotFound();
 
         return NoContent();
+    }
+
+    // === Node Provisioning Endpoints (BLE Pairing) ===
+
+    /// <summary>
+    /// Registers a new node via BLE pairing.
+    /// Called by ESP32 when it first connects to Hub via BLE.
+    /// Returns WiFi credentials and API key.
+    /// </summary>
+    /// <param name="dto">Registration data (MAC address, firmware version, name)</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Node configuration with WiFi credentials and API key</returns>
+    [HttpPost("provision")]
+    [ProducesResponseType(typeof(NodeConfigurationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> Provision([FromBody] NodeRegistrationDto dto, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(dto.MacAddress))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "MacAddress is required"
+            });
+        }
+
+        // Get WiFi configuration from appsettings
+        var wifiSsid = _configuration["NodeProvisioning:WifiSsid"]
+            ?? throw new InvalidOperationException("NodeProvisioning:WifiSsid not configured");
+        var wifiPassword = _configuration["NodeProvisioning:WifiPassword"]
+            ?? throw new InvalidOperationException("NodeProvisioning:WifiPassword not configured");
+
+        // Build Hub API URL from current request or configuration
+        var hubApiUrl = _configuration["NodeProvisioning:HubApiUrl"]
+            ?? $"{Request.Scheme}://{Request.Host}";
+
+        try
+        {
+            var config = await _nodeService.RegisterNodeAsync(dto, wifiSsid, wifiPassword, hubApiUrl, ct);
+
+            // Notify clients about new node
+            await _hubContext.Clients.All.SendAsync("NodeProvisioned", config.NodeId, ct);
+
+            return Ok(config);
+        }
+        catch (InvalidOperationException ex)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Registration Failed",
+                Detail = ex.Message
+            });
+        }
+    }
+
+    /// <summary>
+    /// Processes a heartbeat from a node.
+    /// Called periodically by ESP32 to report status and update LastSeen.
+    /// </summary>
+    /// <param name="dto">Heartbeat data</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Heartbeat response with server time</returns>
+    [HttpPost("heartbeat")]
+    [ProducesResponseType(typeof(NodeHeartbeatResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> Heartbeat([FromBody] NodeHeartbeatDto dto, CancellationToken ct)
+    {
+        // Get API key from Authorization header
+        var authHeader = Request.Headers.Authorization.ToString();
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Detail = "API key required in Authorization header"
+            });
+        }
+
+        var apiKey = authHeader["Bearer ".Length..];
+
+        // Validate API key
+        var node = await _nodeService.ValidateApiKeyAsync(dto.NodeId, apiKey, ct);
+        if (node == null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Detail = "Invalid API key or node not found"
+            });
+        }
+
+        var response = await _nodeService.ProcessHeartbeatAsync(dto, ct);
+
+        // Notify clients about node heartbeat
+        await _hubContext.Clients.Group($"node:{node.Id}")
+            .SendAsync("NodeHeartbeat", node.Id, ct);
+
+        return Ok(response);
+    }
+
+    /// <summary>
+    /// Validates a node's API key.
+    /// Called by ESP32 after WiFi connection to verify configuration.
+    /// </summary>
+    /// <param name="nodeId">Node identifier</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Node data if API key is valid</returns>
+    [HttpGet("validate/{nodeId}")]
+    [ProducesResponseType(typeof(NodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> ValidateApiKey(string nodeId, CancellationToken ct)
+    {
+        // Get API key from Authorization header
+        var authHeader = Request.Headers.Authorization.ToString();
+        if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Detail = "API key required in Authorization header"
+            });
+        }
+
+        var apiKey = authHeader["Bearer ".Length..];
+
+        var node = await _nodeService.ValidateApiKeyAsync(nodeId, apiKey, ct);
+        if (node == null)
+        {
+            return Unauthorized(new ProblemDetails
+            {
+                Title = "Unauthorized",
+                Detail = "Invalid API key or node not found"
+            });
+        }
+
+        return Ok(node);
+    }
+
+    /// <summary>
+    /// Regenerates the API key for a node.
+    /// Used when re-provisioning an existing node.
+    /// </summary>
+    /// <param name="id">Node-ID</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>New node configuration with new API key</returns>
+    [HttpPost("{id:guid}/regenerate-key")]
+    [ProducesResponseType(typeof(NodeConfigurationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> RegenerateApiKey(Guid id, CancellationToken ct)
+    {
+        var wifiSsid = _configuration["NodeProvisioning:WifiSsid"]
+            ?? throw new InvalidOperationException("NodeProvisioning:WifiSsid not configured");
+        var wifiPassword = _configuration["NodeProvisioning:WifiPassword"]
+            ?? throw new InvalidOperationException("NodeProvisioning:WifiPassword not configured");
+        var hubApiUrl = _configuration["NodeProvisioning:HubApiUrl"]
+            ?? $"{Request.Scheme}://{Request.Host}";
+
+        var config = await _nodeService.RegenerateApiKeyAsync(id, wifiSsid, wifiPassword, hubApiUrl, ct);
+
+        if (config == null)
+            return NotFound();
+
+        return Ok(config);
+    }
+
+    /// <summary>
+    /// Gets a node by MAC address.
+    /// </summary>
+    /// <param name="macAddress">MAC address (format: AA:BB:CC:DD:EE:FF)</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Node if found</returns>
+    [HttpGet("by-mac/{macAddress}")]
+    [ProducesResponseType(typeof(NodeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetByMacAddress(string macAddress, CancellationToken ct)
+    {
+        var node = await _nodeService.GetByMacAddressAsync(macAddress, ct);
+
+        if (node == null)
+            return NotFound();
+
+        return Ok(node);
     }
 }

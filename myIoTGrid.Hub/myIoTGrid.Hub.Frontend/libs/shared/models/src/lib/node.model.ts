@@ -3,6 +3,16 @@ import { Protocol } from './enums.model';
 import { Sensor } from './sensor.model';
 
 /**
+ * Node provisioning status
+ */
+export enum NodeProvisioningStatus {
+  Unconfigured = 0,
+  Pairing = 1,
+  Configured = 2,
+  Error = 3
+}
+
+/**
  * Node model - corresponds to Backend NodeDto
  * Matter-konform: Entspricht einem Matter Node (ESP32/LoRa32 device)
  */
@@ -14,12 +24,14 @@ export interface Node {
   name: string;
   protocol: Protocol;
   location?: Location;
-  sensors: Sensor[];
+  assignmentCount: number;
   lastSeen?: string;
   isOnline: boolean;
   firmwareVersion?: string;
   batteryLevel?: number;
   createdAt: string;
+  macAddress: string;
+  status: NodeProvisioningStatus;
 }
 
 export interface CreateNodeDto {
