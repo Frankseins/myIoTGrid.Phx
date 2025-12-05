@@ -6,6 +6,10 @@
 #ifndef ARDUINO_H
 #define ARDUINO_H
 
+// IMPORTANT: Include <cmath> and <limits> FIRST, before any min/max/abs definitions
+// This prevents macro conflicts with std::numeric_limits<T>::min() etc.
+#include <cmath>
+#include <limits>
 #include <cstdint>
 #include <cstddef>
 #include <cstring>
@@ -287,28 +291,39 @@ inline void analogWrite(uint8_t pin, int value) {
     (void)value;
 }
 
-// Math functions
-#ifndef min
-#define min(a,b) ((a)<(b)?(a):(b))
+// Math functions - use inline templates to avoid conflicts with <cmath> and std::numeric_limits
+// DO NOT use macros for min/max/abs as they break std::numeric_limits<T>::min() etc.
+
+// Undefine any existing macros that might have been defined elsewhere
+#ifdef min
+#undef min
+#endif
+#ifdef max
+#undef max
+#endif
+#ifdef abs
+#undef abs
 #endif
 
-#ifndef max
-#define max(a,b) ((a)>(b)?(a):(b))
-#endif
+// Use std::min, std::max, std::abs from <algorithm>/<cmath> - included above
+// For Arduino compatibility, provide these in global namespace
+#include <algorithm>
+using std::min;
+using std::max;
+using std::abs;
+using std::fabs;
 
-#ifndef abs
-#define abs(x) ((x)>0?(x):-(x))
-#endif
+template<typename T>
+inline T constrain(T amt, T low, T high) {
+    return (amt < low) ? low : ((amt > high) ? high : amt);
+}
 
-#ifndef constrain
-#define constrain(amt,low,high) ((amt)<(low)?(low):((amt)>(high)?(high):(amt)))
-#endif
-
-#ifndef map
 inline long map(long x, long in_min, long in_max, long out_min, long out_max) {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
-#endif
+
+// Arduino code can call min(), max(), abs() directly using std:: versions from <cmath>
+// We do NOT define macros here to avoid conflicts with std::numeric_limits<T>::min() etc.
 
 // yield function (no-op in native)
 inline void yield() {}
