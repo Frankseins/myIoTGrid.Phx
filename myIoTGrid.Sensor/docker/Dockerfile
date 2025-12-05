@@ -4,18 +4,21 @@
 
 FROM debian:bullseye AS builder
 
-# Install build dependencies with GCC 10
-RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
-    python3-venv \
-    git \
-    curl \
-    build-essential \
-    g++-10 \
-    gcc-10 \
-    libcurl4-openssl-dev \
-    uuid-dev \
+# Install build dependencies with GCC 10 (with retry for transient network errors)
+RUN for i in 1 2 3; do \
+        apt-get update && apt-get install -y --fix-missing \
+            python3 \
+            python3-pip \
+            python3-venv \
+            git \
+            curl \
+            build-essential \
+            g++-10 \
+            gcc-10 \
+            libcurl4-openssl-dev \
+            uuid-dev \
+        && break || sleep 5; \
+    done \
     && rm -rf /var/lib/apt/lists/* \
     && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
     && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
@@ -43,11 +46,14 @@ RUN pio run -e native
 # ============================================
 FROM debian:bullseye-slim
 
-# Install runtime dependencies (including ca-certificates for HTTPS)
-RUN apt-get update && apt-get install -y \
-    libcurl4 \
-    libuuid1 \
-    ca-certificates \
+# Install runtime dependencies (including ca-certificates for HTTPS) with retry
+RUN for i in 1 2 3; do \
+        apt-get update && apt-get install -y --fix-missing \
+            libcurl4 \
+            libuuid1 \
+            ca-certificates \
+        && break || sleep 5; \
+    done \
     && rm -rf /var/lib/apt/lists/*
 
 # Create non-root user
