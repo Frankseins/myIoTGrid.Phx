@@ -72,6 +72,7 @@ public class AlertService : IAlertService
     {
         var tenantId = _tenantService.GetCurrentTenantId();
 
+        
         var alerts = await _context.Alerts
             .AsNoTracking()
             .Include(a => a.AlertType)
