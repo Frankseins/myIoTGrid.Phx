@@ -1,9 +1,10 @@
 # myIoTGrid Sensor - Native Simulator Docker Image
 # Builds and runs the sensor firmware as a native Linux application
+# Using Debian Bullseye for stable GCC 10 to avoid cmath/numeric_limits bug
 
-FROM ubuntu:24.04 AS builder
+FROM debian:bullseye AS builder
 
-# Install build dependencies
+# Install build dependencies with GCC 10
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -11,9 +12,13 @@ RUN apt-get update && apt-get install -y \
     git \
     curl \
     build-essential \
+    g++-10 \
+    gcc-10 \
     libcurl4-openssl-dev \
     uuid-dev \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-10 100 \
+    && update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-10 100
 
 # Install PlatformIO
 RUN python3 -m venv /opt/pio && \
@@ -36,7 +41,7 @@ RUN pio run -e native
 # ============================================
 # Runtime Image
 # ============================================
-FROM ubuntu:24.04
+FROM debian:bullseye-slim
 
 # Install runtime dependencies (including ca-certificates for HTTPS)
 RUN apt-get update && apt-get install -y \

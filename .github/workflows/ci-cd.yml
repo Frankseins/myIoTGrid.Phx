@@ -245,12 +245,14 @@ jobs:
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
       - name: Build and push Docker image
+        # Note: ARM64 disabled due to GCC libstdc++ bug with <cmath> on QEMU emulation
+        # See: https://gcc.gnu.org/bugzilla/show_bug.cgi?id=103975
         uses: docker/build-push-action@v5
         with:
           context: ./myIoTGrid.Sensor
           file: ./myIoTGrid.Sensor/docker/Dockerfile
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha

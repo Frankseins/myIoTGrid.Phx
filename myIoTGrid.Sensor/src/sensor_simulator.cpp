@@ -3,7 +3,11 @@
  */
 
 #include "sensor_simulator.h"
-#include <cmath>
+
+// Use C math header to avoid ARM64 libstdc++ bug with cmath and numeric_limits
+extern "C" {
+#include <math.h>
+}
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
