@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using myIoTGrid.Hub.Interface.Hubs;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Shared.DTOs;
@@ -24,6 +25,7 @@ public class NodesController : ControllerBase
     private readonly ISensorService _sensorService;
     private readonly IHubContext<SensorHub> _hubContext;
     private readonly IConfiguration _configuration;
+    private readonly ILogger<NodesController> _logger;
 
     public NodesController(
         INodeService nodeService,
@@ -31,7 +33,8 @@ public class NodesController : ControllerBase
         INodeSensorAssignmentService assignmentService,
         ISensorService sensorService,
         IHubContext<SensorHub> hubContext,
-        IConfiguration configuration)
+        IConfiguration configuration,
+        ILogger<NodesController> logger)
     {
         _nodeService = nodeService;
         _hubService = hubService;
@@ -39,6 +42,7 @@ public class NodesController : ControllerBase
         _sensorService = sensorService;
         _hubContext = hubContext;
         _configuration = configuration;
+        _logger = logger;
     }
 
     /// <summary>
@@ -129,8 +133,17 @@ public class NodesController : ControllerBase
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] RegisterNodeDto dto, CancellationToken ct)
     {
+        _logger.LogInformation("=== NODE REGISTRATION REQUEST ===");
+        _logger.LogInformation("RemoteIP: {RemoteIp}", HttpContext.Connection.RemoteIpAddress);
+        _logger.LogInformation("SerialNumber: {SerialNumber}", dto.SerialNumber);
+        _logger.LogInformation("Name: {Name}", dto.Name);
+        _logger.LogInformation("FirmwareVersion: {FirmwareVersion}", dto.FirmwareVersion);
+        _logger.LogInformation("HardwareType: {HardwareType}", dto.HardwareType);
+        _logger.LogInformation("Capabilities: {Capabilities}", dto.Capabilities != null ? string.Join(", ", dto.Capabilities) : "none");
+
         if (string.IsNullOrWhiteSpace(dto.SerialNumber))
         {
+            _logger.LogWarning("Registration rejected: SerialNumber is missing");
             return BadRequest(new ProblemDetails
             {
                 Title = "Invalid Request",
@@ -139,7 +152,9 @@ public class NodesController : ControllerBase
         }
 
         // Get or create default hub for sensor registration
+        _logger.LogInformation("Getting default hub...");
         var defaultHub = await _hubService.GetDefaultHubAsync(ct);
+        _logger.LogInformation("Default hub: {HubId} ({HubName})", defaultHub.Id, defaultHub.Name);
 
         // Convert RegisterNodeDto to CreateNodeDto
         var createDto = new CreateNodeDto(
@@ -150,14 +165,17 @@ public class NodesController : ControllerBase
             Location: dto.Location
         );
 
+        _logger.LogInformation("Registering node...");
         var (node, isNew) = await _nodeService.RegisterOrUpdateWithStatusAsync(createDto, dto.FirmwareVersion, ct);
+        _logger.LogInformation("Node {Action}: {NodeId} (DB-ID: {DbId})", isNew ? "created" : "updated", node.NodeId, node.Id);
 
         // Notify clients
         await _hubContext.Clients.Group($"hub:{defaultHub.Id}")
             .SendAsync("NodeRegistered", node, ct);
+        _logger.LogInformation("SignalR notification sent to hub:{HubId}", defaultHub.Id);
 
         // Build sensor configuration from capabilities
-        // Enable all sensors that the device reported as capabilities
+        // NOTE: Capabilities should later come from Hub, not from sensor
         var sensors = dto.Capabilities?
             .Select(cap => new SensorConfigDto(Type: cap, Enabled: true, Pin: -1))
             .ToList() ?? [];
@@ -178,6 +196,10 @@ public class NodesController : ControllerBase
             IsNewNode: isNew,
             Message: isNew ? "Node registered successfully" : "Node updated successfully"
         );
+
+        _logger.LogInformation("=== NODE REGISTRATION COMPLETE ===");
+        _logger.LogInformation("Response: NodeId={NodeId}, IsNew={IsNew}, Sensors={SensorCount}",
+            response.NodeId, response.IsNewNode, response.Sensors.Count);
 
         return Ok(response);
     }

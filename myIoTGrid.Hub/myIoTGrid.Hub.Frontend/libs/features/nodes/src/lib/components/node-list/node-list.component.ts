@@ -18,7 +18,7 @@ import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { forkJoin } from 'rxjs';
 import { HubApiService, NodeApiService, ReadingApiService, SignalRService } from '@myiotgrid/shared/data-access';
-import { Hub, Node, Reading, NodeProvisioningStatus, NodeSensorsLatest } from '@myiotgrid/shared/models';
+import { Hub, Node, Reading, NodeProvisioningStatus, NodeSensorsLatest, Protocol } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, EmptyStateComponent, ConfirmDialogService, NodeCardComponent } from '@myiotgrid/shared/ui';
 
 type SortField = 'name' | 'nodeId' | 'lastSeen' | 'createdAt';
@@ -343,8 +343,8 @@ export class NodeListComponent implements OnInit, OnDestroy {
   getNodeIcon(node: Node): string {
     const protocol = node.protocol;
     switch (protocol) {
-      case 1: return 'wifi';
-      case 2: return 'cell_tower';
+      case Protocol.WLAN: return 'wifi';
+      case Protocol.LoRaWAN: return 'cell_tower';
       default: return 'router';
     }
   }

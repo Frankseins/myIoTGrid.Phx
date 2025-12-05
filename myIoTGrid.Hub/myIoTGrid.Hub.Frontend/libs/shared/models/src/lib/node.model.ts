@@ -6,10 +6,10 @@ import { Sensor } from './sensor.model';
  * Node provisioning status
  */
 export enum NodeProvisioningStatus {
-  Unconfigured = 0,
-  Pairing = 1,
-  Configured = 2,
-  Error = 3
+  Unconfigured = 'Unconfigured',
+  Pairing = 'Pairing',
+  Configured = 'Configured',
+  Error = 'Error'
 }
 
 /**

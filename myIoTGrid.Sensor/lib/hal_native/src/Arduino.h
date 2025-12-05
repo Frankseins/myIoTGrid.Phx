@@ -134,8 +134,32 @@ public:
         return pos == std::string::npos ? -1 : static_cast<int>(pos);
     }
 
+    int indexOf(char c, size_t fromIndex) const {
+        if (fromIndex >= _str.length()) return -1;
+        size_t pos = _str.find(c, fromIndex);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
     int indexOf(const String& str) const {
         size_t pos = _str.find(str._str);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int indexOf(const String& str, size_t fromIndex) const {
+        if (fromIndex >= _str.length()) return -1;
+        size_t pos = _str.find(str._str, fromIndex);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int indexOf(const char* str) const {
+        if (!str) return -1;
+        size_t pos = _str.find(str);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int indexOf(const char* str, size_t fromIndex) const {
+        if (!str || fromIndex >= _str.length()) return -1;
+        size_t pos = _str.find(str, fromIndex);
         return pos == std::string::npos ? -1 : static_cast<int>(pos);
     }
 

@@ -4,7 +4,7 @@ import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
-import { Node, NodeProvisioningStatus, NodeSensorsLatest } from '@myiotgrid/shared/models';
+import { Node, NodeProvisioningStatus, NodeSensorsLatest, Protocol } from '@myiotgrid/shared/models';
 
 @Component({
   selector: 'myiotgrid-node-card',
@@ -84,8 +84,8 @@ export class NodeCardComponent {
   getNodeIcon(): string {
     const protocol = this.node.protocol;
     switch (protocol) {
-      case 1: return 'wifi';
-      case 2: return 'cell_tower';
+      case Protocol.WLAN: return 'wifi';
+      case Protocol.LoRaWAN: return 'cell_tower';
       default: return 'router';
     }
   }

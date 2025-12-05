@@ -14,6 +14,7 @@
 #ifdef PLATFORM_ESP32
 #include <HTTPClient.h>
 #include <WiFiClientSecure.h>
+#include <WiFiClient.h>
 #endif
 
 #ifdef PLATFORM_NATIVE
@@ -320,15 +321,21 @@ ApiResponse ApiClient::httpGet(const String& path) {
     ApiResponse result;
 
 #ifdef PLATFORM_ESP32
-    WiFiClientSecure client;
-    client.setInsecure();  // Accept self-signed certificates
-
-    HTTPClient http;
     String url = buildUrl(path);
-
     Serial.printf("[API] GET %s\n", url.c_str());
 
-    http.begin(client, url);
+    HTTPClient http;
+    bool isHttps = url.startsWith("https://");
+
+    if (isHttps) {
+        WiFiClientSecure secureClient;
+        secureClient.setInsecure();  // Accept self-signed certificates
+        http.begin(secureClient, url);
+    } else {
+        WiFiClient plainClient;
+        http.begin(plainClient, url);
+    }
+
     http.setTimeout(_timeout);
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");
@@ -404,15 +411,21 @@ ApiResponse ApiClient::httpPost(const String& path, const String& body) {
     ApiResponse result;
 
 #ifdef PLATFORM_ESP32
-    WiFiClientSecure client;
-    client.setInsecure();  // Accept self-signed certificates
-
-    HTTPClient http;
     String url = buildUrl(path);
-
     Serial.printf("[API] POST %s: %s\n", url.c_str(), body.c_str());
 
-    http.begin(client, url);
+    HTTPClient http;
+    bool isHttps = url.startsWith("https://");
+
+    if (isHttps) {
+        WiFiClientSecure secureClient;
+        secureClient.setInsecure();  // Accept self-signed certificates
+        http.begin(secureClient, url);
+    } else {
+        WiFiClient plainClient;
+        http.begin(plainClient, url);
+    }
+
     http.setTimeout(_timeout);
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");

@@ -3,13 +3,13 @@
  * Matches backend CommunicationProtocol enum.
  */
 export enum CommunicationProtocol {
-  I2C = 1,
-  SPI = 2,
-  OneWire = 3,
-  Analog = 4,
-  UART = 5,
-  Digital = 6,
-  UltraSonic = 7
+  I2C = 'I2C',
+  SPI = 'SPI',
+  OneWire = 'OneWire',
+  Analog = 'Analog',
+  UART = 'UART',
+  Digital = 'Digital',
+  UltraSonic = 'UltraSonic'
 }
 
 /**

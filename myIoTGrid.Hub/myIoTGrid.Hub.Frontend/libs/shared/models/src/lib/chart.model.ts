@@ -2,13 +2,13 @@
  * Time intervals for chart data aggregation.
  */
 export enum ChartInterval {
-  OneHour = 0,
-  OneDay = 1,
-  OneWeek = 2,
-  OneMonth = 3,
-  ThreeMonths = 4,
-  SixMonths = 5,
-  OneYear = 6
+  OneHour = 'OneHour',
+  OneDay = 'OneDay',
+  OneWeek = 'OneWeek',
+  OneMonth = 'OneMonth',
+  ThreeMonths = 'ThreeMonths',
+  SixMonths = 'SixMonths',
+  OneYear = 'OneYear'
 }
 
 /**

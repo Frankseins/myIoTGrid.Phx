@@ -30,8 +30,8 @@ export interface UnifiedReading {
 export type UnifiedNodeSource = 'Local' | 'Direct' | 'Virtual' | 'OtherHub';
 
 export enum UnifiedNodeSourceEnum {
-  Local = 0,
-  Direct = 1,
-  Virtual = 2,
-  OtherHub = 3
+  Local = 'Local',
+  Direct = 'Direct',
+  Virtual = 'Virtual',
+  OtherHub = 'OtherHub'
 }

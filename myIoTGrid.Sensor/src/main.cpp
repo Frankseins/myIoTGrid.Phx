@@ -630,6 +630,21 @@ const char* getCurrentProfileName() {
 
 void readAndSendSensors() {
     if (!apiClient.isConfigured()) {
+        Serial.println("[Main] API client not configured - skipping sensor readings");
+        return;
+    }
+
+    // IMPORTANT: Only send readings when we have valid configuration with sensors
+    // The Hub assigns sensors to nodes - we don't send data without knowing what sensors we have
+    if (!configLoaded) {
+        Serial.println("[Main] No configuration loaded - skipping sensor readings");
+        Serial.println("[Main] Waiting for Hub to assign sensors to this node...");
+        return;
+    }
+
+    if (currentConfig.sensors.size() == 0) {
+        Serial.println("[Main] No sensors assigned to this node - skipping readings");
+        Serial.println("[Main] Please assign sensors to this node in the Hub UI");
         return;
     }
 
@@ -641,7 +656,7 @@ void readAndSendSensors() {
     }
 #endif
 
-    // If we have configuration with sensors, use that
+    // We have configuration with sensors, send readings
     if (configLoaded && currentConfig.sensors.size() > 0) {
         Serial.printf("[Main] Reading %d configured sensors...\n", (int)currentConfig.sensors.size());
 
@@ -686,21 +701,9 @@ void readAndSendSensors() {
                 }
             }
         }
-    } else {
-        // Fallback: Default simulated readings when no config
-        Serial.println("[Main] No sensor configuration - sending default readings");
-
-        float temperature = 20.0 + (random(100) / 10.0);  // 20.0 - 30.0°C
-        float humidity = 40.0 + (random(400) / 10.0);     // 40.0 - 80.0%
-
-        if (apiClient.sendReading("temperature", temperature, "°C")) {
-            Serial.printf("[Main] Sent temperature: %.1f°C\n", temperature);
-        }
-
-        if (apiClient.sendReading("humidity", humidity, "%")) {
-            Serial.printf("[Main] Sent humidity: %.1f%%\n", humidity);
-        }
     }
+    // Note: No fallback - we only send readings when we have proper configuration
+    // The Hub assigns sensors to nodes, so we wait for that configuration
 }
 
 bool registerWithHub() {
@@ -721,21 +724,54 @@ bool registerWithHub() {
     // Store serial for later configuration fetches
     currentSerial = serial;
 
-    // Define sensor capabilities
-    std::vector<String> capabilities = {"temperature", "humidity", "pressure", "co2", "light"};
+    // No capabilities sent - Hub assigns sensors to nodes
+    std::vector<String> emptyCapabilities;
 
     RegistrationResponse response = apiClient.registerNode(
         serial,
         FIRMWARE_VERSION,
         HARDWARE_TYPE,
-        capabilities
+        emptyCapabilities
     );
+
+    // If HTTPS fails, try HTTP fallback on port 5000
+    if (!response.success) {
+        String currentUrl = apiClient.getBaseUrl();
+        if (currentUrl.startsWith("https://")) {
+            // Extract host from URL and try HTTP on port 5000
+            int hostStart = 8; // after "https://"
+            int hostEnd = currentUrl.indexOf(':', hostStart);
+            if (hostEnd < 0) hostEnd = currentUrl.indexOf('/', hostStart);
+            if (hostEnd < 0) hostEnd = currentUrl.length();
+            String host = currentUrl.substring(hostStart, hostEnd);
+            String httpUrl = "http://" + host + ":5002";
+
+            Serial.printf("[Main] HTTPS failed, trying HTTP fallback: %s\n", httpUrl.c_str());
+            apiClient.configure(httpUrl, "", "");
+
+            response = apiClient.registerNode(
+                serial,
+                FIRMWARE_VERSION,
+                HARDWARE_TYPE,
+                emptyCapabilities
+            );
+        }
+    }
 
     if (response.success) {
         Serial.printf("[Main] Registered as: %s\n", response.name.c_str());
         Serial.printf("[Main]   Node ID: %s\n", response.nodeId.c_str());
         Serial.printf("[Main]   Interval: %d seconds\n", response.intervalSeconds);
         Serial.printf("[Main]   New Node: %s\n", response.isNewNode ? "yes" : "no");
+
+        // IMPORTANT: Update apiClient with the correct nodeId from registration response
+        // This is especially important after HTTP fallback where we used empty nodeId
+        String currentUrl = apiClient.getBaseUrl();
+        apiClient.configure(currentUrl, response.nodeId, "");
+        Serial.printf("[Main] API client configured with nodeId: %s\n", response.nodeId.c_str());
+
+        // Update currentSerial to match the registered nodeId
+        currentSerial = serial;
 
         // Immediately fetch configuration after successful registration
         Serial.println("[Main] Fetching initial sensor configuration...");

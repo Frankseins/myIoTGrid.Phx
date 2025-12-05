@@ -3,26 +3,26 @@
  */
 
 export enum Protocol {
-  Unknown = 0,
-  WLAN = 1,
-  LoRaWAN = 2
+  Unknown = 'Unknown',
+  WLAN = 'WLAN',
+  LoRaWAN = 'LoRaWAN'
 }
 
 export enum AlertLevel {
-  Ok = 0,
-  Info = 1,
-  Warning = 2,
-  Critical = 3
+  Ok = 'Ok',
+  Info = 'Info',
+  Warning = 'Warning',
+  Critical = 'Critical'
 }
 
 export enum AlertSource {
-  Local = 0,
-  Cloud = 1
+  Local = 'Local',
+  Cloud = 'Cloud'
 }
 
 export enum NodeTransport {
-  Unknown = 0,
-  WLAN = 1,
-  LoRaWAN = 2,
-  Matter = 3
+  Unknown = 'Unknown',
+  WLAN = 'WLAN',
+  LoRaWAN = 'LoRaWAN',
+  Matter = 'Matter'
 }

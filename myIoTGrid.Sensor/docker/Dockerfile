@@ -55,10 +55,13 @@ RUN for i in 1 2 3; do \
 # Create non-root user
 RUN useradd -m -s /bin/bash sensor
 
-# Create data directory
-RUN mkdir -p /data && chown sensor:sensor /data
+# Create data directory (sensor uses ./data relative to working dir)
+RUN mkdir -p /data
 
 WORKDIR /app
+
+# Create data dir in working directory and link to /data for persistence
+RUN mkdir -p /app/data && chown sensor:sensor /app/data
 
 # Copy built binary from builder
 COPY --from=builder /app/.pio/build/native/program /app/sensor
@@ -75,8 +78,8 @@ ENV HUB_PORT=5001
 ENV HUB_PROTOCOL=https
 ENV HUB_INSECURE=true
 
-# Data volume
-VOLUME ["/data"]
+# Data volume for persistence
+VOLUME ["/app/data"]
 
 # Health check - sensor should be running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

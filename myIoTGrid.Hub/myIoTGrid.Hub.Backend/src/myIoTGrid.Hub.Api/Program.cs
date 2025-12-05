@@ -1,4 +1,6 @@
+using System.Net.Security;
 using System.Security.Authentication;
+using System.Security.Cryptography.X509Certificates;
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
@@ -16,6 +18,7 @@ using myIoTGrid.Hub.Interface.Services;
 using myIoTGrid.Hub.Service.Interfaces;
 using myIoTGrid.Hub.Service.Services;
 using myIoTGrid.Hub.Service.Validators;
+using myIoTGrid.Hub.Shared.Converters;
 using myIoTGrid.Hub.Shared.Options;
 using Serilog;
 using Serilog.Events;
@@ -36,15 +39,41 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // ===========================================
-    // Kestrel TLS Configuration (ESP32 mbedTLS compatibility)
+    // Kestrel TLS Configuration
+    // TLS 1.2 for ESP32 mbedTLS + TLS 1.3 for modern browsers
     // ===========================================
     builder.WebHost.ConfigureKestrel(serverOptions =>
     {
         serverOptions.ConfigureHttpsDefaults(httpsOptions =>
         {
-            // ESP32 mbedTLS works best with TLS 1.2 only
-            // TLS 1.3 can cause "Connection reset" issues with older mbedTLS versions
-            httpsOptions.SslProtocols = SslProtocols.Tls12;
+            // Support both TLS 1.2 (ESP32) and TLS 1.3 (Chrome/Firefox)
+            httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+
+            // Log TLS handshakes for debugging
+            httpsOptions.OnAuthenticate = (connectionContext, sslOptions) =>
+            {
+                Log.Debug("TLS Handshake from {RemoteEndPoint}", connectionContext.RemoteEndPoint);
+                // Let the system negotiate the best cipher suite
+                // This allows Chrome to use TLS 1.3 and ESP32 to use TLS 1.2
+            };
+        });
+
+        // Enable connection logging
+        serverOptions.ConfigureEndpointDefaults(listenOptions =>
+        {
+            listenOptions.Use(next => async context =>
+            {
+                Log.Debug("TCP Connection from {RemoteEndPoint}", context.RemoteEndPoint);
+                try
+                {
+                    await next(context);
+                }
+                catch (Exception ex)
+                {
+                    Log.Error(ex, "Connection from {RemoteEndPoint} failed: {Message}", context.RemoteEndPoint, ex.Message);
+                    throw;
+                }
+            });
         });
     });
 
@@ -134,7 +163,15 @@ try
 
     // Controllers (aus Interface-Projekt)
     builder.Services.AddControllers()
-        .AddApplicationPart(typeof(myIoTGrid.Hub.Interface.Controllers.ReadingsController).Assembly);
+        .AddApplicationPart(typeof(myIoTGrid.Hub.Interface.Controllers.ReadingsController).Assembly)
+        .AddJsonOptions(options =>
+        {
+            // Serialize enums as strings
+            options.JsonSerializerOptions.Converters.Add(new System.Text.Json.Serialization.JsonStringEnumConverter());
+            // Serialize DateTimes as UTC with 'Z' suffix for proper browser timezone handling
+            options.JsonSerializerOptions.Converters.Add(new UtcDateTimeConverter());
+            options.JsonSerializerOptions.Converters.Add(new UtcNullableDateTimeConverter());
+        });
 
     // Swagger/OpenAPI
     builder.Services.AddEndpointsApiExplorer();

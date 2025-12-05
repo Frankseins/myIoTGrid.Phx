@@ -6,9 +6,9 @@
  * Time period for sparkline data
  */
 export enum SparklinePeriod {
-  Hour = 0,
-  Day = 1,
-  Week = 2
+  Hour = 'Hour',
+  Day = 'Day',
+  Week = 'Week'
 }
 
 /**
