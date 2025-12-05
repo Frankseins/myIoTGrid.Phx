@@ -36,14 +36,15 @@ try
     var builder = WebApplication.CreateBuilder(args);
 
     // ===========================================
-    // Kestrel TLS Configuration (ESP32 needs TLS 1.2)
+    // Kestrel TLS Configuration (ESP32 mbedTLS compatibility)
     // ===========================================
     builder.WebHost.ConfigureKestrel(serverOptions =>
     {
         serverOptions.ConfigureHttpsDefaults(httpsOptions =>
         {
-            // Allow TLS 1.2 for ESP32 devices (mbedTLS doesn't support TLS 1.3)
-            httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+            // ESP32 mbedTLS works best with TLS 1.2 only
+            // TLS 1.3 can cause "Connection reset" issues with older mbedTLS versions
+            httpsOptions.SslProtocols = SslProtocols.Tls12;
         });
     });
 

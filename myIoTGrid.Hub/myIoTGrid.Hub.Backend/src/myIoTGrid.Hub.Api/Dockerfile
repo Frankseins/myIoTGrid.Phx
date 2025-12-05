@@ -54,10 +54,15 @@ RUN mkdir -p /app/data /app/logs /app/certs && \
     chown -R app:app /app
 
 # Generate self-signed certificate for development (will be overwritten in production)
+# Using RSA 2048 with SHA256 for ESP32 mbedTLS compatibility
+# SAN includes localhost and common private IP ranges for IoT devices
 RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
     -keyout /app/certs/privkey.pem \
     -out /app/certs/fullchain.pem \
-    -subj "/C=DE/ST=NRW/L=Cologne/O=myIoTGrid/OU=Development/CN=localhost" && \
+    -subj "/C=DE/ST=NRW/L=Cologne/O=myIoTGrid/OU=Hub/CN=myiotgrid-hub" \
+    -addext "subjectAltName=DNS:localhost,DNS:hub-api,DNS:myiotgrid-hub,IP:127.0.0.1,IP:192.168.0.1,IP:192.168.1.1,IP:192.168.178.1,IP:192.168.188.1,IP:10.0.0.1" \
+    -addext "keyUsage=digitalSignature,keyEncipherment" \
+    -addext "extendedKeyUsage=serverAuth" && \
     chown -R app:app /app/certs
 
 # Copy published files
