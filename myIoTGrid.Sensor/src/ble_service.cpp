@@ -117,17 +117,37 @@ void BLEProvisioningService::startAdvertising() {
 
 void BLEProvisioningService::stop() {
 #ifdef PLATFORM_ESP32
+    Serial.println("[BLE] Stopping BLE service...");
     if (_advertising) {
+        Serial.println("[BLE] Stopping advertising...");
         _advertising->stop();
     }
-    if (_initialized) {
-        NimBLEDevice::deinit(true);
-        _initialized = false;
-    }
+    // Note: We don't call NimBLEDevice::deinit() here because it can crash
+    // when WiFi events are being processed. Just stop advertising instead.
+    // The BLE stack will be cleaned up on next reboot if needed.
 #endif
     _advertising_active = false;
     _connected = false;
-    Serial.println("[BLE] Service stopped");
+    Serial.println("[BLE] Service stopped (advertising disabled)");
+}
+
+void BLEProvisioningService::stopForWPS() {
+#ifdef PLATFORM_ESP32
+    Serial.println("[BLE] Stopping BLE for WPS mode...");
+    if (_advertising) {
+        _advertising->stop();
+    }
+    // Disconnect any connected clients
+    if (_server && _server->getConnectedCount() > 0) {
+        Serial.println("[BLE] Disconnecting clients...");
+        _server->disconnect(0);
+    }
+    _advertising_active = false;
+    _connected = false;
+    // Give BLE stack time to settle
+    delay(200);
+    Serial.println("[BLE] BLE paused for WPS");
+#endif
 }
 
 void BLEProvisioningService::loop() {

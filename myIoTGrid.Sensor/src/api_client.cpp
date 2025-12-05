@@ -320,12 +320,15 @@ ApiResponse ApiClient::httpGet(const String& path) {
     ApiResponse result;
 
 #ifdef PLATFORM_ESP32
+    WiFiClientSecure client;
+    client.setInsecure();  // Accept self-signed certificates
+
     HTTPClient http;
     String url = buildUrl(path);
 
     Serial.printf("[API] GET %s\n", url.c_str());
 
-    http.begin(url);
+    http.begin(client, url);
     http.setTimeout(_timeout);
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");
@@ -401,12 +404,15 @@ ApiResponse ApiClient::httpPost(const String& path, const String& body) {
     ApiResponse result;
 
 #ifdef PLATFORM_ESP32
+    WiFiClientSecure client;
+    client.setInsecure();  // Accept self-signed certificates
+
     HTTPClient http;
     String url = buildUrl(path);
 
     Serial.printf("[API] POST %s: %s\n", url.c_str(), body.c_str());
 
-    http.begin(url);
+    http.begin(client, url);
     http.setTimeout(_timeout);
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");

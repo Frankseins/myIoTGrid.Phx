@@ -125,6 +125,8 @@ private:
 
     // Configuration
     static const unsigned long WPS_TIMEOUT_MS = 120000;  // 2 minutes
+    static const int MAX_CONNECT_RETRIES = 3;
+    int _connectRetryCount = 0;
 
 #ifdef PLATFORM_ESP32
     // ESP32-specific WPS handling

@@ -67,10 +67,8 @@ StoredConfig ConfigManager::loadConfig() {
         config.wifiPassword = preferences.getString(KEY_WIFI_PASS, "");
         config.hubApiUrl = preferences.getString(KEY_HUB_URL, "");
 
-        // Validate loaded config
-        config.isValid = config.nodeId.length() > 0 &&
-                         config.apiKey.length() > 0 &&
-                         config.wifiSsid.length() > 0 &&
+        // Validate loaded config (apiKey is optional - assigned after registration)
+        config.isValid = config.wifiSsid.length() > 0 &&
                          config.hubApiUrl.length() > 0;
 
         if (config.isValid) {

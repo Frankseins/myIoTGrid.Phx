@@ -54,12 +54,14 @@ SensorSimulator sensorSimulator;
 BLEProvisioningService bleService;
 WPSManager wpsManager;
 
-// Boot button for WPS mode
+// Boot button for WPS mode and Factory Reset
 static const int BOOT_BUTTON_PIN = 0;  // GPIO0 = Boot button on most ESP32 boards
-static const unsigned long WPS_BUTTON_HOLD_MS = 3000;  // 3 seconds to trigger WPS
+static const unsigned long WPS_BUTTON_HOLD_MS = 3000;      // 3 seconds to trigger WPS
+static const unsigned long FACTORY_RESET_HOLD_MS = 10000;  // 10 seconds for factory reset
 static unsigned long buttonPressStart = 0;
 static bool buttonWasPressed = false;
 static bool wpsTriggered = false;
+static bool factoryResetTriggered = false;
 
 // Hardware detection flags
 static bool dht22Detected = false;
@@ -229,21 +231,70 @@ void onWPSSuccess(const String& ssid, const String& password) {
     Serial.println("[Main] WPS SUCCESS - WiFi credentials received!");
     Serial.printf("[Main] SSID: %s\n", ssid.c_str());
 
-    // Save WiFi credentials to NVS (without Hub config - will use discovery)
+    // Wait for DHCP to assign IP address
+    Serial.println("[Main] Waiting for IP address...");
+    int attempts = 0;
+    while (WiFi.localIP() == IPAddress(0, 0, 0, 0) && attempts < 30) {
+        delay(500);
+        Serial.print(".");
+        attempts++;
+    }
+    Serial.println();
+
+    if (WiFi.localIP() == IPAddress(0, 0, 0, 0)) {
+        Serial.println("[Main] Failed to get IP address!");
+        stateMachine.processEvent(StateEvent::WIFI_FAILED);
+        return;
+    }
+
+    Serial.printf("[Main] Got IP address: %s\n", WiFi.localIP().toString().c_str());
+
+    // Now start Hub Discovery via UDP broadcast
+    Serial.println("[Main] Starting Hub Discovery...");
+    String serial = bleService.getMacAddress();
+    serial.replace(":", "");  // Remove colons from MAC
+
+    DiscoveryResponse hubResponse = discoveryClient.discover(
+        serial,
+        FIRMWARE_VERSION,
+        HARDWARE_TYPE
+    );
+
     StoredConfig storedConfig;
     storedConfig.wifiSsid = ssid;
     storedConfig.wifiPassword = password;
-    storedConfig.nodeId = "";  // Will be set after Hub discovery
-    storedConfig.apiKey = "";
-    storedConfig.hubApiUrl = "";
-    storedConfig.isValid = true;
+
+    if (hubResponse.success) {
+        Serial.printf("[Main] Hub found: %s at %s\n",
+                     hubResponse.hubName.c_str(), hubResponse.apiUrl.c_str());
+
+        storedConfig.hubApiUrl = hubResponse.apiUrl;
+        storedConfig.nodeId = serial;  // Use MAC as node ID for now
+        storedConfig.apiKey = "";  // Will be assigned by Hub during registration
+        storedConfig.isValid = true;
+    } else {
+        Serial.printf("[Main] Hub Discovery failed: %s\n", hubResponse.errorMessage.c_str());
+        Serial.println("[Main] Saving WiFi-only config, will retry discovery later...");
+
+        // Save config with empty hub URL - will need manual config or retry
+        storedConfig.hubApiUrl = "";
+        storedConfig.nodeId = serial;
+        storedConfig.apiKey = "";
+        storedConfig.isValid = true;  // WiFi is valid, just no hub yet
+    }
 
     if (configManager.saveConfig(storedConfig)) {
-        Serial.println("[Main] WPS credentials saved to NVS");
+        Serial.println("[Main] Configuration saved to NVS");
 
-        // WiFi is already connected by WPS
-        // Transition to CONFIGURED state
-        stateMachine.processEvent(StateEvent::WIFI_CONNECTED);
+        if (hubResponse.success) {
+            // Full config - go to CONFIGURED
+            stateMachine.processEvent(StateEvent::WIFI_CONNECTED);
+        } else {
+            // WiFi only - stay in pairing mode for BLE config of Hub URL
+            Serial.println("[Main] No Hub found - waiting for BLE configuration or restart discovery");
+            wpsTriggered = false;
+            bleService.startAdvertising();  // Re-enable BLE for manual config
+        }
     }
 }
 
@@ -264,33 +315,126 @@ void onWPSTimeout() {
 }
 
 /**
- * Check Boot button for WPS trigger (3 second hold)
+ * Check Boot button for Factory Reset only (10 second hold)
+ * Used in CONFIGURED, OPERATIONAL, and ERROR states
+ */
+void checkBootButtonForFactoryReset() {
+    static unsigned long lastDebugPrint = 0;
+    bool buttonPressed = (digitalRead(BOOT_BUTTON_PIN) == LOW);
+
+    if (buttonPressed && !buttonWasPressed) {
+        buttonPressStart = millis();
+        buttonWasPressed = true;
+        factoryResetTriggered = false;
+        Serial.println("[Button] Boot button pressed - hold 10s for Factory Reset");
+    } else if (buttonPressed && buttonWasPressed) {
+        unsigned long holdTime = millis() - buttonPressStart;
+        if (millis() - lastDebugPrint >= 1000) {
+            lastDebugPrint = millis();
+            Serial.printf("[Button] %lu ms / %d ms (Factory Reset)\n", holdTime, FACTORY_RESET_HOLD_MS);
+        }
+
+        if (!factoryResetTriggered && (holdTime >= FACTORY_RESET_HOLD_MS)) {
+            factoryResetTriggered = true;
+
+            Serial.println();
+            Serial.println("========================================");
+            Serial.println("  FACTORY RESET - Clearing all config!");
+            Serial.println("========================================");
+            Serial.println();
+
+            configManager.factoryReset();
+        }
+    } else if (!buttonPressed && buttonWasPressed) {
+        unsigned long holdTime = millis() - buttonPressStart;
+        if (holdTime < FACTORY_RESET_HOLD_MS) {
+            Serial.printf("[Button] Released after %lu ms - no action (need 10s for Factory Reset)\n", holdTime);
+        }
+        buttonWasPressed = false;
+        factoryResetTriggered = false;
+    }
+}
+
+/**
+ * Check Boot button for WPS trigger (3 second hold) or Factory Reset (10 second hold)
  */
 void checkBootButton() {
+    static unsigned long lastDebugPrint = 0;
     bool buttonPressed = (digitalRead(BOOT_BUTTON_PIN) == LOW);
 
     if (buttonPressed && !buttonWasPressed) {
         // Button just pressed
         buttonPressStart = millis();
         buttonWasPressed = true;
+        factoryResetTriggered = false;
+        Serial.println("[Button] Boot button pressed:");
+        Serial.println("[Button]   - Hold 3s  = WPS mode");
+        Serial.println("[Button]   - Hold 10s = Factory Reset");
     } else if (buttonPressed && buttonWasPressed) {
-        // Button still held
-        if (!wpsTriggered && (millis() - buttonPressStart >= WPS_BUTTON_HOLD_MS)) {
-            // Held for 3 seconds - trigger WPS
-            wpsTriggered = true;
-            Serial.println("[Main] Boot button held for 3s - Starting WPS!");
+        // Button still held - show progress every 500ms
+        unsigned long holdTime = millis() - buttonPressStart;
+        if (millis() - lastDebugPrint >= 500) {
+            lastDebugPrint = millis();
+            if (holdTime < WPS_BUTTON_HOLD_MS) {
+                Serial.printf("[Button] %lu ms / %d ms (WPS)\n", holdTime, WPS_BUTTON_HOLD_MS);
+            } else if (holdTime < FACTORY_RESET_HOLD_MS) {
+                Serial.printf("[Button] %lu ms / %d ms (Factory Reset)\n", holdTime, FACTORY_RESET_HOLD_MS);
+            }
+        }
+
+        // Check for Factory Reset first (10 seconds)
+        if (!factoryResetTriggered && (holdTime >= FACTORY_RESET_HOLD_MS)) {
+            factoryResetTriggered = true;
+            wpsTriggered = false;  // Cancel WPS if it was triggered
+
+            Serial.println();
+            Serial.println("========================================");
+            Serial.println("  FACTORY RESET - Clearing all config!");
+            Serial.println("========================================");
+            Serial.println();
 
             // Stop BLE if running
-            if (bleService.isAdvertising()) {
+            if (bleService.isInitialized()) {
                 bleService.stop();
             }
 
+            // Perform factory reset (clears NVS and restarts)
+            configManager.factoryReset();
+            // Note: factoryReset() calls ESP.restart(), so we won't reach here
+        }
+        // Check for WPS (3 seconds)
+        else if (!wpsTriggered && !factoryResetTriggered && (holdTime >= WPS_BUTTON_HOLD_MS)) {
+            // Held for 3 seconds - trigger WPS
+            wpsTriggered = true;
+            Serial.println("[Main] Boot button held for 3s - Starting WPS!");
+            Serial.println("[Main] (Keep holding for 10s total for Factory Reset)");
+
+            // Stop BLE advertising for WPS (don't fully deinit to avoid crash)
+            if (bleService.isInitialized()) {
+                Serial.println("[Main] Pausing BLE for WPS...");
+                bleService.stopForWPS();
+            }
+
+            // Ensure WiFi is in a clean state
+            WiFi.disconnect(true);
+            WiFi.mode(WIFI_OFF);
+            delay(100);
+
             // Start WPS
+            Serial.println("[Main] Initializing WPS...");
             wpsManager.startWPS();
         }
     } else if (!buttonPressed && buttonWasPressed) {
         // Button released
+        unsigned long holdTime = millis() - buttonPressStart;
+        if (holdTime < WPS_BUTTON_HOLD_MS) {
+            Serial.printf("[Button] Released after %lu ms - no action (need 3s for WPS)\n", holdTime);
+        } else if (holdTime < FACTORY_RESET_HOLD_MS && wpsTriggered) {
+            Serial.printf("[Button] Released after %lu ms - WPS started\n", holdTime);
+        }
         buttonWasPressed = false;
+        wpsTriggered = false;
+        factoryResetTriggered = false;
     }
 }
 #endif
@@ -804,17 +948,25 @@ void handleConfiguredState() {
 #else
     // ESP32 mode: Need WiFi connection
     static bool wifiConnecting = false;
+    static bool apiConfigured = false;
 
+    // If WiFi already connected (e.g., after WPS) but not yet configured API
+    if (wifiManager.isConnected() && !apiConfigured) {
+        StoredConfig config = configManager.loadConfig();
+        if (config.isValid) {
+            Serial.println("[Main] WiFi connected, configuring API client...");
+            apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
+            apiConfigured = true;
+        }
+    }
+
+    // If WiFi not connected, try to connect
     if (!wifiManager.isConnected() && !wifiConnecting) {
-        // Load config and connect to WiFi
         StoredConfig config = configManager.loadConfig();
         if (config.isValid) {
             Serial.printf("[Main] Connecting to WiFi: %s\n", config.wifiSsid.c_str());
-
-            // Configure API client
             apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
-
-            // Start WiFi connection
+            apiConfigured = true;
             wifiManager.connect(config.wifiSsid, config.wifiPassword);
             wifiConnecting = true;
         } else {
@@ -826,19 +978,17 @@ void handleConfiguredState() {
     // Run WiFi manager loop
     wifiManager.loop();
 
-    // If WiFi connected, register with Hub and start operation
-    if (wifiManager.isConnected() && wifiConnecting) {
+    // If WiFi connected and API configured, register with Hub
+    if (wifiManager.isConnected() && apiConfigured && !nodeRegistered) {
         wifiConnecting = false;
+        Serial.println("[Main] WiFi connected, registering with Hub...");
 
-        // Register with Hub once after connection
-        if (!nodeRegistered) {
-            if (registerWithHub()) {
-                nodeRegistered = true;
-                stateMachine.processEvent(StateEvent::API_VALIDATED);
-            } else {
-                // Registration failed - go to error state
-                stateMachine.processEvent(StateEvent::API_FAILED);
-            }
+        if (registerWithHub()) {
+            nodeRegistered = true;
+            stateMachine.processEvent(StateEvent::API_VALIDATED);
+        } else {
+            // Registration failed - go to error state
+            stateMachine.processEvent(StateEvent::API_FAILED);
         }
     }
 #endif
@@ -995,9 +1145,13 @@ void loop() {
     NodeState currentState = stateMachine.getState();
 
 #ifdef PLATFORM_ESP32
-    // Check Boot button for WPS trigger (in UNCONFIGURED or PAIRING state)
+    // Check Boot button for WPS (in UNCONFIGURED/PAIRING) or Factory Reset (any state)
+    // Factory Reset works in ALL states, WPS only in pairing states
     if (currentState == NodeState::UNCONFIGURED || currentState == NodeState::PAIRING) {
-        checkBootButton();
+        checkBootButton();  // WPS + Factory Reset
+    } else {
+        // In other states, only check for Factory Reset (10 second hold)
+        checkBootButtonForFactoryReset();
     }
 
     // Process WPS events if active

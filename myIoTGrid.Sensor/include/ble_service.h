@@ -80,6 +80,16 @@ public:
     bool isAdvertising() const;
 
     /**
+     * Check if BLE is initialized
+     */
+    bool isInitialized() const { return _initialized; }
+
+    /**
+     * Stop BLE for WPS mode (doesn't deinit, just stops advertising)
+     */
+    void stopForWPS();
+
+    /**
      * Get MAC address
      */
     String getMacAddress() const;

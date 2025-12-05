@@ -1,5 +1,7 @@
+using System.Security.Authentication;
 using FluentValidation;
 using FluentValidation.AspNetCore;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using myIoTGrid.Hub.Domain.Interfaces;
 using myIoTGrid.Hub.Interface.BackgroundServices;
@@ -32,6 +34,18 @@ try
     Log.Information("myIoTGrid Hub API wird gestartet...");
 
     var builder = WebApplication.CreateBuilder(args);
+
+    // ===========================================
+    // Kestrel TLS Configuration (ESP32 needs TLS 1.2)
+    // ===========================================
+    builder.WebHost.ConfigureKestrel(serverOptions =>
+    {
+        serverOptions.ConfigureHttpsDefaults(httpsOptions =>
+        {
+            // Allow TLS 1.2 for ESP32 devices (mbedTLS doesn't support TLS 1.3)
+            httpsOptions.SslProtocols = SslProtocols.Tls12 | SslProtocols.Tls13;
+        });
+    });
 
     // ===========================================
     // Serilog Configuration from appsettings.json

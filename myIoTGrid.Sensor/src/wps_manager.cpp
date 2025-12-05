@@ -209,12 +209,25 @@ void WPSManager::handleWPSEvent(arduino_event_id_t event, arduino_event_info_t i
                 Serial.println("[WPS] Password: ******* (hidden)");
             }
 
-            // Disable WPS
+            // Disable WPS first
             esp_wifi_wps_disable();
+
+            // Wait a moment for clean state transition
+            Serial.println("[WPS] Waiting for WiFi subsystem to stabilize...");
+            delay(1000);
+
+            // Reset WiFi completely before connecting
+            WiFi.disconnect(true);
+            delay(100);
+            WiFi.mode(WIFI_STA);
+            delay(100);
 
             // Connect to WiFi with received credentials
             Serial.println("[WPS] Connecting to WiFi...");
+            Serial.printf("[WPS] Using SSID: %s, Password length: %d\n",
+                         _result.ssid.c_str(), _result.password.length());
             WiFi.begin(_result.ssid.c_str(), _result.password.c_str());
+            _connectRetryCount = 0;
             break;
 
         case ARDUINO_EVENT_WPS_ER_FAILED:
@@ -273,13 +286,69 @@ void WPSManager::handleWPSEvent(arduino_event_id_t event, arduino_event_info_t i
 
         case ARDUINO_EVENT_WIFI_STA_DISCONNECTED:
             if (_status == WPSStatus::CONNECTING) {
-                Serial.println("[WPS] WiFi connection failed after WPS");
-                _status = WPSStatus::FAILED;
-                _result.success = false;
-                _result.errorMessage = "WiFi connection failed after WPS";
+                // Get detailed disconnect reason
+                uint8_t reason = info.wifi_sta_disconnected.reason;
+                Serial.printf("[WPS] WiFi connection failed! Reason code: %d\n", reason);
 
-                if (_onFailed) {
-                    _onFailed("WiFi connection failed");
+                // Decode common reason codes
+                const char* reasonStr;
+                switch (reason) {
+                    case 1:  reasonStr = "UNSPECIFIED"; break;
+                    case 2:  reasonStr = "AUTH_EXPIRE - Authentication expired"; break;
+                    case 3:  reasonStr = "AUTH_LEAVE - Deauthenticated (leaving)"; break;
+                    case 4:  reasonStr = "ASSOC_EXPIRE - Association expired"; break;
+                    case 6:  reasonStr = "NOT_AUTHED - Class 2 frame from non-authenticated STA"; break;
+                    case 7:  reasonStr = "NOT_ASSOCED - Class 3 frame from non-associated STA"; break;
+                    case 8:  reasonStr = "ASSOC_LEAVE - Disassociated (leaving BSS)"; break;
+                    case 14: reasonStr = "MIC_FAILURE - Message integrity code failure (wrong password?)"; break;
+                    case 15: reasonStr = "4WAY_HANDSHAKE_TIMEOUT - 4-way handshake timeout (wrong password or encryption mismatch)"; break;
+                    case 16: reasonStr = "GROUP_KEY_UPDATE_TIMEOUT"; break;
+                    case 17: reasonStr = "IE_IN_4WAY_DIFFERS - Information element mismatch"; break;
+                    case 18: reasonStr = "GROUP_CIPHER_INVALID - Invalid group cipher"; break;
+                    case 19: reasonStr = "PAIRWISE_CIPHER_INVALID - Invalid pairwise cipher"; break;
+                    case 20: reasonStr = "AKMP_INVALID - Invalid AKMP"; break;
+                    case 23: reasonStr = "IEEE802_1X_AUTH_FAILED - 802.1X auth failed"; break;
+                    case 24: reasonStr = "CIPHER_SUITE_REJECTED - Cipher suite rejected"; break;
+                    case 200: reasonStr = "BEACON_TIMEOUT - Access point not responding"; break;
+                    case 201: reasonStr = "NO_AP_FOUND - Access point not found"; break;
+                    case 202: reasonStr = "AUTH_FAIL - Authentication failed (wrong password)"; break;
+                    case 203: reasonStr = "ASSOC_FAIL - Association failed"; break;
+                    case 204: reasonStr = "HANDSHAKE_TIMEOUT - Handshake timeout"; break;
+                    case 205: reasonStr = "CONNECTION_FAIL - Connection failed"; break;
+                    case 206: reasonStr = "AP_TSF_RESET"; break;
+                    case 207: reasonStr = "ROAMING - Roaming"; break;
+                    default: reasonStr = "UNKNOWN"; break;
+                }
+                Serial.printf("[WPS] Disconnect reason: %s\n", reasonStr);
+
+                // Log additional debug info
+                Serial.printf("[WPS] SSID attempted: %s\n", _result.ssid.c_str());
+                Serial.printf("[WPS] Password length: %d chars\n", _result.password.length());
+
+                // Retry connection for certain errors
+                _connectRetryCount++;
+                bool shouldRetry = (reason == 8 || reason == 2 || reason == 4 || reason == 200)
+                                   && _connectRetryCount < MAX_CONNECT_RETRIES;
+
+                if (shouldRetry) {
+                    Serial.printf("[WPS] Retrying connection (%d/%d)...\n",
+                                 _connectRetryCount, MAX_CONNECT_RETRIES);
+                    delay(2000);  // Wait 2 seconds before retry
+                    WiFi.disconnect(true);
+                    delay(100);
+                    WiFi.mode(WIFI_STA);
+                    delay(100);
+                    WiFi.begin(_result.ssid.c_str(), _result.password.c_str());
+                } else {
+                    _status = WPSStatus::FAILED;
+                    _result.success = false;
+                    char errorMsg[128];
+                    snprintf(errorMsg, sizeof(errorMsg), "WiFi failed: %s (code %d)", reasonStr, reason);
+                    _result.errorMessage = String(errorMsg);
+
+                    if (_onFailed) {
+                        _onFailed(_result.errorMessage.c_str());
+                    }
                 }
             }
             break;
