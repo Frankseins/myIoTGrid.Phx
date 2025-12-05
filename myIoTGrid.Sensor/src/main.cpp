@@ -1,15 +1,20 @@
 /**
  * myIoTGrid.Sensor - Main Entry Point
  *
- * Self-Provisioning ESP32 Firmware
+ * Self-Provisioning ESP32 Firmware with Multi-Mode Support
  *
  * Flow:
  * 1. Boot → Check NVS for stored configuration
- * 2. If no config → Start BLE pairing mode
- * 3. Receive WiFi + API config via BLE
+ * 2. If no config → Start BLE pairing mode OR WPS mode (Boot button 3s)
+ * 3. Receive WiFi + API config via BLE or WPS
  * 4. Connect to WiFi
- * 5. Validate API key with Hub
- * 6. Enter operational mode (heartbeats + sensor readings)
+ * 5. Discover Hub via UDP broadcast
+ * 6. Register and enter operational mode (heartbeats + sensor readings)
+ *
+ * Sensor Modes:
+ * - REAL: Read actual hardware sensors (DHT22, BME280, etc.)
+ * - SIMULATED: Generate realistic test data with profiles
+ * - AUTO: Detect hardware, fall back to simulation
  */
 
 #include <Arduino.h>
@@ -20,11 +25,14 @@
 #include "wifi_manager.h"
 #include "api_client.h"
 #include "discovery_client.h"
+#include "sensor_simulator.h"
 
 #ifdef PLATFORM_ESP32
 #include "ble_service.h"
+#include "wps_manager.h"
 #include <esp_mac.h>
 #include <WiFi.h>
+#include <Wire.h>
 #endif
 
 #ifdef PLATFORM_NATIVE
@@ -40,10 +48,34 @@ ConfigManager configManager;
 WiFiManager wifiManager;
 ApiClient apiClient;
 DiscoveryClient discoveryClient;
+SensorSimulator sensorSimulator;
 
 #ifdef PLATFORM_ESP32
 BLEProvisioningService bleService;
+WPSManager wpsManager;
+
+// Boot button for WPS mode
+static const int BOOT_BUTTON_PIN = 0;  // GPIO0 = Boot button on most ESP32 boards
+static const unsigned long WPS_BUTTON_HOLD_MS = 3000;  // 3 seconds to trigger WPS
+static unsigned long buttonPressStart = 0;
+static bool buttonWasPressed = false;
+static bool wpsTriggered = false;
+
+// Hardware detection flags
+static bool dht22Detected = false;
+static bool bme280Detected = false;
+static bool bme680Detected = false;
+static bool sht31Detected = false;
 #endif
+
+// Sensor mode configuration
+enum class SensorMode {
+    AUTO,       // Auto-detect hardware, fall back to simulation
+    REAL,       // Only use real hardware sensors
+    SIMULATED   // Only use simulated values
+};
+static SensorMode sensorMode = SensorMode::AUTO;
+static bool hardwareDetected = false;
 
 // ============================================================================
 // Configuration
@@ -63,6 +95,205 @@ static unsigned long lastConfigCheck = 0;
 static NodeConfigurationResponse currentConfig;
 static bool configLoaded = false;
 static String currentSerial;
+
+// ============================================================================
+// Hardware Detection (ESP32 only)
+// ============================================================================
+
+#ifdef PLATFORM_ESP32
+/**
+ * Scan I2C bus for connected sensors
+ * BME280: 0x76 or 0x77
+ * BME680: 0x76 or 0x77 (different chip ID)
+ * SHT31: 0x44 or 0x45
+ */
+void detectI2CSensors() {
+    Wire.begin();
+    Serial.println("[HW] Scanning I2C bus for sensors...");
+
+    // Check for BME280/BME680 at 0x76
+    Wire.beginTransmission(0x76);
+    if (Wire.endTransmission() == 0) {
+        // Read chip ID to distinguish BME280 vs BME680
+        Wire.beginTransmission(0x76);
+        Wire.write(0xD0);  // Chip ID register
+        Wire.endTransmission();
+        Wire.requestFrom(0x76, 1);
+        if (Wire.available()) {
+            uint8_t chipId = Wire.read();
+            if (chipId == 0x60) {
+                bme280Detected = true;
+                Serial.println("[HW] BME280 detected at 0x76");
+            } else if (chipId == 0x61) {
+                bme680Detected = true;
+                Serial.println("[HW] BME680 detected at 0x76");
+            }
+        }
+    }
+
+    // Check for BME280/BME680 at 0x77
+    Wire.beginTransmission(0x77);
+    if (Wire.endTransmission() == 0) {
+        Wire.beginTransmission(0x77);
+        Wire.write(0xD0);
+        Wire.endTransmission();
+        Wire.requestFrom(0x77, 1);
+        if (Wire.available()) {
+            uint8_t chipId = Wire.read();
+            if (chipId == 0x60 && !bme280Detected) {
+                bme280Detected = true;
+                Serial.println("[HW] BME280 detected at 0x77");
+            } else if (chipId == 0x61 && !bme680Detected) {
+                bme680Detected = true;
+                Serial.println("[HW] BME680 detected at 0x77");
+            }
+        }
+    }
+
+    // Check for SHT31 at 0x44
+    Wire.beginTransmission(0x44);
+    if (Wire.endTransmission() == 0) {
+        sht31Detected = true;
+        Serial.println("[HW] SHT31 detected at 0x44");
+    }
+
+    // Check for SHT31 at 0x45
+    Wire.beginTransmission(0x45);
+    if (Wire.endTransmission() == 0 && !sht31Detected) {
+        sht31Detected = true;
+        Serial.println("[HW] SHT31 detected at 0x45");
+    }
+}
+
+/**
+ * Check for DHT22 on GPIO4 (default pin)
+ * This is a simple presence detection, not a full read
+ */
+void detectDHT22() {
+    const int DHT_PIN = 4;  // Default DHT22 pin
+
+    pinMode(DHT_PIN, INPUT_PULLUP);
+    delay(100);
+
+    // DHT22 should pull the line low when responding
+    // Simple detection: check if pin can be controlled
+    pinMode(DHT_PIN, OUTPUT);
+    digitalWrite(DHT_PIN, LOW);
+    delay(20);
+    pinMode(DHT_PIN, INPUT_PULLUP);
+    delay(40);
+
+    // If a DHT22 is connected, the line should go low briefly
+    int lowCount = 0;
+    for (int i = 0; i < 100; i++) {
+        if (digitalRead(DHT_PIN) == LOW) {
+            lowCount++;
+        }
+        delayMicroseconds(10);
+    }
+
+    // If we saw some low pulses, assume DHT22 is present
+    if (lowCount > 5 && lowCount < 80) {
+        dht22Detected = true;
+        Serial.println("[HW] DHT22 detected on GPIO4");
+    }
+}
+
+/**
+ * Perform hardware auto-detection
+ */
+void autoDetectHardware() {
+    Serial.println("[HW] Auto-detecting hardware sensors...");
+
+    detectI2CSensors();
+    detectDHT22();
+
+    hardwareDetected = dht22Detected || bme280Detected || bme680Detected || sht31Detected;
+
+    if (hardwareDetected) {
+        Serial.println("[HW] Hardware sensors detected - using REAL mode");
+        sensorMode = SensorMode::REAL;
+    } else {
+        Serial.println("[HW] No hardware sensors detected - using SIMULATED mode");
+        sensorMode = SensorMode::SIMULATED;
+    }
+}
+#endif
+
+// ============================================================================
+// WPS Callbacks (ESP32 only)
+// ============================================================================
+
+#ifdef PLATFORM_ESP32
+void onWPSSuccess(const String& ssid, const String& password) {
+    Serial.println("[Main] WPS SUCCESS - WiFi credentials received!");
+    Serial.printf("[Main] SSID: %s\n", ssid.c_str());
+
+    // Save WiFi credentials to NVS (without Hub config - will use discovery)
+    StoredConfig storedConfig;
+    storedConfig.wifiSsid = ssid;
+    storedConfig.wifiPassword = password;
+    storedConfig.nodeId = "";  // Will be set after Hub discovery
+    storedConfig.apiKey = "";
+    storedConfig.hubApiUrl = "";
+    storedConfig.isValid = true;
+
+    if (configManager.saveConfig(storedConfig)) {
+        Serial.println("[Main] WPS credentials saved to NVS");
+
+        // WiFi is already connected by WPS
+        // Transition to CONFIGURED state
+        stateMachine.processEvent(StateEvent::WIFI_CONNECTED);
+    }
+}
+
+void onWPSFailed(const String& reason) {
+    Serial.printf("[Main] WPS FAILED: %s\n", reason.c_str());
+    wpsTriggered = false;
+
+    // Return to BLE pairing mode
+    Serial.println("[Main] Returning to BLE pairing mode...");
+}
+
+void onWPSTimeout() {
+    Serial.println("[Main] WPS TIMEOUT - No response from router");
+    wpsTriggered = false;
+
+    // Return to BLE pairing mode
+    Serial.println("[Main] Returning to BLE pairing mode...");
+}
+
+/**
+ * Check Boot button for WPS trigger (3 second hold)
+ */
+void checkBootButton() {
+    bool buttonPressed = (digitalRead(BOOT_BUTTON_PIN) == LOW);
+
+    if (buttonPressed && !buttonWasPressed) {
+        // Button just pressed
+        buttonPressStart = millis();
+        buttonWasPressed = true;
+    } else if (buttonPressed && buttonWasPressed) {
+        // Button still held
+        if (!wpsTriggered && (millis() - buttonPressStart >= WPS_BUTTON_HOLD_MS)) {
+            // Held for 3 seconds - trigger WPS
+            wpsTriggered = true;
+            Serial.println("[Main] Boot button held for 3s - Starting WPS!");
+
+            // Stop BLE if running
+            if (bleService.isAdvertising()) {
+                bleService.stop();
+            }
+
+            // Start WPS
+            wpsManager.startWPS();
+        }
+    } else if (!buttonPressed && buttonWasPressed) {
+        // Button released
+        buttonWasPressed = false;
+    }
+}
+#endif
 
 // ============================================================================
 // BLE Callbacks (ESP32 only)
@@ -180,101 +411,77 @@ void fetchSensorConfiguration() {
 }
 
 /**
- * Generate simulated value based on sensor code or unit
+ * Generate simulated value using the advanced SensorSimulator
+ * Supports 5 profiles: NORMAL, WINTER, SUMMER, STORM, STRESS
  */
 double generateSimulatedValue(const String& sensorCode, const String& unit) {
-    // Check by sensor code first (specific sensor types)
+    // Use the new SensorSimulator for realistic values
     String code = sensorCode;
     code.toLowerCase();
 
     // Temperature sensors
-    if (code.indexOf("temp") >= 0 || code.indexOf("ds18b20") >= 0 ||
-        code.indexOf("dht") >= 0 || code.indexOf("bme") >= 0 ||
-        code.indexOf("sht") >= 0 || code.indexOf("lm35") >= 0 ||
-        code.indexOf("ntc") >= 0 || code.indexOf("pt100") >= 0) {
-        // Check unit to determine temperature or other value
-        if (unit == "°C" || unit == "C" || unit.indexOf("Celsius") >= 0) {
-            return 18.0 + (random(150) / 10.0);  // 18.0 - 33.0 °C
-        }
-        if (unit == "°F" || unit == "F" || unit.indexOf("Fahrenheit") >= 0) {
-            return 64.0 + (random(270) / 10.0);  // 64.0 - 91.0 °F
-        }
+    if (code.indexOf("temp") >= 0 || unit == "°C" || unit == "C") {
+        return sensorSimulator.getTemperature();
     }
 
     // Humidity sensors
-    if (code.indexOf("humid") >= 0 || code.indexOf("hum") >= 0 ||
-        code.indexOf("dht") >= 0 || code.indexOf("sht") >= 0 ||
-        code.indexOf("bme") >= 0 || code.indexOf("hdc") >= 0) {
-        if (unit == "%" || unit == "% RH" || unit.indexOf("Humidity") >= 0) {
-            return 35.0 + (random(500) / 10.0);  // 35.0 - 85.0 %
-        }
-    }
-
-    // Light sensors
-    if (code.indexOf("light") >= 0 || code.indexOf("bh1750") >= 0 ||
-        code.indexOf("tsl") >= 0 || code.indexOf("ldr") >= 0 ||
-        code.indexOf("veml") >= 0 || code.indexOf("max44") >= 0) {
-        if (unit == "lux" || unit == "Lux" || unit == "lx") {
-            return random(15000);  // 0 - 15000 lux
+    if (code.indexOf("humid") >= 0 || code.indexOf("hum") >= 0 || unit == "%" || unit == "% RH") {
+        // Check if it's specifically humidity (not soil moisture)
+        if (code.indexOf("soil") < 0 && code.indexOf("moisture") < 0) {
+            return sensorSimulator.getHumidity();
         }
     }
 
     // Pressure sensors
     if (code.indexOf("pressure") >= 0 || code.indexOf("bmp") >= 0 ||
-        code.indexOf("bme") >= 0 || code.indexOf("ms5611") >= 0) {
-        if (unit == "hPa" || unit == "mbar") {
-            return 980.0 + (random(500) / 10.0);  // 980.0 - 1030.0 hPa
-        }
-        if (unit == "Pa") {
-            return 98000.0 + random(5000);  // 98000 - 103000 Pa
-        }
+        unit == "hPa" || unit == "mbar") {
+        return sensorSimulator.getPressure();
     }
 
     // CO2 sensors
-    if (code.indexOf("co2") >= 0 || code.indexOf("mh-z") >= 0 ||
-        code.indexOf("scd") >= 0 || code.indexOf("ccs811") >= 0) {
-        if (unit == "ppm") {
-            return 400.0 + random(800);  // 400 - 1200 ppm
-        }
+    if (code.indexOf("co2") >= 0 || unit == "ppm") {
+        return sensorSimulator.getCO2();
+    }
+
+    // Light sensors
+    if (code.indexOf("light") >= 0 || unit == "lux" || unit == "lx") {
+        return sensorSimulator.getLight();
     }
 
     // Soil moisture sensors
     if (code.indexOf("soil") >= 0 || code.indexOf("moisture") >= 0) {
-        if (unit == "%") {
-            return 20.0 + (random(600) / 10.0);  // 20.0 - 80.0 %
-        }
+        return sensorSimulator.getSoilMoisture();
     }
 
-    // Distance sensors (ultrasonic)
-    if (code.indexOf("distance") >= 0 || code.indexOf("hc-sr04") >= 0 ||
-        code.indexOf("ultrasonic") >= 0) {
-        if (unit == "cm") {
-            return 5.0 + (random(2950) / 10.0);  // 5.0 - 300.0 cm
-        }
-        if (unit == "mm") {
-            return 50.0 + random(2950);  // 50 - 3000 mm
-        }
-    }
+    // Default: Use temperature as fallback
+    return sensorSimulator.getTemperature();
+}
 
-    // Fallback: Generate value based on unit alone
-    if (unit == "°C" || unit == "C") {
-        return 18.0 + (random(150) / 10.0);
-    }
-    if (unit == "%" || unit == "% RH") {
-        return 30.0 + (random(500) / 10.0);
-    }
-    if (unit == "hPa" || unit == "mbar") {
-        return 980.0 + (random(500) / 10.0);
-    }
-    if (unit == "ppm") {
-        return 400.0 + random(800);
-    }
-    if (unit == "lux" || unit == "lx") {
-        return random(15000);
-    }
+/**
+ * Set simulation profile from string
+ */
+void setSimulationProfile(const String& profileName) {
+    String name = profileName;
+    name.toLowerCase();
 
-    // Default: random value 0-100
-    return random(10000) / 100.0;
+    if (name == "winter") {
+        sensorSimulator.setProfile(SimulationProfile::WINTER);
+    } else if (name == "summer") {
+        sensorSimulator.setProfile(SimulationProfile::SUMMER);
+    } else if (name == "storm") {
+        sensorSimulator.setProfile(SimulationProfile::STORM);
+    } else if (name == "stress") {
+        sensorSimulator.setProfile(SimulationProfile::STRESS);
+    } else {
+        sensorSimulator.setProfile(SimulationProfile::NORMAL);
+    }
+}
+
+/**
+ * Get current simulation profile name
+ */
+const char* getCurrentProfileName() {
+    return SensorSimulator::getProfileName(sensorSimulator.getProfile());
 }
 
 void readAndSendSensors() {
@@ -706,7 +913,7 @@ void setup() {
 
     Serial.println();
     Serial.println("========================================");
-    Serial.println("  myIoTGrid Sensor - Self-Provisioning");
+    Serial.println("  myIoTGrid Sensor - Multi-Mode Support");
     Serial.printf("  Firmware: %s\n", FIRMWARE_VERSION);
     Serial.println("========================================");
     Serial.println();
@@ -720,6 +927,46 @@ void setup() {
     wifiManager.onConnected(onWiFiConnected);
     wifiManager.onDisconnected(onWiFiDisconnected);
     wifiManager.onFailed(onWiFiFailed);
+
+#ifdef PLATFORM_ESP32
+    // Initialize Boot button for WPS
+    pinMode(BOOT_BUTTON_PIN, INPUT_PULLUP);
+
+    // Initialize WPS Manager
+    wpsManager.init();
+    wpsManager.onSuccess(onWPSSuccess);
+    wpsManager.onFailed(onWPSFailed);
+    wpsManager.onTimeout(onWPSTimeout);
+    Serial.println("[Main] WPS Manager initialized (hold Boot button 3s to start)");
+
+    // Auto-detect hardware sensors (Story 6)
+    autoDetectHardware();
+#else
+    // Native mode: Always use simulation
+    sensorMode = SensorMode::SIMULATED;
+    Serial.println("[Main] Native platform - using SIMULATED mode");
+#endif
+
+    // Initialize Sensor Simulator with default profile
+    // Check environment variable for profile (native) or use NORMAL
+#ifdef PLATFORM_NATIVE
+    const char* profileEnv = std::getenv("SIMULATION_PROFILE");
+    if (profileEnv) {
+        setSimulationProfile(String(profileEnv));
+        Serial.printf("[Simulator] Profile from env: %s\n", getCurrentProfileName());
+    } else {
+        sensorSimulator.init(SimulationProfile::NORMAL);
+    }
+#else
+    sensorSimulator.init(SimulationProfile::NORMAL);
+#endif
+    Serial.printf("[Simulator] Active profile: %s\n", getCurrentProfileName());
+    Serial.printf("[Simulator] Daily cycle: %s\n",
+                  sensorSimulator.isDailyCycleEnabled() ? "enabled" : "disabled");
+
+    // Print sensor mode
+    const char* modeNames[] = {"AUTO", "REAL", "SIMULATED"};
+    Serial.printf("[Main] Sensor mode: %s\n", modeNames[(int)sensorMode]);
 
     // Check for existing configuration
     if (configManager.hasConfig()) {
@@ -746,6 +993,25 @@ void setup() {
 
 void loop() {
     NodeState currentState = stateMachine.getState();
+
+#ifdef PLATFORM_ESP32
+    // Check Boot button for WPS trigger (in UNCONFIGURED or PAIRING state)
+    if (currentState == NodeState::UNCONFIGURED || currentState == NodeState::PAIRING) {
+        checkBootButton();
+    }
+
+    // Process WPS events if active
+    if (wpsManager.isActive()) {
+        wpsManager.loop();
+    }
+#endif
+
+    // Update sensor simulator (generates smooth value transitions)
+    static unsigned long lastSimulatorUpdate = 0;
+    if (millis() - lastSimulatorUpdate >= 1000) {  // Update every second
+        lastSimulatorUpdate = millis();
+        sensorSimulator.update();
+    }
 
     switch (currentState) {
         case NodeState::UNCONFIGURED:

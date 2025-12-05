@@ -59,6 +59,11 @@ public:
      */
     void factoryReset();
 
+    /**
+     * Get unique device serial number (derived from MAC address)
+     */
+    String getSerial();
+
 private:
     static constexpr const char* NVS_NAMESPACE = "myiotgrid";
 

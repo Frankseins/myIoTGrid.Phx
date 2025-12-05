@@ -6,6 +6,7 @@
 
 #ifdef PLATFORM_ESP32
 #include <Preferences.h>
+#include <WiFi.h>
 Preferences preferences;
 #endif
 
@@ -117,5 +118,18 @@ void ConfigManager::factoryReset() {
 #ifdef PLATFORM_ESP32
     delay(1000);
     ESP.restart();
+#endif
+}
+
+String ConfigManager::getSerial() {
+#ifdef PLATFORM_ESP32
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char serialBuf[20];
+    snprintf(serialBuf, sizeof(serialBuf), "ESP-%02X%02X%02X%02X",
+             mac[2], mac[3], mac[4], mac[5]);
+    return String(serialBuf);
+#else
+    return String("SIM-00000000-0001");
 #endif
 }
