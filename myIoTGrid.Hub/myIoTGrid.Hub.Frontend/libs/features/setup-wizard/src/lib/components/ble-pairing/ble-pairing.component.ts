@@ -8,6 +8,7 @@ import { MatListModule } from '@angular/material/list';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatChipsModule } from '@angular/material/chips';
 import { SetupWizardService, BleDevice } from '../../services/setup-wizard.service';
+import { BleCommunicationService } from '../../services/ble-communication.service';
 
 type ScanState = 'idle' | 'scanning' | 'connecting' | 'connected' | 'error';
 
@@ -29,6 +30,7 @@ type ScanState = 'idle' | 'scanning' | 'connecting' | 'connected' | 'error';
 })
 export class BlePairingComponent implements OnInit, OnDestroy {
   private readonly wizardService = inject(SetupWizardService);
+  private readonly bleService = inject(BleCommunicationService);
 
   readonly scanState = signal<ScanState>('idle');
   readonly devices = signal<BleDevice[]>([]);
@@ -37,6 +39,7 @@ export class BlePairingComponent implements OnInit, OnDestroy {
   readonly isBluetoothSupported = signal(true);
 
   private scanInterval: ReturnType<typeof setInterval> | null = null;
+  private selectedBluetoothDevice: BluetoothDevice | null = null;
 
   ngOnInit(): void {
     // Check if Web Bluetooth is supported
@@ -55,44 +58,41 @@ export class BlePairingComponent implements OnInit, OnDestroy {
     this.devices.set([]);
     this.errorMessage.set(null);
 
-    // Check for real Bluetooth API
-    if ('bluetooth' in navigator) {
+    // Check if Web Bluetooth is supported
+    if (this.bleService.isSupported()) {
       try {
-        // Try to use Web Bluetooth API
-        const device = await (navigator as Navigator & { bluetooth: Bluetooth }).bluetooth.requestDevice({
-          filters: [
-            { namePrefix: 'myIoTGrid' },
-            { namePrefix: 'ESP32' },
-            { namePrefix: 'SIM-' }
-          ],
-          optionalServices: ['generic_access']
-        });
+        // Use BleCommunicationService to request device - this stores the device for later connection
+        const device = await this.bleService.requestDevice();
 
         if (device) {
+          const mac = this.generateMacFromId(device.id);
           const bleDevice: BleDevice = {
             id: device.id,
             name: device.name || 'Unbekanntes Gerät',
             rssi: -50, // Web Bluetooth doesn't expose RSSI directly
-            macAddress: this.generateMacFromId(device.id)
+            macAddress: mac,
+            nodeId: `ESP32-${mac.replace(/:/g, '').toUpperCase()}` // Temporary, updated on connect
           };
 
           this.devices.set([bleDevice]);
+          // Auto-select the device since we only get one from Web Bluetooth picker
+          this.selectedDevice.set(bleDevice);
           this.scanState.set('idle');
+        } else {
+          // User cancelled or error occurred
+          const error = this.bleService.lastError();
+          if (error) {
+            this.errorMessage.set(error);
+            this.scanState.set('error');
+          } else {
+            // User cancelled - just go back to idle
+            this.scanState.set('idle');
+          }
         }
       } catch (error: unknown) {
-        // User cancelled or no device found
-        if (error instanceof DOMException && error.name === 'NotFoundError') {
-          this.errorMessage.set('Kein Gerät gefunden. Stellen Sie sicher, dass der Node eingeschaltet ist.');
-        } else if (error instanceof DOMException && error.name === 'NotAllowedError') {
-          // User cancelled - that's OK, just go back to idle
-          this.scanState.set('idle');
-          return;
-        } else {
-          // Fallback to simulation
-          this.startScanSimulation();
-          return;
-        }
-        this.scanState.set('error');
+        console.error('BLE scan error:', error);
+        // Fallback to simulation
+        this.startScanSimulation();
       }
     } else {
       // Fallback: Simulate scanning for demo purposes
@@ -114,7 +114,8 @@ export class BlePairingComponent implements OnInit, OnDestroy {
           id: 'sim-001',
           name: 'myIoTGrid Sensor A',
           rssi: -45,
-          macAddress: 'AA:BB:CC:DD:EE:01'
+          macAddress: 'AA:BB:CC:DD:EE:01',
+          nodeId: 'ESP32-AABBCCDDEE01'
         });
         this.devices.set([...simulatedDevices]);
       }
@@ -124,7 +125,8 @@ export class BlePairingComponent implements OnInit, OnDestroy {
           id: 'sim-002',
           name: 'ESP32-Wohnzimmer',
           rssi: -62,
-          macAddress: 'AA:BB:CC:DD:EE:02'
+          macAddress: 'AA:BB:CC:DD:EE:02',
+          nodeId: 'ESP32-AABBCCDDEE02'
         });
         this.devices.set([...simulatedDevices]);
       }
@@ -134,7 +136,8 @@ export class BlePairingComponent implements OnInit, OnDestroy {
           id: 'sim-003',
           name: 'SIM-Sensor-Test',
           rssi: -78,
-          macAddress: 'AA:BB:CC:DD:EE:03'
+          macAddress: 'AA:BB:CC:DD:EE:03',
+          nodeId: 'ESP32-AABBCCDDEE03'
         });
         this.devices.set([...simulatedDevices]);
       }
@@ -169,17 +172,45 @@ export class BlePairingComponent implements OnInit, OnDestroy {
     this.scanState.set('connecting');
     this.errorMessage.set(null);
 
-    // Simulate connection delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Use the BleCommunicationService to establish real GATT connection
+      const connected = await this.bleService.connect();
 
-    // Simulate successful connection
-    this.wizardService.setBleDevice(device);
-    this.scanState.set('connected');
+      if (connected) {
+        // Get the connected device info from the service
+        const connectedDevice = this.bleService.connectedDevice();
+        if (connectedDevice) {
+          // Update the device with real MAC address and nodeId from ESP32
+          const updatedDevice: BleDevice = {
+            ...device,
+            macAddress: connectedDevice.macAddress,
+            nodeId: connectedDevice.nodeId
+          };
+          this.wizardService.setBleDevice(updatedDevice);
+        } else {
+          // Fallback: generate nodeId from device name/id if no connectedDevice
+          const fallbackDevice: BleDevice = {
+            ...device,
+            nodeId: `ESP32-${device.macAddress.replace(/:/g, '').toUpperCase()}`
+          };
+          this.wizardService.setBleDevice(fallbackDevice);
+        }
 
-    // Auto-advance after brief delay
-    setTimeout(() => {
-      this.wizardService.nextStep();
-    }, 800);
+        this.scanState.set('connected');
+
+        // Auto-advance after brief delay
+        setTimeout(() => {
+          this.wizardService.nextStep();
+        }, 800);
+      } else {
+        this.scanState.set('error');
+        this.errorMessage.set(this.bleService.lastError() || 'Verbindung fehlgeschlagen');
+      }
+    } catch (error) {
+      console.error('BLE connection error:', error);
+      this.scanState.set('error');
+      this.errorMessage.set('Verbindung zum Gerät fehlgeschlagen');
+    }
   }
 
   getSignalStrengthIcon(rssi: number): string {
@@ -222,28 +253,4 @@ export class BlePairingComponent implements OnInit, OnDestroy {
   onCancel(): void {
     this.wizardService.exitWizard();
   }
-}
-
-// Type declarations for Web Bluetooth API
-interface Bluetooth {
-  requestDevice(options: RequestDeviceOptions): Promise<BluetoothDevice>;
-}
-
-interface RequestDeviceOptions {
-  filters?: BluetoothLEScanFilter[];
-  optionalServices?: BluetoothServiceUUID[];
-  acceptAllDevices?: boolean;
-}
-
-interface BluetoothLEScanFilter {
-  name?: string;
-  namePrefix?: string;
-  services?: BluetoothServiceUUID[];
-}
-
-type BluetoothServiceUUID = string | number;
-
-interface BluetoothDevice {
-  id: string;
-  name?: string;
 }

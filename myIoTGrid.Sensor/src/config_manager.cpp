@@ -67,15 +67,21 @@ StoredConfig ConfigManager::loadConfig() {
         config.wifiPassword = preferences.getString(KEY_WIFI_PASS, "");
         config.hubApiUrl = preferences.getString(KEY_HUB_URL, "");
 
-        // Validate loaded config (apiKey is optional - assigned after registration)
-        config.isValid = config.wifiSsid.length() > 0 &&
-                         config.hubApiUrl.length() > 0;
+        // Validate loaded config
+        // WiFi SSID is required, Hub URL is optional (will be discovered via UDP)
+        // apiKey is also optional - assigned after registration
+        config.isValid = config.wifiSsid.length() > 0;
 
         if (config.isValid) {
-            Serial.printf("[Config] Loaded: NodeID=%s, HubURL=%s\n",
-                          config.nodeId.c_str(), config.hubApiUrl.c_str());
+            if (config.hubApiUrl.length() > 0) {
+                Serial.printf("[Config] Loaded: NodeID=%s, HubURL=%s\n",
+                              config.nodeId.c_str(), config.hubApiUrl.c_str());
+            } else {
+                Serial.printf("[Config] Loaded WiFi-only: NodeID=%s, SSID=%s (Hub will be discovered)\n",
+                              config.nodeId.c_str(), config.wifiSsid.c_str());
+            }
         } else {
-            Serial.println("[Config] Invalid stored configuration");
+            Serial.println("[Config] Invalid stored configuration (no WiFi SSID)");
         }
     } else {
         Serial.println("[Config] No stored configuration found");
@@ -123,9 +129,10 @@ String ConfigManager::getSerial() {
 #ifdef PLATFORM_ESP32
     uint8_t mac[6];
     WiFi.macAddress(mac);
-    char serialBuf[20];
-    snprintf(serialBuf, sizeof(serialBuf), "ESP-%02X%02X%02X%02X",
-             mac[2], mac[3], mac[4], mac[5]);
+    char serialBuf[24];
+    // Use full 6-byte WiFi MAC address for unique sensor ID
+    snprintf(serialBuf, sizeof(serialBuf), "ESP32-%02X%02X%02X%02X%02X%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     return String(serialBuf);
 #else
     return String("SIM-00000000-0001");

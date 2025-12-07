@@ -39,4 +39,8 @@ export abstract class BaseApiService {
   protected delete<T>(endpoint: string): Observable<T> {
     return this.http.delete<T>(`${this.baseUrl}${endpoint}`);
   }
+
+  protected deleteWithBody<T>(endpoint: string, body: unknown): Observable<T> {
+    return this.http.delete<T>(`${this.baseUrl}${endpoint}`, { body });
+  }
 }

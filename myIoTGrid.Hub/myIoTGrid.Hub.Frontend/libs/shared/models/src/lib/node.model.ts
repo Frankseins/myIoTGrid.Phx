@@ -45,7 +45,6 @@ export interface CreateNodeDto {
   hubId?: string;
   protocol?: Protocol;
   location?: Location;
-  sensors?: CreateSensorDto[];
 }
 
 export interface UpdateNodeDto {
@@ -123,5 +122,3 @@ export interface LatestMeasurement {
   timestamp: string;
 }
 
-// Re-export for convenience
-import { CreateSensorDto } from './sensor.model';

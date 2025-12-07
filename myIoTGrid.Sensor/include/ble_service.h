@@ -85,6 +85,15 @@ public:
     bool isInitialized() const { return _initialized; }
 
     /**
+     * Check if WiFi credentials are pending (waiting for API config)
+     */
+    bool hasWifiPending() const {
+        return _pendingConfig.wifiSsid.length() > 0 &&
+               _pendingConfig.wifiPassword.length() > 0 &&
+               _pendingConfig.hubApiUrl.length() == 0;
+    }
+
+    /**
      * Stop BLE for WPS mode (doesn't deinit, just stops advertising)
      */
     void stopForWPS();
@@ -110,10 +119,27 @@ public:
     void setPairingCompletedCallback(OnPairingCompleted callback);
 
     /**
-     * Send registration request to Hub
-     * (MAC address and firmware version)
+     * Set firmware version and update registration characteristic
+     * Call this after init() to set the registration data
+     */
+    void setFirmwareVersion(const String& firmwareVersion);
+
+    /**
+     * Send registration notification to connected client
+     * (node_id, mac_address, firmware_version)
      */
     void sendRegistration(const String& macAddress, const String& firmwareVersion);
+
+    /**
+     * Get the generated Node ID (ESP32-<WiFi-MAC>)
+     */
+    String getNodeId() const { return "ESP32-" + _macAddress; }
+
+    /**
+     * Finalize WiFi-only configuration (no Hub URL)
+     * Call this after timeout if no API config is received
+     */
+    void finalizeWifiOnlyConfig();
 
     /**
      * Service UUID for myIoTGrid Node Provisioning
@@ -143,6 +169,7 @@ private:
     bool _connected;
     bool _advertising_active;
     String _macAddress;
+    String _firmwareVersion;
 
     OnBLEConfigReceived _onConfigReceived;
     OnPairingStarted _onPairingStarted;

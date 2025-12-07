@@ -150,6 +150,44 @@ public class ReadingsController : ControllerBase
         return Ok(result);
     }
 
+    // ==================== DELETE ENDPOINTS ====================
+
+    /// <summary>
+    /// Deletes readings within a date range.
+    /// Supports optional filtering by sensor assignment and measurement type.
+    /// </summary>
+    /// <param name="dto">Delete criteria (nodeId, from, to, optional filters)</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Number of deleted readings</returns>
+    /// <response code="200">Readings successfully deleted</response>
+    /// <response code="400">Invalid request parameters</response>
+    [HttpDelete("range")]
+    [ProducesResponseType(typeof(DeleteReadingsResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> DeleteRange([FromBody] DeleteReadingsRangeDto dto, CancellationToken ct)
+    {
+        if (dto.NodeId == Guid.Empty)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "NodeId is required"
+            });
+        }
+
+        if (dto.From > dto.To)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "From date must be before or equal to To date"
+            });
+        }
+
+        var result = await _readingService.DeleteRangeAsync(dto, ct);
+        return Ok(result);
+    }
+
     // ==================== CHART ENDPOINTS ====================
 
     /// <summary>

@@ -25,6 +25,9 @@ public interface IHubService
     /// <summary>Returns the default Hub for sensor registration</summary>
     Task<HubDto> GetDefaultHubAsync(CancellationToken ct = default);
 
+    /// <summary>Returns the provisioning settings for new nodes (WiFi, API URL)</summary>
+    Task<HubProvisioningSettingsDto> GetProvisioningSettingsAsync(CancellationToken ct = default);
+
     // === Legacy API (for internal use) ===
 
     /// <summary>Returns a Hub by ID</summary>

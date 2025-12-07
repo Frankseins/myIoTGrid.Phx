@@ -48,6 +48,11 @@
                 </div>
             </div>
         }
+
+        <!-- Custom Toolbar Actions (z.B. Delete Button) -->
+        @if (toolbarActionsTemplate) {
+            <ng-container *ngTemplateOutlet="toolbarActionsTemplate"></ng-container>
+        }
     </mat-toolbar>
 
     <!-- Loading Indicator -->

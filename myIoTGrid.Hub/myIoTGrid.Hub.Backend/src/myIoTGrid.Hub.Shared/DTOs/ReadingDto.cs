@@ -89,3 +89,35 @@ public record CreateSensorReadingDto(
     /// </summary>
     int? EndpointId = null
 );
+
+/// <summary>
+/// DTO for deleting readings in a date range.
+/// Allows filtering by node, sensor assignment, and measurement type.
+/// </summary>
+public record DeleteReadingsRangeDto(
+    /// <summary>Node ID (required) - readings will only be deleted for this node</summary>
+    Guid NodeId,
+    /// <summary>Start of the date range (inclusive)</summary>
+    DateTime From,
+    /// <summary>End of the date range (inclusive)</summary>
+    DateTime To,
+    /// <summary>Optional: Only delete readings for a specific sensor assignment</summary>
+    Guid? AssignmentId = null,
+    /// <summary>Optional: Only delete readings for a specific measurement type (e.g., "temperature")</summary>
+    string? MeasurementType = null
+);
+
+/// <summary>
+/// Response DTO for delete readings operation.
+/// Returns the count of deleted readings.
+/// </summary>
+public record DeleteReadingsResultDto(
+    /// <summary>Number of readings that were deleted</summary>
+    int DeletedCount,
+    /// <summary>The filter criteria that were applied</summary>
+    Guid NodeId,
+    DateTime From,
+    DateTime To,
+    Guid? AssignmentId,
+    string? MeasurementType
+);

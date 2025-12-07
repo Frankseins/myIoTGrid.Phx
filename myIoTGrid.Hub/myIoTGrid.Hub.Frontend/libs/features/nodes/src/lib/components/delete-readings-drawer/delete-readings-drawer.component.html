@@ -1,0 +1,111 @@
+<div class="gt-drawer gt-delete-drawer">
+  <div class="gt-drawer__header">
+    <h3 class="gt-drawer__title">Messwerte löschen</h3>
+    <button mat-icon-button (click)="onClose()" aria-label="Schließen">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="gt-drawer__body">
+    @if (isLoading()) {
+      <div class="loading-container">
+        <mat-spinner diameter="32"></mat-spinner>
+        <span>Sensoren werden geladen...</span>
+      </div>
+    } @else {
+      <div class="gt-drawer__inner">
+        @if (currentNode(); as node) {
+          <div class="node-info">
+            <mat-icon>router</mat-icon>
+            <span>{{ node.location?.name || node.name }}</span>
+          </div>
+        }
+
+        <div class="filter-fields">
+          <!-- Datumsbereich -->
+          <div class="date-range">
+            <mat-form-field appearance="outline" class="date-field">
+              <mat-label>Von</mat-label>
+              <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" placeholder="Startdatum">
+              <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
+              <mat-datepicker #fromPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="date-field">
+              <mat-label>Bis</mat-label>
+              <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" placeholder="Enddatum">
+              <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
+              <mat-datepicker #toPicker></mat-datepicker>
+            </mat-form-field>
+          </div>
+
+          <!-- Sensor Filter -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Sensor</mat-label>
+            <mat-select [(ngModel)]="selectedAssignmentId">
+              <mat-option [value]="null">Alle Sensoren</mat-option>
+              @for (assignment of assignments(); track assignment.id) {
+                <mat-option [value]="assignment.id">
+                  {{ getAssignmentLabel(assignment) }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+
+          <!-- Messtyp Filter -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Messtyp</mat-label>
+            <mat-select [(ngModel)]="selectedMeasurementType">
+              <mat-option [value]="null">Alle Messtypen</mat-option>
+              @for (type of measurementTypes(); track type.value) {
+                <mat-option [value]="type.value">{{ type.label }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Warnhinweis -->
+        <div class="warning-box">
+          <mat-icon>warning</mat-icon>
+          <div class="warning-text">
+            <strong>Achtung:</strong> Das Löschen von Messwerten kann nicht rückgängig gemacht werden!
+          </div>
+        </div>
+
+        <!-- Fehler -->
+        @if (error(); as errorMessage) {
+          <div class="error-box">
+            <mat-icon>error</mat-icon>
+            <span>{{ errorMessage }}</span>
+          </div>
+        }
+
+        <!-- Erfolg -->
+        @if (deleteResult(); as result) {
+          <div class="success-box">
+            <mat-icon>check_circle</mat-icon>
+            <div class="success-text">
+              <strong>{{ result.deletedCount }}</strong> Messwerte wurden gelöscht.
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="drawer-buttons">
+    <button mat-button (click)="onReset()" [disabled]="isDeleting()">
+      <mat-icon>clear</mat-icon> Zurücksetzen
+    </button>
+    <button mat-flat-button color="warn"
+            (click)="onDelete()"
+            [disabled]="!canDelete()">
+      @if (isDeleting()) {
+        <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+      } @else {
+        <mat-icon>delete</mat-icon>
+      }
+      Löschen
+    </button>
+  </div>
+</div>

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, map } from 'rxjs';
 import { BaseApiService } from './base-api.service';
-import { Hub, HubStatus, Node, UpdateHubDto } from '@myiotgrid/shared/models';
+import { Hub, HubStatus, HubProvisioningSettings, Node, UpdateHubDto } from '@myiotgrid/shared/models';
 
 /**
  * API Service for Hub management
@@ -43,6 +43,14 @@ export class HubApiService extends BaseApiService {
    */
   getNodes(): Observable<Node[]> {
     return this.get<Node[]>(`${this.endpoint}/nodes`);
+  }
+
+  /**
+   * Get provisioning settings for BLE setup wizard
+   * GET /api/hub/provisioning-settings
+   */
+  getProvisioningSettings(): Observable<HubProvisioningSettings> {
+    return this.get<HubProvisioningSettings>(`${this.endpoint}/provisioning-settings`);
   }
 
   // === Legacy API (for compatibility) ===

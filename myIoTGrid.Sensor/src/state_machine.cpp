@@ -41,7 +41,8 @@ void StateMachine::processEvent(StateEvent event) {
         case NodeState::PAIRING:
             switch (event) {
                 case StateEvent::BLE_CONFIG_RECEIVED:
-                    // Stay in PAIRING until WiFi connects
+                    // BLE config received - transition to CONFIGURED to start WiFi connection
+                    transitionTo(NodeState::CONFIGURED);
                     break;
                 case StateEvent::WIFI_CONNECTED:
                     transitionTo(NodeState::CONFIGURED);

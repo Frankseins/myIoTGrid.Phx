@@ -4,6 +4,10 @@
 
 #include "ble_service.h"
 #include <ArduinoJson.h>
+#include <string>
+#ifdef PLATFORM_ESP32
+#include <WiFi.h>
+#endif
 #ifdef PLATFORM_NATIVE
 #include "ArduinoJsonString.h"
 #endif
@@ -39,8 +43,20 @@ bool BLEProvisioningService::init(const String& deviceName) {
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
 
-    _macAddress = NimBLEDevice::getAddress().toString().c_str();
-    Serial.printf("[BLE] MAC Address: %s\n", _macAddress.c_str());
+    // IMPORTANT: WiFi must be initialized before reading MAC address!
+    // Initialize WiFi in STA mode temporarily if not already done
+    // This is required for WiFi.macAddress() to return valid data
+    WiFi.mode(WIFI_STA);
+    delay(10);  // Brief delay for WiFi subsystem to initialize
+
+    // Use WiFi MAC address (not BLE MAC) for consistent device identification
+    uint8_t mac[6];
+    WiFi.macAddress(mac);
+    char macBuf[24];
+    snprintf(macBuf, sizeof(macBuf), "%02X%02X%02X%02X%02X%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
+    _macAddress = String(macBuf);
+    Serial.printf("[BLE] WiFi MAC Address: %s\n", _macAddress.c_str());
 
     // Create server
     _server = NimBLEDevice::createServer();
@@ -54,6 +70,15 @@ bool BLEProvisioningService::init(const String& deviceName) {
         CHAR_REGISTRATION_UUID,
         NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
     );
+
+    // Set registration value with just the node ID as plain string
+    // Format: ESP32-<WiFi-MAC> (e.g., ESP32-0070078492CC)
+    // This is simple, fits in any MTU, and is all the frontend needs
+    // IMPORTANT: Use std::string to ensure NimBLE copies the data properly
+    // Using c_str() with temporary String can cause pointer invalidation
+    std::string nodeId = std::string("ESP32-") + _macAddress.c_str();
+    _regChar->setValue(nodeId);
+    Serial.printf("[BLE] Registration set (nodeId): %s (length: %d)\n", nodeId.c_str(), nodeId.length());
 
     _wifiChar = _nimbleService->createCharacteristic(
         CHAR_WIFI_CONFIG_UUID,
@@ -179,21 +204,32 @@ void BLEProvisioningService::setPairingCompletedCallback(OnPairingCompleted call
     _onPairingCompleted = callback;
 }
 
+void BLEProvisioningService::setFirmwareVersion(const String& firmwareVersion) {
+    _firmwareVersion = firmwareVersion;
+
+#ifdef PLATFORM_ESP32
+    if (!_regChar) return;
+
+    // Just set the node ID as plain string - simple and reliable
+    // IMPORTANT: Use std::string to ensure NimBLE copies the data properly
+    std::string nodeId = std::string("ESP32-") + _macAddress.c_str();
+    _regChar->setValue(nodeId);
+
+    Serial.printf("[BLE] Registration set (nodeId): %s (length: %d)\n", nodeId.c_str(), nodeId.length());
+#endif
+}
+
 void BLEProvisioningService::sendRegistration(const String& macAddress, const String& firmwareVersion) {
 #ifdef PLATFORM_ESP32
     if (!_regChar) return;
 
-    JsonDocument doc;
-    doc["mac_address"] = macAddress;
-    doc["firmware_version"] = firmwareVersion;
-
-    String json;
-    serializeJson(doc, json);
-
-    _regChar->setValue(json.c_str());
+    // Just send the node ID as plain string
+    // IMPORTANT: Use std::string to ensure NimBLE copies the data properly
+    std::string nodeId = std::string("ESP32-") + _macAddress.c_str();
+    _regChar->setValue(nodeId);
     _regChar->notify();
 
-    Serial.printf("[BLE] Sent registration: %s\n", json.c_str());
+    Serial.printf("[BLE] Sent registration (nodeId): %s (length: %d)\n", nodeId.c_str(), nodeId.length());
 #else
     Serial.printf("[BLE] Simulated registration: MAC=%s, FW=%s\n",
                   macAddress.c_str(), firmwareVersion.c_str());
@@ -247,26 +283,93 @@ bool BLEProvisioningService::parseApiConfig(const String& json) {
 }
 
 void BLEProvisioningService::checkConfiguration() {
-    // Check if we have all required configuration
+    Serial.println("[BLE] checkConfiguration() called");
+    Serial.printf("[BLE] SSID length: %d, Password length: %d, HubURL length: %d\n",
+                  _pendingConfig.wifiSsid.length(),
+                  _pendingConfig.wifiPassword.length(),
+                  _pendingConfig.hubApiUrl.length());
+
+    // NEW FLOW: Prefer full config (WiFi + Hub URL) over WiFi-only
+    // Frontend sends: 1) WiFi config, 2) API config (with Hub URL)
+    //
+    // Cases:
+    // 1. WiFi + API config received -> Trigger callback with full config (direct Hub connection)
+    // 2. WiFi only (API not yet received) -> Wait for API config
+    // 3. API config received but no WiFi -> Wait for WiFi config
+
+    // Check if we have WiFi credentials (minimum required)
+    if (_pendingConfig.wifiSsid.length() > 0 &&
+        _pendingConfig.wifiPassword.length() > 0) {
+
+        // Generate nodeId from WiFi MAC address if not provided
+        // Format: ESP32-<full-6-byte-MAC> for consistent identification
+        if (_pendingConfig.nodeId.length() == 0) {
+            _pendingConfig.nodeId = "ESP32-" + _macAddress;
+            Serial.printf("[BLE] Generated NodeID from WiFi MAC: %s\n", _pendingConfig.nodeId.c_str());
+        }
+
+        // Check if we have Hub URL (preferred - direct connection)
+        if (_pendingConfig.hubApiUrl.length() > 0) {
+            // Full configuration with Hub URL - trigger callback
+            Serial.println("[BLE] Full configuration complete with Hub URL!");
+            Serial.printf("[BLE] Hub URL: %s\n", _pendingConfig.hubApiUrl.c_str());
+
+            _pendingConfig.isValid = true;
+
+            if (_onPairingCompleted) {
+                Serial.println("[BLE] Calling onPairingCompleted callback");
+                _onPairingCompleted();
+            }
+
+            if (_onConfigReceived) {
+                Serial.println("[BLE] Calling onConfigReceived callback");
+                _onConfigReceived(_pendingConfig);
+            } else {
+                Serial.println("[BLE] WARNING: No onConfigReceived callback set!");
+            }
+
+            // Reset pending config after full config is processed
+            _pendingConfig = BLEConfig();
+        } else {
+            // WiFi-only received - wait for API config
+            // Frontend Setup Wizard will send API config right after WiFi
+            Serial.println("[BLE] WiFi received, waiting for API config with Hub URL...");
+            Serial.println("[BLE] (If using WPS or manual WiFi, Hub will be discovered via UDP)");
+            // Don't trigger callback yet - wait for API config
+            // Mark that we're waiting with WiFi ready
+            _pendingConfig.isValid = false;  // Not complete yet
+        }
+    } else if (_pendingConfig.hubApiUrl.length() > 0) {
+        // API config received but no WiFi yet
+        Serial.println("[BLE] API config received, waiting for WiFi credentials...");
+    } else {
+        Serial.println("[BLE] Configuration incomplete - waiting for data");
+    }
+}
+
+void BLEProvisioningService::finalizeWifiOnlyConfig() {
+    // Called when we want to proceed with WiFi-only mode (e.g., timeout or explicit trigger)
     if (_pendingConfig.wifiSsid.length() > 0 &&
         _pendingConfig.wifiPassword.length() > 0 &&
-        _pendingConfig.nodeId.length() > 0 &&
-        _pendingConfig.apiKey.length() > 0 &&
-        _pendingConfig.hubApiUrl.length() > 0) {
+        _pendingConfig.hubApiUrl.length() == 0) {
+
+        Serial.println("[BLE] Finalizing WiFi-only configuration (no Hub URL)");
+        Serial.println("[BLE] ESP32 will discover Hub via UDP broadcast");
+
+        // Generate nodeId from WiFi MAC address if not provided
+        // Format: ESP32-<full-6-byte-MAC> for consistent identification
+        if (_pendingConfig.nodeId.length() == 0) {
+            _pendingConfig.nodeId = "ESP32-" + _macAddress;
+        }
 
         _pendingConfig.isValid = true;
-
-        Serial.println("[BLE] Configuration complete!");
 
         if (_onPairingCompleted) {
             _onPairingCompleted();
         }
-
         if (_onConfigReceived) {
             _onConfigReceived(_pendingConfig);
         }
-
-        // Reset pending config
         _pendingConfig = BLEConfig();
     }
 }
@@ -277,6 +380,14 @@ void BLEProvisioningService::ServerCallbacks::onConnect(NimBLEServer* server) {
     Serial.println("[BLE] Client connected");
     _parent->_connected = true;
     _parent->_advertising_active = false;
+
+    // Send registration notification to client
+    if (_parent->_regChar && _parent->_firmwareVersion.length() > 0) {
+        // Delay slightly to ensure connection is stable
+        delay(100);
+        _parent->_regChar->notify();
+        Serial.println("[BLE] Sent registration notification");
+    }
 }
 
 void BLEProvisioningService::ServerCallbacks::onDisconnect(NimBLEServer* server) {

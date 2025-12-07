@@ -79,4 +79,18 @@ public class HubController : ControllerBase
         var nodes = await _nodeService.GetByHubAsync(hub.Id, ct);
         return Ok(nodes);
     }
+
+    /// <summary>
+    /// Returns the provisioning settings for BLE setup wizard
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Provisioning settings (WiFi, API URL)</returns>
+    /// <response code="200">Settings retrieved</response>
+    [HttpGet("provisioning-settings")]
+    [ProducesResponseType(typeof(HubProvisioningSettingsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProvisioningSettings(CancellationToken ct)
+    {
+        var settings = await _hubService.GetProvisioningSettingsAsync(ct);
+        return Ok(settings);
+    }
 }

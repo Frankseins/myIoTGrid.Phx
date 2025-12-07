@@ -273,13 +273,13 @@ public static class SensorMappingExtensions
     /// Applies capability updates to a Sensor entity.
     /// - If Id is null, a new capability will be created.
     /// - If Id is set, the existing capability will be updated.
-    /// - Capabilities not included in the list will be deleted.
+    /// NOTE: This method does NOT remove capabilities - that's handled by the caller (SensorService.UpdateAsync)
+    /// to properly manage EF Core's change tracker.
     /// </summary>
     private static void ApplyCapabilitiesUpdate(Sensor sensor, IEnumerable<UpdateSensorCapabilityDto> capabilityDtos)
     {
         var dtoList = capabilityDtos.ToList();
         var existingCapabilities = sensor.Capabilities.ToList();
-        var updatedIds = new HashSet<Guid>();
 
         var sortOrder = 0;
         foreach (var capDto in dtoList)
@@ -291,7 +291,6 @@ public static class SensorMappingExtensions
                 if (existing != null)
                 {
                     ApplyCapabilityUpdate(existing, capDto, sortOrder++);
-                    updatedIds.Add(existing.Id);
                 }
             }
             else
@@ -317,12 +316,7 @@ public static class SensorMappingExtensions
             }
         }
 
-        // Remove capabilities not in the updated list
-        var toRemove = existingCapabilities.Where(c => !updatedIds.Contains(c.Id)).ToList();
-        foreach (var cap in toRemove)
-        {
-            sensor.Capabilities.Remove(cap);
-        }
+        // NOTE: Removal is handled by SensorService.UpdateAsync to avoid EF Core tracking conflicts
     }
 
     /// <summary>

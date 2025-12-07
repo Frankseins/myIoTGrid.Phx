@@ -58,3 +58,20 @@ export interface LatestReadingDto {
   nodeId: string;
   readings: { [measurementType: string]: Reading };
 }
+
+export interface DeleteReadingsRangeDto {
+  nodeId: string;
+  from: string;
+  to: string;
+  assignmentId?: string;
+  measurementType?: string;
+}
+
+export interface DeleteReadingsResultDto {
+  deletedCount: number;
+  nodeId: string;
+  from: string;
+  to: string;
+  assignmentId?: string;
+  measurementType?: string;
+}

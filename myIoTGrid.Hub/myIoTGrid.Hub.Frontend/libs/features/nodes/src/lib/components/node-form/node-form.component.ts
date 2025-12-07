@@ -25,6 +25,7 @@ import {
 } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, GenericListComponent, GenericListColumn, ListLazyEvent, ListColumnTemplateDirective } from '@myiotgrid/shared/ui';
 import { ConfirmDialogComponent } from '@myiotgrid/shared/ui';
+import { DeleteReadingsDrawerComponent } from '../delete-readings-drawer/delete-readings-drawer.component';
 
 type FormMode = 'view' | 'edit' | 'create';
 
@@ -51,13 +52,15 @@ type FormMode = 'view' | 'edit' | 'create';
     OverlayModule,
     LoadingSpinnerComponent,
     GenericListComponent,
-    ListColumnTemplateDirective
+    ListColumnTemplateDirective,
+    DeleteReadingsDrawerComponent
   ],
   templateUrl: './node-form.component.html',
   styleUrl: './node-form.component.scss'
 })
 export class NodeFormComponent implements OnInit, OnDestroy {
   @ViewChild('assignmentDrawer') assignmentDrawerTemplate!: TemplateRef<unknown>;
+  @ViewChild('deleteReadingsDrawer') deleteReadingsDrawerTemplate!: TemplateRef<unknown>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -74,6 +77,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
   private readonly dialog = inject(MatDialog);
 
   private assignmentOverlayRef: OverlayRef | null = null;
+  private deleteOverlayRef: OverlayRef | null = null;
   private timestampInterval: ReturnType<typeof setInterval> | null = null;
 
   // Effect to sync isSimulation FormControl disabled state with view mode
@@ -843,5 +847,61 @@ export class NodeFormComponent implements OnInit, OnDestroy {
         });
       }
     });
+  }
+
+  // === Delete Readings Drawer Methods ===
+
+  openDeleteDrawer(): void {
+    if (this.deleteOverlayRef) return;
+
+    const positionStrategy = this.overlay.position()
+      .global()
+      .right('0')
+      .top('0');
+
+    this.deleteOverlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'gt-drawer-backdrop',
+      panelClass: ['gt-drawer-panel'],
+      width: '420px',
+      height: '100vh',
+      scrollStrategy: this.overlay.scrollStrategies.block()
+    });
+
+    this.deleteOverlayRef.backdropClick().subscribe(() => this.closeDeleteDrawer());
+
+    const portal = new TemplatePortal(this.deleteReadingsDrawerTemplate, this.viewContainerRef);
+    this.deleteOverlayRef.attach(portal);
+
+    requestAnimationFrame(() => {
+      this.deleteOverlayRef?.addPanelClass('open');
+    });
+  }
+
+  closeDeleteDrawer(): void {
+    if (this.deleteOverlayRef) {
+      this.deleteOverlayRef.removePanelClass('open');
+      setTimeout(() => {
+        this.deleteOverlayRef?.dispose();
+        this.deleteOverlayRef = null;
+      }, 200);
+    }
+  }
+
+  onDeleteReadingsComplete(result: { deletedCount: number }): void {
+    this.closeDeleteDrawer();
+    this.snackBar.open(`${result.deletedCount} Messwerte gelöscht`, 'Schließen', { duration: 3000 });
+
+    // Refresh the readings list
+    if (this.lastHistoryEvent) {
+      this.loadReadingsLazy({ ...this.lastHistoryEvent, first: 0 });
+    }
+
+    // Also refresh sensors latest
+    const nodeId = this.node()?.id;
+    if (nodeId) {
+      this.loadSensorsLatest(nodeId);
+    }
   }
 }

@@ -64,8 +64,6 @@
 }
 
 .status-card {
-  grid-row: span 2;
-
   mat-card-header {
     mat-card-title {
       display: flex;
@@ -267,6 +265,72 @@
       mat-icon {
         color: #1976d2;
       }
+    }
+  }
+}
+
+// Provisioning Card
+.provisioning-card {
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding-top: 16px;
+  }
+
+  .card-description {
+    color: rgba(0, 0, 0, 0.6);
+    margin: 0 0 16px;
+    font-size: 14px;
+  }
+
+  .provisioning-section {
+    padding: 16px 0;
+
+    h4 {
+      margin: 0 0 16px;
+      font-weight: 500;
+      color: rgba(0, 0, 0, 0.7);
+    }
+  }
+
+  mat-divider {
+    margin: 8px 0;
+  }
+
+  .full-width {
+    width: 100%;
+    margin-bottom: 16px;
+  }
+
+  .half-width {
+    width: 50%;
+    margin-bottom: 16px;
+
+    @media (max-width: 768px) {
+      width: 100%;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    margin-top: 24px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+
+    .spin {
+      animation: spin 1s linear infinite;
     }
   }
 }

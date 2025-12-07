@@ -15,6 +15,7 @@ export interface BleDevice {
   name: string;
   rssi: number;
   macAddress: string;
+  nodeId: string;  // ESP32-generated unique ID (format: ESP32-<WiFi-MAC>)
 }
 
 /**
@@ -71,8 +72,8 @@ const INITIAL_STATE: WizardState = {
 const STEP_ORDER: WizardStep[] = [
   'welcome',
   'ble-pairing',
+  'node-info',      // Node info BEFORE wifi-setup so node can be created first
   'wifi-setup',
-  'node-info',
   'first-sensor',
   'success'
 ];
@@ -191,12 +192,34 @@ export class SetupWizardService {
   }
 
   /**
+   * Store a reference to the created node (before wizard is complete)
+   * Used when node is created early in the flow (after node-info step)
+   */
+  setCreatedNode(node: Node): void {
+    this._state.update(state => ({
+      ...state,
+      createdNode: node
+    }));
+  }
+
+  /**
    * Mark wizard as complete with created node
    */
   complete(node: Node): void {
     this._state.update(state => ({
       ...state,
       createdNode: node,
+      isComplete: true,
+      currentStep: 'success'
+    }));
+  }
+
+  /**
+   * Mark wizard as complete (node was already created)
+   */
+  completeWithExistingNode(): void {
+    this._state.update(state => ({
+      ...state,
       isComplete: true,
       currentStep: 'success'
     }));
@@ -222,20 +245,20 @@ export class SetupWizardService {
     }
 
     return {
-      nodeId: `node-${state.bleDevice.macAddress.replace(/:/g, '').toLowerCase()}`,
+      nodeId: state.bleDevice.nodeId,  // Use ESP32-generated nodeId (format: ESP32-<WiFi-MAC>)
       name: state.nodeInfo.name,
+      hubIdentifier: 'my-iot-hub', // Default hub identifier
       protocol: Protocol.WLAN,
-      location: state.nodeInfo.location ? { name: state.nodeInfo.location } : undefined,
-      sensors: state.sensor ? [state.sensor] : undefined
+      location: state.nodeInfo.location ? { name: state.nodeInfo.location } : undefined
     };
   }
 
   /**
-   * Skip sensor configuration step
+   * Skip sensor configuration step - completes the wizard since node is already created
    */
   skipSensorStep(): void {
     this.setSensor(null);
-    this.nextStep();
+    this.completeWithExistingNode();
   }
 
   /**

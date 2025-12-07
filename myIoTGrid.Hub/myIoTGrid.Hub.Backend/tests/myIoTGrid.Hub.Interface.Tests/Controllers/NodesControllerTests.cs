@@ -280,8 +280,9 @@ public class NodesControllerTests
         );
         var node = CreateNodeDto("node-01", "Test Node");
 
-        _nodeServiceMock.Setup(s => s.CreateAsync(It.IsAny<CreateNodeDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(node);
+        // GetOrCreate pattern: returns (NodeDto, isNew: true) for new nodes
+        _nodeServiceMock.Setup(s => s.RegisterOrUpdateWithStatusAsync(It.IsAny<CreateNodeDto>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((node, true));
 
         // Act
         var result = await _sut.Create(dto, CancellationToken.None);
@@ -290,6 +291,32 @@ public class NodesControllerTests
         var createdResult = result.Should().BeOfType<CreatedAtActionResult>().Subject;
         createdResult.ActionName.Should().Be(nameof(NodesController.GetById));
         createdResult.Value.Should().BeOfType<NodeDto>();
+    }
+
+    [Fact]
+    public async Task Create_WithExistingNode_ReturnsOkWithExistingNode()
+    {
+        // Arrange
+        var dto = new CreateNodeDto(
+            NodeId: "node-01",
+            Name: "Test Node",
+            HubIdentifier: null,
+            HubId: _hubId,
+            Protocol: ProtocolDto.WLAN,
+            Location: null
+        );
+        var existingNode = CreateNodeDto("node-01", "Existing Node");
+
+        // GetOrCreate pattern: returns (NodeDto, isNew: false) for existing nodes
+        _nodeServiceMock.Setup(s => s.RegisterOrUpdateWithStatusAsync(It.IsAny<CreateNodeDto>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((existingNode, false));
+
+        // Act
+        var result = await _sut.Create(dto, CancellationToken.None);
+
+        // Assert
+        var okResult = result.Should().BeOfType<OkObjectResult>().Subject;
+        okResult.Value.Should().BeOfType<NodeDto>();
     }
 
     [Fact]
@@ -319,8 +346,9 @@ public class NodesControllerTests
 
         _hubServiceMock.Setup(s => s.GetOrCreateByHubIdAsync("hub-01", It.IsAny<CancellationToken>()))
             .ReturnsAsync(hubDto);
-        _nodeServiceMock.Setup(s => s.CreateAsync(It.IsAny<CreateNodeDto>(), It.IsAny<CancellationToken>()))
-            .ReturnsAsync(node);
+        // GetOrCreate pattern: returns (NodeDto, isNew: true) for new nodes
+        _nodeServiceMock.Setup(s => s.RegisterOrUpdateWithStatusAsync(It.IsAny<CreateNodeDto>(), null, It.IsAny<CancellationToken>()))
+            .ReturnsAsync((node, true));
 
         // Act
         var result = await _sut.Create(dto, CancellationToken.None);

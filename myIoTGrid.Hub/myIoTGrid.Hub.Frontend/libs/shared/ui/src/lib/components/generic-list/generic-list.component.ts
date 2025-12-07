@@ -107,6 +107,9 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     // Slot für Filter
     @ContentChild('filterTemplate', { static: false }) filterTemplate!: TemplateRef<unknown>;
 
+    // Slot für zusätzliche Toolbar-Buttons (z.B. Delete Button)
+    @ContentChild('toolbarActionsTemplate', { static: false }) toolbarActionsTemplate!: TemplateRef<unknown>;
+
     // Custom Column Templates
     @ContentChildren(ListColumnTemplateDirective) customColumnTemplates!: QueryList<ListColumnTemplateDirective>;
 

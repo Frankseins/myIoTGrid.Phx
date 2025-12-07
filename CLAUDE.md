@@ -1392,11 +1392,23 @@ export interface SensorData {
 - [ ] Alert-Level-Styling korrekt?
 
 ### Vor jedem Commit (ESP32):
+- [ ] **FIRMWARE_VERSION erhöht!** (in config.h) - PFLICHT bei jeder Änderung!
 - [ ] Payload enthält hubId, sensorType, value?
 - [ ] REST oder MQTT korrekt implementiert?
 - [ ] WiFi/MQTT Reconnect implementiert?
 - [ ] Deep Sleep für Batteriebetrieb?
 - [ ] OTA-Updates möglich?
+
+### 🚨 WICHTIG: Firmware-Versionierung
+Bei **JEDER** Änderung an der ESP32-Firmware MUSS die Version in `config.h` erhöht werden:
+```cpp
+#define FIRMWARE_VERSION "X.Y.Z"
+```
+- **X** (Major): Breaking Changes, neue Architektur
+- **Y** (Minor): Neue Features, neue Sensoren
+- **Z** (Patch): Bugfixes, kleine Verbesserungen
+
+Die Version wird beim Start im Serial Monitor angezeigt - so erkennt man sofort welche Firmware läuft!
 
 ---
 

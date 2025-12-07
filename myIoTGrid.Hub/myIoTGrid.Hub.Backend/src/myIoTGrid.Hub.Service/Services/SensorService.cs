@@ -224,7 +224,54 @@ public class SensorService : ISensorService
             throw new InvalidOperationException($"Sensor with Id '{id}' not found.");
         }
 
+        // Identify capabilities to delete BEFORE ApplyUpdate modifies the collection
+        var capabilitiesToDelete = new List<SensorCapability>();
+        if (dto.Capabilities != null)
+        {
+            var updatedIds = dto.Capabilities
+                .Where(c => c.Id.HasValue)
+                .Select(c => c.Id!.Value)
+                .ToHashSet();
+
+            // Get the actual tracked entities that will be removed
+            capabilitiesToDelete = sensor.Capabilities
+                .Where(c => !updatedIds.Contains(c.Id))
+                .ToList();
+        }
+
+        // Get IDs of existing capabilities BEFORE ApplyUpdate
+        var existingCapabilityIds = sensor.Capabilities.Select(c => c.Id).ToHashSet();
+
+        // Apply updates (adds new and updates existing capabilities, but does NOT remove)
         sensor.ApplyUpdate(dto);
+
+        // Identify and explicitly mark NEW capabilities as Added
+        // (EF Core might not auto-detect them as new if they have an explicit Id)
+        foreach (var cap in sensor.Capabilities)
+        {
+            if (!existingCapabilityIds.Contains(cap.Id))
+            {
+                _context.Entry(cap).State = EntityState.Added;
+                _logger.LogDebug("Marking capability {CapabilityId} ({Type}) as Added for Sensor {SensorId}",
+                    cap.Id, cap.MeasurementType, id);
+            }
+        }
+
+        // Now handle deletion: Remove from collection AND mark for deletion
+        // Both steps are needed for EF Core to properly track the deletion
+        if (capabilitiesToDelete.Count > 0)
+        {
+            foreach (var cap in capabilitiesToDelete)
+            {
+                // Remove from the in-memory collection
+                sensor.Capabilities.Remove(cap);
+                // Explicitly mark for deletion in the change tracker
+                _context.SensorCapabilities.Remove(cap);
+            }
+            _logger.LogInformation("Removing {Count} capabilities from Sensor {SensorId}",
+                capabilitiesToDelete.Count, id);
+        }
+
         await _unitOfWork.SaveChangesAsync(ct);
 
         InvalidateCache(sensor.TenantId);
@@ -375,6 +422,30 @@ public class SensorService : ISensorService
             ));
         }
 
+        // GY-302 - Light (BH1750 Breakout Board)
+        if (!existingCodes.Contains("gy302"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "gy302",
+                name: "GY-302 Lichstärkensensor",
+                manufacturer: "Generic",
+                protocol: CommunicationProtocol.I2C,
+                category: "climate",
+                icon: "light_mode",
+                color: "#FFEB3B",
+                i2CAddress: "0x23",
+                sdaPin: 21,
+                sclPin: 22,
+                intervalSeconds: 60,
+                capabilities: new[]
+                {
+                    CreateCapability("illuminance", "Helligkeit", "lux", 1, 65535, 1, 20, 1024, "IlluminanceMeasurement")
+                },
+                now: now
+            ));
+        }
+
         // DS18B20 - Water Temperature
         if (!existingCodes.Contains("ds18b20"))
         {
@@ -419,7 +490,7 @@ public class SensorService : ISensorService
             ));
         }
 
-        // NEO-6M - GPS
+        // NEO-6M - GPS (UART: RX=GPIO16, TX=GPIO17 - ESP32 Serial2 defaults)
         if (!existingCodes.Contains("neo-6m"))
         {
             newSensors.Add(CreateSensor(
@@ -431,6 +502,8 @@ public class SensorService : ISensorService
                 category: "location",
                 icon: "location_on",
                 color: "#4CAF50",
+                analogPin: 16,      // RX Pin (ESP32 RX ← GPS TX)
+                digitalPin: 17,     // TX Pin (ESP32 TX → GPS RX)
                 intervalSeconds: 1,
                 capabilities: new[]
                 {
@@ -438,6 +511,31 @@ public class SensorService : ISensorService
                     CreateCapability("longitude", "Längengrad", "°", -180, 180, 0.000001, 2.5),
                     CreateCapability("altitude", "Höhe", "m", -500, 50000, 0.1, 10),
                     CreateCapability("speed", "Geschwindigkeit", "km/h", 0, 500, 0.1, 0.5)
+                },
+                now: now
+            ));
+        }
+
+        // SR04M-2 - Waterproof Ultrasonic Distance Sensor (UART Mode)
+        if (!existingCodes.Contains("sr04m-2"))
+        {
+            newSensors.Add(CreateSensor(
+                tenantId: tenantId,
+                code: "sr04m-2",
+                name: "SR04M-2 Ultraschall wasserdicht (UART)",
+                manufacturer: "Generic",
+                protocol: CommunicationProtocol.UART,
+                category: "water",
+                icon: "straighten",
+                color: "#009688",
+                analogPin: 19,      // RX Pin (ESP32 RX ← Sensor TX)
+                digitalPin: 18,     // TX Pin (ESP32 TX → Sensor RX)
+                intervalSeconds: 5,
+                minIntervalSeconds: 1,
+                capabilities: new[]
+                {
+                    CreateCapability("distance", "Distanz", "cm", 20, 600, 1, 1, 64514),
+                    CreateCapability("water_level", "Wasserstand", "cm", 20, 600, 1, 1, 64512)
                 },
                 now: now
             ));

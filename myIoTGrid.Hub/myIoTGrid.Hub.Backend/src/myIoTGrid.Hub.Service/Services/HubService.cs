@@ -172,6 +172,23 @@ public class HubService : IHubService
         _logger.LogInformation("Default Hub created: {HubId} ({Name})", defaultHub.HubId, defaultHub.Name);
     }
 
+    /// <inheritdoc />
+    public async Task<HubProvisioningSettingsDto> GetProvisioningSettingsAsync(CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        var hub = await _context.Hubs
+            .AsNoTracking()
+            .FirstOrDefaultAsync(h => h.TenantId == tenantId, ct);
+
+        if (hub == null)
+        {
+            throw new InvalidOperationException("Hub not initialized. Please restart the application.");
+        }
+
+        return hub.ToProvisioningSettingsDto();
+    }
+
     // === Legacy API Implementation ===
 
     /// <inheritdoc />

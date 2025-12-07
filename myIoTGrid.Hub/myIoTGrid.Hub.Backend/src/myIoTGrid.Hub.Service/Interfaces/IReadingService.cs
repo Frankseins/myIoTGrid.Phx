@@ -38,4 +38,7 @@ public interface IReadingService
 
     /// <summary>Marks Readings as synced to cloud</summary>
     Task MarkAsSyncedAsync(IEnumerable<long> ids, CancellationToken ct = default);
+
+    /// <summary>Deletes Readings within a date range, optionally filtered by sensor and measurement type</summary>
+    Task<DeleteReadingsResultDto> DeleteRangeAsync(DeleteReadingsRangeDto dto, CancellationToken ct = default);
 }

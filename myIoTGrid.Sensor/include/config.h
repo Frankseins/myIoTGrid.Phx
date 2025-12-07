@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.2.0"
+#define FIRMWARE_VERSION "1.8.10"
 #endif
 
 // Hardware Type

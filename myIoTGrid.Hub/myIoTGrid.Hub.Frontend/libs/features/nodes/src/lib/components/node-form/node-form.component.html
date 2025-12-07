@@ -37,7 +37,7 @@
           </button>
         }
 
-        <!-- Delete Button (nur im Edit-Modus sichtbar) -->
+        <!-- Delete Node Button (nur im Edit-Modus sichtbar) -->
         @if (isEditMode()) {
           <button mat-icon-button class="tbar-icon warn"
                   matTooltip="Node löschen"
@@ -413,6 +413,18 @@
                   </div>
                 </ng-template>
 
+                <!-- Toolbar Actions Template (Delete Readings Button) -->
+                <ng-template #toolbarActionsTemplate>
+                  @if (isEditMode()) {
+                    <button mat-icon-button class="tbar-icon warn"
+                            matTooltip="Messwerte löschen"
+                            [disabled]="historyTotalRecords() === 0"
+                            (click)="openDeleteDrawer()">
+                      <mat-icon>delete_sweep</mat-icon>
+                    </button>
+                  }
+                </ng-template>
+
                 <!-- Custom timestamp column -->
                 <ng-template myiotgridListColumnTemplate="timestamp" let-row>
                   {{ formatTimestamp(row.timestamp) }}
@@ -600,4 +612,13 @@
       </button>
     </div>
   </div>
+</ng-template>
+
+<!-- Delete Readings Drawer Template -->
+<ng-template #deleteReadingsDrawer>
+  <myiotgrid-delete-readings-drawer
+    [node]="node()"
+    (close)="closeDeleteDrawer()"
+    (deleted)="onDeleteReadingsComplete($event)">
+  </myiotgrid-delete-readings-drawer>
 </ng-template>

@@ -559,6 +559,47 @@ public class ReadingService : IReadingService
         _logger.LogInformation("Marked {Count} readings as synced to cloud", idList.Count);
     }
 
+    /// <inheritdoc />
+    public async Task<DeleteReadingsResultDto> DeleteRangeAsync(DeleteReadingsRangeDto dto, CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        // Build query with required filters
+        var query = _context.Readings
+            .Where(r => r.TenantId == tenantId)
+            .Where(r => r.NodeId == dto.NodeId)
+            .Where(r => r.Timestamp >= dto.From && r.Timestamp <= dto.To);
+
+        // Optional: Filter by AssignmentId (sensor)
+        if (dto.AssignmentId.HasValue)
+        {
+            query = query.Where(r => r.AssignmentId == dto.AssignmentId.Value);
+        }
+
+        // Optional: Filter by MeasurementType
+        if (!string.IsNullOrEmpty(dto.MeasurementType))
+        {
+            var measurementType = dto.MeasurementType.ToLowerInvariant();
+            query = query.Where(r => r.MeasurementType == measurementType);
+        }
+
+        // Execute bulk delete
+        var deletedCount = await query.ExecuteDeleteAsync(ct);
+
+        _logger.LogInformation(
+            "Deleted {Count} readings for Node {NodeId} from {From} to {To} (AssignmentId: {AssignmentId}, MeasurementType: {MeasurementType})",
+            deletedCount, dto.NodeId, dto.From, dto.To, dto.AssignmentId, dto.MeasurementType);
+
+        return new DeleteReadingsResultDto(
+            DeletedCount: deletedCount,
+            NodeId: dto.NodeId,
+            From: dto.From,
+            To: dto.To,
+            AssignmentId: dto.AssignmentId,
+            MeasurementType: dto.MeasurementType
+        );
+    }
+
     private async Task<HubDto> GetOrCreateHubAsync(string? hubId, Guid tenantId, CancellationToken ct)
     {
         if (!string.IsNullOrEmpty(hubId))

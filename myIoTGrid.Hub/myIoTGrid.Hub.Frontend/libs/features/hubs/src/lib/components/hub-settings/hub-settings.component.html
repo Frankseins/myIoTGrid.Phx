@@ -27,6 +27,8 @@
     </mat-card>
   } @else {
     <div class="settings-grid">
+      <!-- Row 1: Status | Konfiguration | Dienste -->
+
       <!-- Status Card -->
       <mat-card class="status-card">
         <mat-card-header>
@@ -210,6 +212,110 @@
               <mat-icon class="status-icon">{{ status()?.services?.cloud?.message === 'Not configured' ? 'remove_circle_outline' : (status()?.services?.cloud?.isOnline ? 'check_circle' : 'cancel') }}</mat-icon>
             </div>
           </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Row 2: Node Provisioning | Cloud | Smart Home -->
+
+      <!-- Node Provisioning Card -->
+      <mat-card class="provisioning-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>bluetooth</mat-icon>
+            Node-Provisioning
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="card-description">Standard-Einstellungen für neue Sensor-Nodes (BLE Setup)</p>
+          <form [formGroup]="form" (ngSubmit)="onSave()">
+            <div class="provisioning-section">
+              <h4>WiFi-Einstellungen</h4>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>WiFi SSID</mat-label>
+                <input
+                  matInput
+                  formControlName="defaultWifiSsid"
+                  placeholder="Ihr WiFi-Netzwerk"
+                  [readonly]="isViewMode()">
+                <mat-icon matSuffix>wifi</mat-icon>
+                @if (form.get('defaultWifiSsid')?.hasError('maxlength')) {
+                  <mat-error>SSID darf maximal 32 Zeichen haben</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>WiFi Passwort</mat-label>
+                <input
+                  matInput
+                  formControlName="defaultWifiPassword"
+                  [type]="isViewMode() ? 'password' : 'text'"
+                  placeholder="WiFi-Passwort"
+                  [readonly]="isViewMode()">
+                <mat-icon matSuffix>lock</mat-icon>
+                @if (form.get('defaultWifiPassword')?.hasError('maxlength')) {
+                  <mat-error>Passwort darf maximal 64 Zeichen haben</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            <mat-divider></mat-divider>
+
+            <div class="provisioning-section">
+              <h4>API-Verbindung</h4>
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Hub API URL</mat-label>
+                <input
+                  matInput
+                  formControlName="apiUrl"
+                  placeholder="http://192.168.1.100"
+                  [readonly]="isViewMode()">
+                <mat-icon matSuffix>link</mat-icon>
+                <mat-hint>IP-Adresse oder Hostname des Hubs</mat-hint>
+                @if (form.get('apiUrl')?.hasError('maxlength')) {
+                  <mat-error>URL darf maximal 200 Zeichen haben</mat-error>
+                }
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>API Port</mat-label>
+                <input
+                  matInput
+                  type="number"
+                  formControlName="apiPort"
+                  placeholder="5002"
+                  [readonly]="isViewMode()">
+                <mat-icon matSuffix>settings_ethernet</mat-icon>
+                @if (form.get('apiPort')?.hasError('min') || form.get('apiPort')?.hasError('max')) {
+                  <mat-error>Port muss zwischen 1 und 65535 liegen</mat-error>
+                }
+              </mat-form-field>
+            </div>
+
+            @if (isEditMode()) {
+              <div class="form-actions">
+                <button
+                  mat-button
+                  type="button"
+                  (click)="onCancel()"
+                  [disabled]="isSaving()">
+                  Abbrechen
+                </button>
+                <button
+                  mat-raised-button
+                  color="primary"
+                  type="submit"
+                  [disabled]="form.invalid || isSaving()">
+                  @if (isSaving()) {
+                    <mat-icon class="spin">sync</mat-icon>
+                    Speichern...
+                  } @else {
+                    <mat-icon>save</mat-icon>
+                    Speichern
+                  }
+                </button>
+              </div>
+            }
+          </form>
         </mat-card-content>
       </mat-card>
 

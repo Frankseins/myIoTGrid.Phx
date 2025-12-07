@@ -310,12 +310,18 @@ export class SensorFormComponent implements OnInit {
     this.selectedProtocol.set(sensor.protocol);
 
     // Load capabilities into FormArray
+    console.log('[SensorForm] Loading capabilities:', sensor.capabilities);
+    console.log('[SensorForm] Capabilities count:', sensor.capabilities?.length ?? 0);
+
     this.capabilitiesFormArray.clear();
-    if (sensor.capabilities) {
-      sensor.capabilities.forEach(cap => {
+    if (sensor.capabilities && sensor.capabilities.length > 0) {
+      sensor.capabilities.forEach((cap, index) => {
+        console.log(`[SensorForm] Adding capability ${index}:`, cap);
         this.capabilitiesFormArray.push(this.createCapabilityFormGroup(cap));
       });
     }
+
+    console.log('[SensorForm] FormArray length after patch:', this.capabilitiesFormArray.length);
   }
 
   /**

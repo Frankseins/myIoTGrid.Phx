@@ -9,7 +9,11 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { SetupWizardService, NodeInfo } from '../../services/setup-wizard.service';
+import { NodeApiService } from '@myiotgrid/shared/data-access';
+import { Protocol } from '@myiotgrid/shared/models';
 
 interface IconOption {
   value: string;
@@ -34,19 +38,24 @@ interface LocationSuggestion {
     MatInputModule,
     MatSelectModule,
     MatDividerModule,
-    MatTooltipModule
+    MatTooltipModule,
+    MatProgressSpinnerModule,
+    MatSnackBarModule
   ],
   templateUrl: './node-info.component.html',
   styleUrl: './node-info.component.scss'
 })
 export class NodeInfoComponent implements OnInit {
   private readonly wizardService = inject(SetupWizardService);
+  private readonly nodeApiService = inject(NodeApiService);
+  private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
 
   form!: FormGroup;
 
   readonly bleDevice = this.wizardService.bleDevice;
   readonly selectedIcon = signal<string>('sensors');
+  readonly isCreating = signal(false);
 
   readonly icons: IconOption[] = [
     { value: 'sensors', label: 'Sensor' },
@@ -120,7 +129,7 @@ export class NodeInfoComponent implements OnInit {
     this.form.patchValue({ location: location.name });
   }
 
-  onSave(): void {
+  async onSave(): Promise<void> {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
       return;
@@ -132,8 +141,50 @@ export class NodeInfoComponent implements OnInit {
       icon: this.form.value.icon
     };
 
+    // Save node info to wizard state
     this.wizardService.setNodeInfo(nodeInfo);
-    this.wizardService.nextStep();
+
+    // Create the node via API BEFORE proceeding to WiFi setup
+    // This ensures the node exists when the ESP32 discovers the Hub and calls the API
+    this.isCreating.set(true);
+
+    try {
+      const bleDevice = this.bleDevice();
+      if (!bleDevice) {
+        throw new Error('No BLE device found');
+      }
+
+      // Use the ESP32-generated nodeId from BLE registration (format: ESP32-<WiFi-MAC>)
+      const nodeId = bleDevice.nodeId;
+
+      const createNodeDto = {
+        nodeId: nodeId,
+        name: nodeInfo.name,
+        hubIdentifier: 'my-iot-hub',
+        protocol: Protocol.WLAN,
+        location: nodeInfo.location ? { name: nodeInfo.location } : undefined
+      };
+
+      console.log('[NodeInfo] Creating node via API:', createNodeDto);
+
+      const createdNode = await this.nodeApiService.create(createNodeDto).toPromise();
+
+      if (!createdNode) {
+        throw new Error('Failed to create node');
+      }
+
+      console.log('[NodeInfo] Node created successfully:', createdNode.id);
+
+      // Store the created node in wizard state so it can be used later
+      // Note: We don't call complete() here, just store a reference
+      this.wizardService.setCreatedNode(createdNode);
+
+      this.wizardService.nextStep();
+    } catch (error) {
+      console.error('[NodeInfo] Error creating node:', error);
+      this.snackBar.open('Fehler beim Erstellen des Nodes', 'Schließen', { duration: 5000 });
+      this.isCreating.set(false);
+    }
   }
 
   onBack(): void {

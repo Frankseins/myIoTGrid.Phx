@@ -12,6 +12,10 @@ namespace myIoTGrid.Hub.Shared.DTOs;
 /// <param name="IsOnline">Online status</param>
 /// <param name="CreatedAt">Creation timestamp</param>
 /// <param name="SensorCount">Number of connected sensors</param>
+/// <param name="DefaultWifiSsid">Default WiFi SSID for node provisioning</param>
+/// <param name="DefaultWifiPassword">Default WiFi password for node provisioning</param>
+/// <param name="ApiUrl">API URL for nodes to connect to</param>
+/// <param name="ApiPort">API Port (default 5002)</param>
 public record HubDto(
     Guid Id,
     Guid TenantId,
@@ -21,7 +25,11 @@ public record HubDto(
     DateTime? LastSeen,
     bool IsOnline,
     DateTime CreatedAt,
-    int SensorCount
+    int SensorCount,
+    string? DefaultWifiSsid = null,
+    string? DefaultWifiPassword = null,
+    string? ApiUrl = null,
+    int ApiPort = 5002
 );
 
 /// <summary>
@@ -41,7 +49,48 @@ public record CreateHubDto(
 /// </summary>
 /// <param name="Name">New display name</param>
 /// <param name="Description">New description</param>
+/// <param name="DefaultWifiSsid">Default WiFi SSID for node provisioning</param>
+/// <param name="DefaultWifiPassword">Default WiFi password for node provisioning</param>
+/// <param name="ApiUrl">API URL for nodes to connect to</param>
+/// <param name="ApiPort">API Port (default 5002)</param>
 public record UpdateHubDto(
     string? Name = null,
-    string? Description = null
+    string? Description = null,
+    string? DefaultWifiSsid = null,
+    string? DefaultWifiPassword = null,
+    string? ApiUrl = null,
+    int? ApiPort = null
+);
+
+/// <summary>
+/// DTO for Hub provisioning settings (for BLE setup wizard)
+/// </summary>
+/// <param name="DefaultWifiSsid">Default WiFi SSID</param>
+/// <param name="DefaultWifiPassword">Default WiFi password</param>
+/// <param name="ApiUrl">API URL for nodes</param>
+/// <param name="ApiPort">API Port</param>
+public record HubProvisioningSettingsDto(
+    string? DefaultWifiSsid,
+    string? DefaultWifiPassword,
+    string? ApiUrl,
+    int ApiPort
+);
+
+/// <summary>
+/// DTO for BLE provisioning data sent to sensor node
+/// Contains everything needed to configure a new sensor via BLE
+/// </summary>
+/// <param name="WifiSsid">WiFi network name</param>
+/// <param name="WifiPassword">WiFi password</param>
+/// <param name="ApiUrl">Hub API URL (e.g., "http://192.168.1.100:5002")</param>
+/// <param name="NodeId">Assigned Node ID (GUID)</param>
+/// <param name="NodeName">Display name for the node</param>
+/// <param name="ApiKey">API key for authentication</param>
+public record BleProvisioningDataDto(
+    string WifiSsid,
+    string WifiPassword,
+    string ApiUrl,
+    Guid NodeId,
+    string NodeName,
+    string ApiKey
 );

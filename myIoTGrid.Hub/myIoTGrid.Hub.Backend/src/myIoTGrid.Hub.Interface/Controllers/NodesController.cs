@@ -205,13 +205,15 @@ public class NodesController : ControllerBase
     }
 
     /// <summary>
-    /// Creates a new Node
+    /// Creates or updates a Node (GetOrCreate pattern).
+    /// If a node with the same NodeId exists, it will be updated and returned.
     /// </summary>
     /// <param name="dto">Node data</param>
     /// <param name="ct">Cancellation Token</param>
-    /// <returns>The created Node</returns>
+    /// <returns>The created or existing Node</returns>
     [HttpPost]
     [ProducesResponseType(typeof(NodeDto), StatusCodes.Status201Created)]
+    [ProducesResponseType(typeof(NodeDto), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Create([FromBody] CreateNodeDto dto, CancellationToken ct)
     {
@@ -232,8 +234,19 @@ public class NodesController : ControllerBase
         }
 
         var createDto = dto with { HubId = hubId };
-        var node = await _nodeService.CreateAsync(createDto, ct);
-        return CreatedAtAction(nameof(GetById), new { id = node.Id }, node);
+
+        // Use RegisterOrUpdateWithStatusAsync for GetOrCreate pattern
+        // This allows re-provisioning of existing nodes
+        var (node, isNew) = await _nodeService.RegisterOrUpdateWithStatusAsync(createDto, null, ct);
+
+        if (isNew)
+        {
+            return CreatedAtAction(nameof(GetById), new { id = node.Id }, node);
+        }
+
+        // Return existing node with 200 OK
+        _logger.LogInformation("Node already exists, returning existing: {NodeId}", dto.NodeId);
+        return Ok(node);
     }
 
     /// <summary>

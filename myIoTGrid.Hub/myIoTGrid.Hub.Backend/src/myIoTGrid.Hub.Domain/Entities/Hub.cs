@@ -32,6 +32,19 @@ public class Hub : ITenantEntity
     /// <summary>When the hub was registered</summary>
     public DateTime CreatedAt { get; set; }
 
+    // Default Provisioning Settings (for BLE setup of new nodes)
+    /// <summary>Default WiFi SSID for new node provisioning</summary>
+    public string? DefaultWifiSsid { get; set; }
+
+    /// <summary>Default WiFi Password for new node provisioning (stored encrypted)</summary>
+    public string? DefaultWifiPassword { get; set; }
+
+    /// <summary>API URL for nodes to connect to (e.g., "http://192.168.1.100:5002")</summary>
+    public string? ApiUrl { get; set; }
+
+    /// <summary>API Port (default 5002 for HTTP, 5001 for HTTPS)</summary>
+    public int ApiPort { get; set; } = 5002;
+
     // Navigation Properties
     public Tenant? Tenant { get; set; }
     public ICollection<Node> Nodes { get; set; } = new List<Node>();

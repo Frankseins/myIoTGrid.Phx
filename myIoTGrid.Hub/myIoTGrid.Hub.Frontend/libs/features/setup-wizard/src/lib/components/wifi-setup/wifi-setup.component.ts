@@ -9,7 +9,10 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
-import { SetupWizardService, WifiNetwork, WifiCredentials } from '../../services/setup-wizard.service';
+import { SetupWizardService, WifiCredentials } from '../../services/setup-wizard.service';
+import { BleCommunicationService } from '../../services/ble-communication.service';
+import { HubApiService } from '@myiotgrid/shared/data-access';
+import { HubProvisioningSettings } from '@myiotgrid/shared/models';
 
 type ConfigState = 'idle' | 'scanning' | 'configuring' | 'success' | 'error';
 
@@ -33,12 +36,15 @@ type ConfigState = 'idle' | 'scanning' | 'configuring' | 'success' | 'error';
 })
 export class WifiSetupComponent implements OnInit {
   private readonly wizardService = inject(SetupWizardService);
+  private readonly bleService = inject(BleCommunicationService);
+  private readonly hubApiService = inject(HubApiService);
   private readonly fb = inject(FormBuilder);
 
   readonly configState = signal<ConfigState>('idle');
-  readonly networks = signal<WifiNetwork[]>([]);
   readonly showPassword = signal(false);
   readonly errorMessage = signal<string | null>(null);
+  readonly provisioningSettings = signal<HubProvisioningSettings | null>(null);
+  readonly isLoadingDefaults = signal(false);
 
   form!: FormGroup;
 
@@ -46,8 +52,10 @@ export class WifiSetupComponent implements OnInit {
 
   ngOnInit(): void {
     this.initForm();
-    this.scanNetworks();
+    this.loadProvisioningDefaults();
+  }
 
+  private loadProvisioningDefaults(): void {
     // Pre-fill if we have saved credentials
     const savedCredentials = this.wizardService.wifiCredentials();
     if (savedCredentials) {
@@ -55,7 +63,28 @@ export class WifiSetupComponent implements OnInit {
         ssid: savedCredentials.ssid,
         password: savedCredentials.password
       });
+      return;
     }
+
+    // Load provisioning defaults from Hub
+    this.isLoadingDefaults.set(true);
+    this.hubApiService.getProvisioningSettings().subscribe({
+      next: (settings) => {
+        this.provisioningSettings.set(settings);
+        // Pre-fill form with defaults
+        if (settings.defaultWifiSsid) {
+          this.form.patchValue({
+            ssid: settings.defaultWifiSsid,
+            password: settings.defaultWifiPassword || ''
+          });
+        }
+        this.isLoadingDefaults.set(false);
+      },
+      error: (error) => {
+        console.error('[WiFiSetup] Failed to load provisioning defaults:', error);
+        this.isLoadingDefaults.set(false);
+      }
+    });
   }
 
   private initForm(): void {
@@ -65,47 +94,8 @@ export class WifiSetupComponent implements OnInit {
     });
   }
 
-  scanNetworks(): void {
-    this.configState.set('scanning');
-    this.errorMessage.set(null);
-
-    // Simulate network scan - in real implementation, this would
-    // communicate with the ESP32 via BLE to get available networks
-    setTimeout(() => {
-      const simulatedNetworks: WifiNetwork[] = [
-        { ssid: 'Zuhause', rssi: -45, secured: true },
-        { ssid: 'FRITZ!Box 7590', rssi: -52, secured: true },
-        { ssid: 'Gast-WLAN', rssi: -65, secured: true },
-        { ssid: 'Nachbar_5G', rssi: -78, secured: true },
-        { ssid: 'OpenWiFi', rssi: -82, secured: false }
-      ];
-
-      this.networks.set(simulatedNetworks);
-      this.configState.set('idle');
-    }, 1500);
-  }
-
-  selectNetwork(network: WifiNetwork): void {
-    this.form.patchValue({ ssid: network.ssid });
-    if (!network.secured) {
-      this.form.patchValue({ password: '' });
-      this.form.get('password')?.clearValidators();
-      this.form.get('password')?.updateValueAndValidity();
-    } else {
-      this.form.get('password')?.setValidators([Validators.required, Validators.minLength(8)]);
-      this.form.get('password')?.updateValueAndValidity();
-    }
-  }
-
   togglePasswordVisibility(): void {
     this.showPassword.update(v => !v);
-  }
-
-  getSignalStrengthIcon(rssi: number): string {
-    if (rssi > -50) return 'signal_wifi_4_bar';
-    if (rssi > -60) return 'network_wifi_3_bar';
-    if (rssi > -70) return 'network_wifi_2_bar';
-    return 'network_wifi_1_bar';
   }
 
   async onConfigure(): Promise<void> {
@@ -122,24 +112,76 @@ export class WifiSetupComponent implements OnInit {
     this.configState.set('configuring');
     this.errorMessage.set(null);
 
-    // Simulate sending WiFi credentials to ESP32 via BLE
-    // In real implementation, this would use Web Bluetooth GATT
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    try {
+      // Check if BLE is connected
+      const bleConnected = this.bleService.connectionState() === 'connected';
 
-    // Simulate connection test
-    const success = Math.random() > 0.1; // 90% success rate
+      if (bleConnected) {
+        // Step 1: Send WiFi credentials via BLE
+        console.log('[WiFiSetup] Sending WiFi credentials via BLE...');
+        const wifiSuccess = await this.bleService.sendWifiConfig({
+          ssid: credentials.ssid,
+          password: credentials.password
+        });
 
-    if (success) {
-      this.wizardService.setWifiCredentials(credentials);
-      this.configState.set('success');
+        if (!wifiSuccess) {
+          this.configState.set('error');
+          this.errorMessage.set(this.bleService.lastError() || 'WiFi-Konfiguration fehlgeschlagen');
+          return;
+        }
 
-      // Auto-advance after brief delay
-      setTimeout(() => {
-        this.wizardService.nextStep();
-      }, 1000);
-    } else {
+        // Step 2: Send API configuration via BLE (no more mDNS discovery!)
+        const settings = this.provisioningSettings();
+        const createdNode = this.wizardService.createdNode();
+
+        if (settings?.apiUrl && createdNode) {
+          // Build the full Hub URL with port
+          // Check if URL already includes a port (after removing protocol like http://)
+          const urlWithoutProtocol = settings.apiUrl.replace(/^https?:\/\//, '');
+          const hasPort = urlWithoutProtocol.includes(':');
+          const hubUrl = hasPort
+            ? settings.apiUrl  // Already has port
+            : `${settings.apiUrl}:${settings.apiPort}`;
+
+          console.log('[WiFiSetup] Sending API config via BLE...', { hubUrl });
+          const apiSuccess = await this.bleService.sendApiConfig({
+            nodeId: createdNode.id,
+            apiKey: '', // API key will be assigned by Hub on first registration
+            hubUrl: hubUrl
+          });
+
+          if (!apiSuccess) {
+            console.warn('[WiFiSetup] API config send failed, ESP32 may use fallback discovery');
+          } else {
+            console.log('[WiFiSetup] API config sent successfully. ESP32 will connect directly to Hub.');
+          }
+        } else {
+          console.log('[WiFiSetup] No API URL configured or no node created, ESP32 will use mDNS discovery.');
+        }
+
+        this.wizardService.setWifiCredentials(credentials);
+        this.configState.set('success');
+
+        // Auto-advance after brief delay
+        setTimeout(() => {
+          this.wizardService.nextStep();
+        }, 1000);
+      } else {
+        // Fallback: Simulate for demo/testing when BLE is not connected
+        console.log('[WiFiSetup] BLE not connected, using simulated mode');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        this.wizardService.setWifiCredentials(credentials);
+        this.configState.set('success');
+
+        setTimeout(() => {
+          this.wizardService.nextStep();
+        }, 1000);
+      }
+    } catch (error) {
+      console.error('[WiFiSetup] Configuration error:', error);
       this.configState.set('error');
-      this.errorMessage.set('Verbindung fehlgeschlagen. Bitte überprüfen Sie das Passwort.');
+      this.errorMessage.set('Konfiguration fehlgeschlagen. Bitte versuchen Sie es erneut.');
     }
   }
 

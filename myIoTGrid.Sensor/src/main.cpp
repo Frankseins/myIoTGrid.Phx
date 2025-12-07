@@ -26,6 +26,8 @@
 #include "api_client.h"
 #include "discovery_client.h"
 #include "sensor_simulator.h"
+#include "hardware_scanner.h"
+#include "sensor_reader.h"
 
 #ifdef PLATFORM_ESP32
 #include "ble_service.h"
@@ -49,6 +51,8 @@ WiFiManager wifiManager;
 ApiClient apiClient;
 DiscoveryClient discoveryClient;
 SensorSimulator sensorSimulator;
+HardwareScanner hardwareScanner;
+SensorReader sensorReader;
 
 #ifdef PLATFORM_ESP32
 BLEProvisioningService bleService;
@@ -97,6 +101,46 @@ static unsigned long lastConfigCheck = 0;
 static NodeConfigurationResponse currentConfig;
 static bool configLoaded = false;
 static String currentSerial;
+static unsigned long lastValidatedConfigTimestamp = 0;  // Track when we last validated hardware
+
+// ============================================================================
+// URL Helper Functions
+// ============================================================================
+
+/**
+ * Ensure Hub URL has a port. Adds default port 5002 if missing.
+ * E.g., "http://192.168.1.100" -> "http://192.168.1.100:5002"
+ */
+String ensureUrlHasPort(const String& url, int defaultPort = 5002) {
+    if (url.length() == 0) return url;
+
+    // Find protocol end (after "://")
+    int protocolEnd = url.indexOf("://");
+    if (protocolEnd < 0) protocolEnd = 0;
+    else protocolEnd += 3;
+
+    // Check if there's already a port after the host
+    String afterProtocol = url.substring(protocolEnd);
+    int portIndex = afterProtocol.indexOf(':');
+
+    if (portIndex >= 0) {
+        // URL already has a port
+        return url;
+    }
+
+    // No port found - add default port
+    // Find where host ends (before path if any)
+    int pathStart = afterProtocol.indexOf('/');
+    if (pathStart < 0) {
+        // No path - just append port
+        return url + ":" + String(defaultPort);
+    } else {
+        // Has path - insert port before path
+        String host = url.substring(0, protocolEnd + pathStart);
+        String path = url.substring(protocolEnd + pathStart);
+        return host + ":" + String(defaultPort) + path;
+    }
+}
 
 // ============================================================================
 // Hardware Detection (ESP32 only)
@@ -110,8 +154,26 @@ static String currentSerial;
  * SHT31: 0x44 or 0x45
  */
 void detectI2CSensors() {
-    Wire.begin();
-    Serial.println("[HW] Scanning I2C bus for sensors...");
+    Wire.begin(21, 22);  // Explicit SDA=21, SCL=22
+    Serial.println("[HW] Scanning I2C bus (SDA=21, SCL=22)...");
+
+    // Full I2C scan first
+    int devicesFound = 0;
+    Serial.println("[HW] Full I2C scan:");
+    for (uint8_t addr = 1; addr < 127; addr++) {
+        Wire.beginTransmission(addr);
+        byte error = Wire.endTransmission();
+        if (error == 0) {
+            Serial.printf("[HW]   Found device at 0x%02X\n", addr);
+            devicesFound++;
+        }
+    }
+    if (devicesFound == 0) {
+        Serial.println("[HW]   No I2C devices found!");
+        Serial.println("[HW]   Check wiring: SDA->GPIO21, SCL->GPIO22, VCC->3.3V, GND->GND");
+    } else {
+        Serial.printf("[HW]   Total: %d device(s) found\n", devicesFound);
+    }
 
     // Check for BME280/BME680 at 0x76
     Wire.beginTransmission(0x76);
@@ -202,11 +264,12 @@ void detectDHT22() {
 }
 
 /**
- * Perform hardware auto-detection
+ * Perform hardware auto-detection (simplified - no pin scanning)
  */
 void autoDetectHardware() {
     Serial.println("[HW] Auto-detecting hardware sensors...");
 
+    // Simple I2C scan only
     detectI2CSensors();
     detectDHT22();
 
@@ -445,10 +508,18 @@ void checkBootButton() {
 
 #ifdef PLATFORM_ESP32
 void onBLEConfigReceived(const BLEConfig& config) {
-    Serial.println("[Main] BLE configuration received!");
+    Serial.println("[Main] ========================================");
+    Serial.println("[Main] BLE CONFIGURATION RECEIVED");
+    Serial.println("[Main] ========================================");
     Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
     Serial.printf("[Main] WiFi SSID: %s\n", config.wifiSsid.c_str());
-    Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+
+    if (config.hubApiUrl.length() > 0) {
+        Serial.println("[Main] Mode: DIRECT HUB CONNECTION (no UDP discovery needed)");
+        Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+    } else {
+        Serial.println("[Main] Mode: WIFI-ONLY (will discover Hub via UDP broadcast)");
+    }
 
     // Save configuration to NVS
     StoredConfig storedConfig;
@@ -456,7 +527,7 @@ void onBLEConfigReceived(const BLEConfig& config) {
     storedConfig.apiKey = config.apiKey;
     storedConfig.wifiSsid = config.wifiSsid;
     storedConfig.wifiPassword = config.wifiPassword;
-    storedConfig.hubApiUrl = config.hubApiUrl;
+    storedConfig.hubApiUrl = config.hubApiUrl;  // May be empty - will discover later
     storedConfig.isValid = true;
 
     if (configManager.saveConfig(storedConfig)) {
@@ -465,8 +536,12 @@ void onBLEConfigReceived(const BLEConfig& config) {
         // Stop BLE service
         bleService.stop();
 
-        // Configure API client
-        apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
+        // Configure API client if Hub URL is provided (direct connection mode)
+        // Otherwise, handleConfiguredState will discover it via UDP
+        if (config.hubApiUrl.length() > 0) {
+            Serial.println("[Main] Configuring API client with Hub URL from BLE...");
+            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+        }
 
         // Transition to CONFIGURED state (will attempt WiFi connection)
         stateMachine.processEvent(StateEvent::BLE_CONFIG_RECEIVED);
@@ -521,6 +596,9 @@ void sendHeartbeat() {
     }
 }
 
+// Flag to track if simulation mode has been logged (reset on config change)
+static bool simulationModeLogged = false;
+
 /**
  * Fetch or refresh sensor configuration from Hub
  */
@@ -536,6 +614,9 @@ void fetchSensorConfiguration() {
 
     Serial.println("[Main] Fetching sensor configuration from Hub...");
 
+    // Remember previous simulation state to detect changes
+    bool wasSimulation = configLoaded ? currentConfig.isSimulation : false;
+
     NodeConfigurationResponse response = apiClient.fetchConfiguration(currentSerial);
 
     if (response.success) {
@@ -545,8 +626,36 @@ void fetchSensorConfiguration() {
         Serial.printf("[Main] Configuration updated: %d sensors\n",
                       (int)currentConfig.sensors.size());
 
-        if (currentConfig.isSimulation) {
-            Serial.println("[Main] Node is in SIMULATION mode");
+        // Log simulation mode change
+        if (currentConfig.isSimulation != wasSimulation || !simulationModeLogged) {
+            simulationModeLogged = false;  // Reset to log new mode in readAndSendSensors()
+            if (currentConfig.isSimulation) {
+                Serial.println("[Main] Node is in SIMULATION mode (isSimulation=true)");
+            } else {
+                Serial.println("[Main] Node is in REAL HARDWARE mode (isSimulation=false)");
+            }
+        }
+
+        // Validate hardware configuration only when:
+        // 1. Not in simulation mode
+        // 2. Sensors are configured
+        // 3. Configuration has changed (different timestamp) or first time validation
+        if (!currentConfig.isSimulation && currentConfig.sensors.size() > 0) {
+            if (currentConfig.configurationTimestamp != lastValidatedConfigTimestamp) {
+                Serial.println("[Main] Configuration changed - validating hardware...");
+                ValidationSummary validationResult = hardwareScanner.validateConfiguration(currentConfig.sensors);
+
+                if (!validationResult.allFound()) {
+                    Serial.println("\n[Main] WARNING: Hardware validation found missing sensors!");
+                    Serial.println("[Main] Some configured sensors may not work correctly.");
+                    Serial.println("[Main] Please check your hardware connections.\n");
+                } else {
+                    Serial.println("[Main] Hardware validation successful - all sensors detected!");
+                }
+
+                // Remember this timestamp so we don't re-validate until config changes
+                lastValidatedConfigTimestamp = currentConfig.configurationTimestamp;
+            }
         }
     } else {
         Serial.printf("[Main] Config fetch: %s\n", response.error.c_str());
@@ -628,6 +737,70 @@ const char* getCurrentProfileName() {
     return SensorSimulator::getProfileName(sensorSimulator.getProfile());
 }
 
+/**
+ * Read sensor value - either from hardware or simulation based on Hub config
+ * @param sensorCode Sensor code/measurement type
+ * @param unit Unit of measurement
+ * @param sensorConfig Sensor configuration from Hub (optional, for hardware reading)
+ * @return Sensor reading value
+ */
+double readSensorValueWithConfig(const String& sensorCode, const String& unit, const SensorAssignmentConfig* sensorConfig) {
+    // Use isSimulation flag from Hub configuration (not local auto-detect!)
+    if (currentConfig.isSimulation) {
+        // Hub says to simulate - use simulated values
+        return generateSimulatedValue(sensorCode, unit);
+    }
+
+#ifdef PLATFORM_ESP32
+    // Hub says real hardware - try to read from actual sensors using SensorReader
+    if (sensorConfig != nullptr) {
+        // Use the sensor configuration to read hardware
+        SensorReading reading = sensorReader.readValue(sensorCode, *sensorConfig);
+
+        if (reading.success) {
+            return reading.value;
+        }
+
+        // Hardware reading failed - log error and fall back to simulation with warning
+        Serial.printf("[HW] Hardware read failed for %s: %s\n",
+                      sensorCode.c_str(), reading.error.c_str());
+        Serial.println("[HW] CRITICAL: isSimulation=false but hardware unavailable!");
+        Serial.println("[HW] Check sensor wiring and configuration in Hub");
+
+        // Return NaN or 0 to indicate error (don't silently simulate)
+        // Actually, return a distinctive error value that Hub can recognize
+        return -999.99;  // Error indicator value
+    }
+
+    // No sensor config provided - can't read hardware
+    Serial.printf("[HW] No sensor config for %s - cannot read hardware\n", sensorCode.c_str());
+    return -999.99;  // Error indicator value
+#else
+    // Native platform - no hardware available
+    Serial.println("[HW] Native platform has no hardware sensors");
+    return generateSimulatedValue(sensorCode, unit);
+#endif
+}
+
+/**
+ * Read sensor value - either from hardware or simulation based on Hub config
+ * Legacy wrapper for backward compatibility
+ * @param sensorCode Sensor code/measurement type
+ * @param unit Unit of measurement
+ * @return Sensor reading value
+ */
+double readSensorValue(const String& sensorCode, const String& unit) {
+    // Use isSimulation flag from Hub configuration
+    if (currentConfig.isSimulation) {
+        return generateSimulatedValue(sensorCode, unit);
+    }
+
+    // When not simulating but no config, we can't read hardware
+    // This should not happen in normal operation
+    Serial.printf("[HW] readSensorValue called without config for %s\n", sensorCode.c_str());
+    return -999.99;  // Error indicator
+}
+
 void readAndSendSensors() {
     if (!apiClient.isConfigured()) {
         Serial.println("[Main] API client not configured - skipping sensor readings");
@@ -656,9 +829,27 @@ void readAndSendSensors() {
     }
 #endif
 
+    // Log simulation mode from Hub (uses global simulationModeLogged flag)
+    if (!simulationModeLogged) {
+        if (currentConfig.isSimulation) {
+            Serial.println("[Main] ========================================");
+            Serial.println("[Main] SIMULATION MODE (from Hub configuration)");
+            Serial.println("[Main] Node.isSimulation = true");
+            Serial.println("[Main] ========================================");
+        } else {
+            Serial.println("[Main] ========================================");
+            Serial.println("[Main] REAL HARDWARE MODE (from Hub configuration)");
+            Serial.println("[Main] Node.isSimulation = false");
+            Serial.println("[Main] ========================================");
+        }
+        simulationModeLogged = true;
+    }
+
     // We have configuration with sensors, send readings
     if (configLoaded && currentConfig.sensors.size() > 0) {
-        Serial.printf("[Main] Reading %d configured sensors...\n", (int)currentConfig.sensors.size());
+        Serial.printf("[Main] Reading %d configured sensors (simulation=%s)...\n",
+                      (int)currentConfig.sensors.size(),
+                      currentConfig.isSimulation ? "true" : "false");
 
         for (const auto& sensor : currentConfig.sensors) {
             if (!sensor.isActive) {
@@ -666,20 +857,36 @@ void readAndSendSensors() {
                 continue;
             }
 
+            // Initialize sensor if not simulating (first reading will init)
+#ifdef PLATFORM_ESP32
+            if (!currentConfig.isSimulation) {
+                // Ensure sensor is initialized with Hub configuration
+                sensorReader.initializeSensor(sensor);
+            }
+#endif
+
             // If sensor has capabilities, send one reading per capability
             if (sensor.capabilities.size() > 0) {
                 for (const auto& cap : sensor.capabilities) {
-                    // Generate simulated value based on measurement type and unit
-                    double value = generateSimulatedValue(cap.measurementType, cap.unit);
+                    // Read value based on Hub's isSimulation flag, with sensor config
+                    double value = readSensorValueWithConfig(cap.measurementType, cap.unit, &sensor);
+
+                    // Check for error indicator
+                    if (value <= -999.0) {
+                        Serial.printf("[Main] Skipping %s/%s - hardware read error\n",
+                                      sensor.sensorName.c_str(), cap.measurementType.c_str());
+                        continue;
+                    }
 
                     // Apply calibration corrections
                     value = (value + sensor.offsetCorrection) * sensor.gainCorrection;
 
                     // Include endpointId to identify which sensor assignment this reading belongs to
                     if (apiClient.sendReading(cap.measurementType, value, cap.unit, sensor.endpointId)) {
-                        Serial.printf("[Main] Sent %s/%s: %.2f %s (Endpoint %d)\n",
+                        Serial.printf("[Main] Sent %s/%s: %.2f %s (Endpoint %d)%s\n",
                                       sensor.sensorName.c_str(), cap.displayName.c_str(),
-                                      value, cap.unit.c_str(), sensor.endpointId);
+                                      value, cap.unit.c_str(), sensor.endpointId,
+                                      currentConfig.isSimulation ? " [SIM]" : " [HW]");
                     } else {
                         Serial.printf("[Main] Failed to send %s/%s reading\n",
                                       sensor.sensorName.c_str(), cap.measurementType.c_str());
@@ -687,15 +894,23 @@ void readAndSendSensors() {
                 }
             } else {
                 // Fallback: Send single reading with sensor code as measurement type
-                double value = generateSimulatedValue(sensor.sensorCode, "");
+                double value = readSensorValueWithConfig(sensor.sensorCode, "", &sensor);
+
+                // Check for error indicator
+                if (value <= -999.0) {
+                    Serial.printf("[Main] Skipping %s - hardware read error\n",
+                                  sensor.sensorName.c_str());
+                    continue;
+                }
 
                 // Apply calibration corrections
                 value = (value + sensor.offsetCorrection) * sensor.gainCorrection;
 
                 // Include endpointId to identify which sensor assignment this reading belongs to
                 if (apiClient.sendReading(sensor.sensorCode, value, "", sensor.endpointId)) {
-                    Serial.printf("[Main] Sent %s: %.2f (Endpoint %d)\n",
-                                  sensor.sensorName.c_str(), value, sensor.endpointId);
+                    Serial.printf("[Main] Sent %s: %.2f (Endpoint %d)%s\n",
+                                  sensor.sensorName.c_str(), value, sensor.endpointId,
+                                  currentConfig.isSimulation ? " [SIM]" : " [HW]");
                 } else {
                     Serial.printf("[Main] Failed to send %s reading\n", sensor.sensorName.c_str());
                 }
@@ -821,14 +1036,15 @@ bool attemptHubDiscovery() {
     // Get sensor serial from HAL (native only)
     String serial = hal::get_device_serial().c_str();
 #else
-    // ESP32: Generate serial from MAC address
-    String serial = "ESP-UNKNOWN";
+    // ESP32: Generate serial from full 6-byte WiFi MAC address
+    String serial = "ESP32-UNKNOWN";
 #ifdef PLATFORM_ESP32
     uint8_t mac[6];
     WiFi.macAddress(mac);
-    char serialBuf[20];
-    snprintf(serialBuf, sizeof(serialBuf), "ESP-%02X%02X%02X%02X",
-             mac[2], mac[3], mac[4], mac[5]);
+    char serialBuf[24];
+    // Use full 6-byte WiFi MAC address for unique sensor ID
+    snprintf(serialBuf, sizeof(serialBuf), "ESP32-%02X%02X%02X%02X%02X%02X",
+             mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
     serial = String(serialBuf);
 #endif
 #endif
@@ -850,6 +1066,16 @@ bool attemptHubDiscovery() {
             Serial.printf("[Main]   Hub ID: %s\n", response.hubId.c_str());
             Serial.printf("[Main]   Hub Name: %s\n", response.hubName.c_str());
             Serial.printf("[Main]   API URL: %s\n", response.apiUrl.c_str());
+
+            // Save discovered Hub URL to stored config
+            StoredConfig storedConfig = configManager.loadConfig();
+            storedConfig.hubApiUrl = response.apiUrl;
+            storedConfig.nodeId = serial;
+            if (configManager.saveConfig(storedConfig)) {
+                Serial.println("[Main] Hub URL saved to NVS");
+            } else {
+                Serial.println("[Main] Warning: Failed to save Hub URL to NVS");
+            }
 
             // Configure API client with discovered URL
             // Use serial as nodeId and empty apiKey for now (will register)
@@ -885,6 +1111,7 @@ void handleUnconfiguredState() {
                  mac[4], mac[5]);
 
         bleService.init(deviceName);
+        bleService.setFirmwareVersion(FIRMWARE_VERSION);  // Set registration data with node_id
         bleService.startAdvertising();
         stateMachine.processEvent(StateEvent::BLE_PAIR_START);
     }
@@ -959,6 +1186,23 @@ void handlePairingState() {
 #ifdef PLATFORM_ESP32
     // Just wait for BLE callback - bleService handles everything
     bleService.loop();
+
+    // Check for WiFi-only timeout (if WiFi received but no API config after 5 seconds)
+    static unsigned long wifiReceivedTime = 0;
+    static const unsigned long WIFI_ONLY_TIMEOUT_MS = 5000;  // 5 seconds to wait for API config
+
+    if (bleService.hasWifiPending()) {
+        if (wifiReceivedTime == 0) {
+            wifiReceivedTime = millis();
+            Serial.println("[Main] WiFi credentials received, waiting for API config...");
+        } else if (millis() - wifiReceivedTime > WIFI_ONLY_TIMEOUT_MS) {
+            Serial.println("[Main] Timeout waiting for API config - proceeding with WiFi-only mode");
+            bleService.finalizeWifiOnlyConfig();
+            wifiReceivedTime = 0;
+        }
+    } else {
+        wifiReceivedTime = 0;  // Reset when no longer pending
+    }
 #endif
 }
 
@@ -985,24 +1229,13 @@ void handleConfiguredState() {
     // ESP32 mode: Need WiFi connection
     static bool wifiConnecting = false;
     static bool apiConfigured = false;
-
-    // If WiFi already connected (e.g., after WPS) but not yet configured API
-    if (wifiManager.isConnected() && !apiConfigured) {
-        StoredConfig config = configManager.loadConfig();
-        if (config.isValid) {
-            Serial.println("[Main] WiFi connected, configuring API client...");
-            apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
-            apiConfigured = true;
-        }
-    }
+    static bool discoveryAttempted = false;
 
     // If WiFi not connected, try to connect
     if (!wifiManager.isConnected() && !wifiConnecting) {
         StoredConfig config = configManager.loadConfig();
         if (config.isValid) {
             Serial.printf("[Main] Connecting to WiFi: %s\n", config.wifiSsid.c_str());
-            apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
-            apiConfigured = true;
             wifiManager.connect(config.wifiSsid, config.wifiPassword);
             wifiConnecting = true;
         } else {
@@ -1014,10 +1247,51 @@ void handleConfiguredState() {
     // Run WiFi manager loop
     wifiManager.loop();
 
+    // If WiFi connected but API not configured yet
+    if (wifiManager.isConnected() && !apiConfigured) {
+        wifiConnecting = false;
+        StoredConfig config = configManager.loadConfig();
+
+        // Check if we have a Hub URL from BLE config (direct connection mode)
+        if (config.hubApiUrl.length() > 0) {
+            // Hub URL was provided via BLE - SKIP UDP discovery
+            Serial.println("[Main] ========================================");
+            Serial.println("[Main] DIRECT HUB CONNECTION MODE");
+            Serial.println("[Main] Hub URL received from BLE config - skipping UDP discovery");
+            Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+            Serial.println("[Main] ========================================");
+            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+            apiConfigured = true;
+        } else if (!discoveryAttempted) {
+            // No Hub URL - need to discover Hub via UDP broadcast (fallback mode)
+            Serial.println("[Main] No Hub URL in config - starting UDP Hub Discovery...");
+            discoveryAttempted = true;
+
+            if (attemptHubDiscovery()) {
+                // Discovery succeeded - reload config with new Hub URL
+                config = configManager.loadConfig();
+                Serial.printf("[Main] Hub discovered via UDP! URL: %s\n", config.hubApiUrl.c_str());
+                apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+                apiConfigured = true;
+            } else {
+                Serial.println("[Main] Hub Discovery failed - will retry later");
+                // Reset to allow retry after delay
+                static unsigned long lastDiscoveryAttempt = 0;
+                if (millis() - lastDiscoveryAttempt > 10000) {
+                    lastDiscoveryAttempt = millis();
+                    discoveryAttempted = false;
+                }
+                return;
+            }
+        } else {
+            Serial.println("[Main] Still no Hub URL - waiting for discovery retry...");
+            return;
+        }
+    }
+
     // If WiFi connected and API configured, register with Hub
     if (wifiManager.isConnected() && apiConfigured && !nodeRegistered) {
-        wifiConnecting = false;
-        Serial.println("[Main] WiFi connected, registering with Hub...");
+        Serial.println("[Main] Registering with Hub...");
 
         if (registerWithHub()) {
             nodeRegistered = true;
@@ -1124,6 +1398,10 @@ void setup() {
     wpsManager.onFailed(onWPSFailed);
     wpsManager.onTimeout(onWPSTimeout);
     Serial.println("[Main] WPS Manager initialized (hold Boot button 3s to start)");
+
+    // Initialize SensorReader for hardware sensor access
+    sensorReader.init();
+    Serial.println("[Main] SensorReader initialized");
 
     // Auto-detect hardware sensors (Story 6)
     autoDetectHardware();

@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApiService } from './base-api.service';
-import { Reading, CreateReadingDto, ReadingFilter, PaginatedResult, QueryParams, PagedResult } from '@myiotgrid/shared/models';
+import { Reading, CreateReadingDto, ReadingFilter, PaginatedResult, QueryParams, PagedResult, DeleteReadingsRangeDto, DeleteReadingsResultDto } from '@myiotgrid/shared/models';
 import { queryParamsToObject } from './api-query.helper';
 
 @Injectable({ providedIn: 'root' })
@@ -71,5 +71,13 @@ export class ReadingApiService extends BaseApiService {
    */
   create(dto: CreateReadingDto): Observable<Reading> {
     return this.post<Reading>(this.endpoint, dto);
+  }
+
+  /**
+   * Delete readings within a date range
+   * DELETE /api/readings/range
+   */
+  deleteRange(dto: DeleteReadingsRangeDto): Observable<DeleteReadingsResultDto> {
+    return this.deleteWithBody<DeleteReadingsResultDto>(`${this.endpoint}/range`, dto);
   }
 }

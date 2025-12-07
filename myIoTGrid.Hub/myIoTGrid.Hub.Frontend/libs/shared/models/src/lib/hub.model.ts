@@ -19,6 +19,11 @@ export interface Hub {
   metadata?: string;
   createdAt: string;
   sensorCount?: number;
+  // Provisioning defaults for new nodes
+  defaultWifiSsid?: string;
+  defaultWifiPassword?: string;
+  apiUrl?: string;
+  apiPort: number;
 }
 
 /**
@@ -65,4 +70,19 @@ export interface UpdateHubDto {
   protocol?: Protocol;
   defaultLocation?: Location;
   metadata?: string;
+  // Provisioning defaults for new nodes
+  defaultWifiSsid?: string;
+  defaultWifiPassword?: string;
+  apiUrl?: string;
+  apiPort?: number;
+}
+
+/**
+ * Provisioning settings for new nodes (BLE setup)
+ */
+export interface HubProvisioningSettings {
+  defaultWifiSsid?: string;
+  defaultWifiPassword?: string;
+  apiUrl?: string;
+  apiPort: number;
 }

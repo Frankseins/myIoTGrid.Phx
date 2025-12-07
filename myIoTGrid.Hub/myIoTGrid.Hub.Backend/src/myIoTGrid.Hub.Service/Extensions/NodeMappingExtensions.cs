@@ -82,7 +82,7 @@ public static class NodeMappingExtensions
             CreatedAt = DateTime.UtcNow,
             MacAddress = GenerateMacFromNodeId(dto.NodeId), // Generate MAC from NodeId for simulated nodes
             ApiKeyHash = string.Empty, // Will be set during provisioning
-            Status = NodeStatus.Unconfigured
+            Status = NodeStatus.Configured // Nodes created via API/wizard are configured
         };
     }
 

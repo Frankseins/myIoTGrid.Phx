@@ -71,7 +71,12 @@ export class HubSettingsComponent implements OnInit {
   private initForm(): void {
     this.form = this.fb.group({
       name: ['', [Validators.required, Validators.minLength(2), Validators.maxLength(200)]],
-      description: ['', [Validators.maxLength(500)]]
+      description: ['', [Validators.maxLength(500)]],
+      // Node provisioning defaults
+      defaultWifiSsid: ['', [Validators.maxLength(32)]],
+      defaultWifiPassword: ['', [Validators.maxLength(64)]],
+      apiUrl: ['', [Validators.maxLength(200)]],
+      apiPort: [5002, [Validators.min(1), Validators.max(65535)]]
     });
   }
 
@@ -103,7 +108,11 @@ export class HubSettingsComponent implements OnInit {
   private patchForm(hub: Hub): void {
     this.form.patchValue({
       name: hub.name,
-      description: hub.description || ''
+      description: hub.description || '',
+      defaultWifiSsid: hub.defaultWifiSsid || '',
+      defaultWifiPassword: hub.defaultWifiPassword || '',
+      apiUrl: hub.apiUrl || '',
+      apiPort: hub.apiPort || 5002
     });
   }
 
@@ -131,7 +140,11 @@ export class HubSettingsComponent implements OnInit {
 
     const dto: UpdateHubDto = {
       name: formValue.name,
-      description: formValue.description || undefined
+      description: formValue.description || undefined,
+      defaultWifiSsid: formValue.defaultWifiSsid || undefined,
+      defaultWifiPassword: formValue.defaultWifiPassword || undefined,
+      apiUrl: formValue.apiUrl || undefined,
+      apiPort: formValue.apiPort || undefined
     };
 
     this.hubApiService.updateCurrent(dto).subscribe({

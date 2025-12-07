@@ -14,56 +14,11 @@
 
       <div class="wifi-form">
         <form [formGroup]="form">
-          <div class="network-selection">
-            <div class="section-header">
-              <h3>Verfügbare Netzwerke</h3>
-              <button
-                mat-icon-button
-                (click)="scanNetworks()"
-                [disabled]="configState() === 'scanning' || configState() === 'configuring'"
-                matTooltip="Erneut scannen"
-              >
-                <mat-icon [class.spinning]="configState() === 'scanning'">refresh</mat-icon>
-              </button>
-            </div>
-
-            @if (configState() === 'scanning') {
-              <div class="scanning-indicator">
-                <mat-spinner diameter="24"></mat-spinner>
-                <span>Suche nach Netzwerken...</span>
-              </div>
-            } @else {
-              <div class="network-list">
-                @for (network of networks(); track network.ssid) {
-                  <div
-                    class="network-item"
-                    [class.selected]="form.value.ssid === network.ssid"
-                    (click)="selectNetwork(network)"
-                    (keydown.enter)="selectNetwork(network)"
-                    tabindex="0"
-                    role="option"
-                    [attr.aria-selected]="form.value.ssid === network.ssid"
-                  >
-                    <mat-icon class="wifi-icon">{{ getSignalStrengthIcon(network.rssi) }}</mat-icon>
-                    <span class="network-name">{{ network.ssid }}</span>
-                    @if (network.secured) {
-                      <mat-icon class="lock-icon">lock</mat-icon>
-                    }
-                  </div>
-                } @empty {
-                  <div class="no-networks">
-                    <mat-icon>wifi_off</mat-icon>
-                    <span>Keine Netzwerke gefunden</span>
-                  </div>
-                }
-              </div>
-            }
-          </div>
-
-          <mat-divider></mat-divider>
-
           <div class="credentials-section">
-            <h3>Zugangsdaten</h3>
+            <p class="info-text">
+              <mat-icon>info</mat-icon>
+              Geben Sie die Zugangsdaten für Ihr WLAN ein. Der Sensor wird sich nach der Konfiguration mit diesem Netzwerk verbinden.
+            </p>
 
             <mat-form-field appearance="outline" class="full-width">
               <mat-label>Netzwerkname (SSID)</mat-label>

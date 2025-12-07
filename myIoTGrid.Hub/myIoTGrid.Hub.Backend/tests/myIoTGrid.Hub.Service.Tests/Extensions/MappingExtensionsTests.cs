@@ -1704,6 +1704,180 @@ public class MappingExtensionsTests
         result.Capabilities.Should().BeEmpty();
     }
 
+    [Fact]
+    public void Sensor_ApplyUpdate_WithNewCapabilities_AddsCapabilitiesToCollection()
+    {
+        // Arrange - Sensor without capabilities
+        var sensor = new Sensor
+        {
+            Id = Guid.NewGuid(),
+            TenantId = Guid.NewGuid(),
+            Code = "test-sensor",
+            Name = "Test Sensor",
+            Category = "test",
+            Protocol = CommunicationProtocol.I2C,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Capabilities = new List<SensorCapability>() // Empty initially
+        };
+
+        // Update with new capabilities (id=null means new)
+        var updateDto = new UpdateSensorDto(
+            Capabilities: new List<UpdateSensorCapabilityDto>
+            {
+                new UpdateSensorCapabilityDto(
+                    Id: null, // NEW capability
+                    MeasurementType: "temperature",
+                    DisplayName: "Temperatur",
+                    Unit: "°C",
+                    Resolution: 0.1,
+                    Accuracy: 0.5
+                ),
+                new UpdateSensorCapabilityDto(
+                    Id: null, // NEW capability
+                    MeasurementType: "humidity",
+                    DisplayName: "Luftfeuchtigkeit",
+                    Unit: "%"
+                )
+            }
+        );
+
+        // Act
+        sensor.ApplyUpdate(updateDto);
+
+        // Assert
+        sensor.Capabilities.Should().HaveCount(2);
+        sensor.Capabilities.Should().Contain(c => c.MeasurementType == "temperature");
+        sensor.Capabilities.Should().Contain(c => c.MeasurementType == "humidity");
+        // New capabilities should have generated IDs
+        sensor.Capabilities.Should().OnlyContain(c => c.Id != Guid.Empty);
+    }
+
+    [Fact]
+    public void Sensor_ApplyUpdate_WithExistingAndNewCapabilities_UpdatesExistingAndAddsNew()
+    {
+        // Arrange - Sensor with one existing capability
+        var sensorId = Guid.NewGuid();
+        var existingCapabilityId = Guid.NewGuid();
+        var sensor = new Sensor
+        {
+            Id = sensorId,
+            TenantId = Guid.NewGuid(),
+            Code = "test-sensor",
+            Name = "Test Sensor",
+            Category = "test",
+            Protocol = CommunicationProtocol.I2C,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Capabilities = new List<SensorCapability>
+            {
+                new SensorCapability
+                {
+                    Id = existingCapabilityId,
+                    SensorId = sensorId,
+                    MeasurementType = "temperature",
+                    DisplayName = "Alte Temperatur",
+                    Unit = "°C",
+                    IsActive = true
+                }
+            }
+        };
+
+        // Update: modify existing capability + add new one
+        var updateDto = new UpdateSensorDto(
+            Capabilities: new List<UpdateSensorCapabilityDto>
+            {
+                new UpdateSensorCapabilityDto(
+                    Id: existingCapabilityId, // UPDATE existing
+                    DisplayName: "Neue Temperatur" // Changed display name
+                ),
+                new UpdateSensorCapabilityDto(
+                    Id: null, // NEW capability
+                    MeasurementType: "humidity",
+                    DisplayName: "Luftfeuchtigkeit",
+                    Unit: "%"
+                )
+            }
+        );
+
+        // Act
+        sensor.ApplyUpdate(updateDto);
+
+        // Assert
+        sensor.Capabilities.Should().HaveCount(2);
+
+        // Existing capability was updated
+        var tempCapability = sensor.Capabilities.First(c => c.Id == existingCapabilityId);
+        tempCapability.DisplayName.Should().Be("Neue Temperatur");
+
+        // New capability was added
+        sensor.Capabilities.Should().Contain(c => c.MeasurementType == "humidity");
+    }
+
+    [Fact]
+    public void Sensor_ApplyUpdate_DoesNotRemoveCapabilities_RemovalHandledByService()
+    {
+        // Arrange - Sensor with two capabilities
+        // NOTE: ApplyUpdate intentionally does NOT remove capabilities.
+        // Removal is handled by SensorService.UpdateAsync to properly manage EF Core's change tracker.
+        var sensorId = Guid.NewGuid();
+        var capabilityToKeepId = Guid.NewGuid();
+        var capabilityNotInUpdateId = Guid.NewGuid();
+        var sensor = new Sensor
+        {
+            Id = sensorId,
+            TenantId = Guid.NewGuid(),
+            Code = "test-sensor",
+            Name = "Test Sensor",
+            Category = "test",
+            Protocol = CommunicationProtocol.I2C,
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow,
+            UpdatedAt = DateTime.UtcNow,
+            Capabilities = new List<SensorCapability>
+            {
+                new SensorCapability
+                {
+                    Id = capabilityToKeepId,
+                    SensorId = sensorId,
+                    MeasurementType = "temperature",
+                    DisplayName = "Temperatur",
+                    Unit = "°C",
+                    IsActive = true
+                },
+                new SensorCapability
+                {
+                    Id = capabilityNotInUpdateId,
+                    SensorId = sensorId,
+                    MeasurementType = "humidity",
+                    DisplayName = "Luftfeuchtigkeit",
+                    Unit = "%",
+                    IsActive = true
+                }
+            }
+        };
+
+        // Update: only include one capability (but ApplyUpdate won't remove the other)
+        var updateDto = new UpdateSensorDto(
+            Capabilities: new List<UpdateSensorCapabilityDto>
+            {
+                new UpdateSensorCapabilityDto(
+                    Id: capabilityToKeepId
+                )
+            }
+        );
+
+        // Act
+        sensor.ApplyUpdate(updateDto);
+
+        // Assert - Both capabilities should still exist (removal is handled by service layer)
+        sensor.Capabilities.Should().HaveCount(2);
+        sensor.Capabilities.Should().Contain(c => c.Id == capabilityToKeepId);
+        sensor.Capabilities.Should().Contain(c => c.Id == capabilityNotInUpdateId);
+    }
+
     private static Sensor CreateTestSensor()
     {
         return new Sensor

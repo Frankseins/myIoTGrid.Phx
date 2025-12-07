@@ -22,7 +22,11 @@ public static class HubMappingExtensions
             DateTime.UtcNow, // LastSeen is now (API is responding)
             true, // Always online when API is reachable
             entity.CreatedAt,
-            entity.Nodes.Count
+            entity.Nodes.Count,
+            entity.DefaultWifiSsid,
+            entity.DefaultWifiPassword,
+            entity.ApiUrl,
+            entity.ApiPort
         );
     }
 
@@ -41,7 +45,24 @@ public static class HubMappingExtensions
             DateTime.UtcNow, // LastSeen is now (API is responding)
             true, // Always online when API is reachable
             entity.CreatedAt,
-            nodeCount
+            nodeCount,
+            entity.DefaultWifiSsid,
+            entity.DefaultWifiPassword,
+            entity.ApiUrl,
+            entity.ApiPort
+        );
+    }
+
+    /// <summary>
+    /// Converts Hub Entity to HubProvisioningSettingsDto
+    /// </summary>
+    public static HubProvisioningSettingsDto ToProvisioningSettingsDto(this Domain.Entities.Hub entity)
+    {
+        return new HubProvisioningSettingsDto(
+            entity.DefaultWifiSsid,
+            entity.DefaultWifiPassword,
+            entity.ApiUrl,
+            entity.ApiPort
         );
     }
 
@@ -72,6 +93,14 @@ public static class HubMappingExtensions
             entity.Name = dto.Name;
         if (dto.Description != null)
             entity.Description = dto.Description;
+        if (dto.DefaultWifiSsid != null)
+            entity.DefaultWifiSsid = dto.DefaultWifiSsid;
+        if (dto.DefaultWifiPassword != null)
+            entity.DefaultWifiPassword = dto.DefaultWifiPassword;
+        if (dto.ApiUrl != null)
+            entity.ApiUrl = dto.ApiUrl;
+        if (dto.ApiPort.HasValue)
+            entity.ApiPort = dto.ApiPort.Value;
     }
 
     /// <summary>
