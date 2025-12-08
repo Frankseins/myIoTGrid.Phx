@@ -1,0 +1,194 @@
+// Bottom Navigation - Material Design 3
+// Mobile-only navigation bar fixed at bottom
+
+:host {
+  display: block;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+}
+
+.bottom-nav {
+  display: flex;
+  justify-content: space-around;
+  align-items: stretch;
+  height: 80px;
+  background: var(--mat-sys-surface, #ffffff);
+  border-top: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.08);
+
+  // Safe area padding for iPhone notch/home indicator
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-width: 64px;
+  max-width: 96px;
+  padding: 12px 0 16px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+
+  // Touch target minimum 48x48px
+  min-height: 48px;
+
+  // Ripple effect
+  --mat-ripple-color: var(--mat-sys-primary, #1976d2);
+
+  &:focus-visible {
+    outline: 2px solid var(--mat-sys-primary, #1976d2);
+    outline-offset: -2px;
+    border-radius: 4px;
+  }
+
+  &:active {
+    background: rgba(var(--mat-sys-primary-rgb, 25, 118, 210), 0.08);
+  }
+
+  .nav-item-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    position: relative;
+    z-index: 1;
+  }
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+    transition: color 0.2s ease, transform 0.2s ease;
+  }
+
+  .nav-label {
+    font-family: 'Roboto', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.4px;
+    color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+    transition: color 0.2s ease;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 80px;
+  }
+
+  // Active indicator pill (MD3 style)
+  .active-indicator {
+    position: absolute;
+    top: 8px;
+    left: 50%;
+    transform: translateX(-50%) scaleX(0);
+    width: 64px;
+    height: 32px;
+    background: var(--mat-sys-secondary-container, rgba(25, 118, 210, 0.12));
+    border-radius: 16px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 0;
+
+    &.visible {
+      transform: translateX(-50%) scaleX(1);
+    }
+  }
+
+  // Active state
+  &.active {
+    mat-icon {
+      color: var(--mat-sys-on-secondary-container, #1976d2);
+      transform: scale(1.1);
+    }
+
+    .nav-label {
+      color: var(--mat-sys-on-secondary-container, #1976d2);
+      font-weight: 600;
+    }
+  }
+
+  // Hover state (for hybrid devices)
+  @media (hover: hover) {
+    &:hover:not(.active) {
+      mat-icon {
+        color: var(--mat-sys-on-surface, rgba(0, 0, 0, 0.87));
+      }
+
+      .nav-label {
+        color: var(--mat-sys-on-surface, rgba(0, 0, 0, 0.87));
+      }
+    }
+  }
+}
+
+// Badge styling
+::ng-deep .mat-badge-content {
+  font-size: 10px;
+  font-weight: 600;
+}
+
+// Landscape orientation adjustments
+@media (orientation: landscape) and (max-height: 500px) {
+  .bottom-nav {
+    height: 56px;
+    padding-bottom: 0;
+  }
+
+  .nav-item {
+    padding: 8px 0;
+
+    .nav-label {
+      font-size: 10px;
+    }
+
+    .active-indicator {
+      height: 28px;
+      width: 56px;
+    }
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .bottom-nav {
+    background: var(--mat-sys-surface, #1e1e1e);
+    border-top-color: var(--mat-sys-outline-variant, rgba(255, 255, 255, 0.12));
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.24);
+  }
+
+  .nav-item {
+    &:active {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    mat-icon {
+      color: var(--mat-sys-on-surface-variant, rgba(255, 255, 255, 0.6));
+    }
+
+    .nav-label {
+      color: var(--mat-sys-on-surface-variant, rgba(255, 255, 255, 0.6));
+    }
+
+    &.active {
+      mat-icon {
+        color: var(--mat-sys-primary, #90caf9);
+      }
+
+      .nav-label {
+        color: var(--mat-sys-primary, #90caf9);
+      }
+    }
+
+    .active-indicator {
+      background: rgba(144, 202, 249, 0.16);
+    }
+  }
+}

@@ -192,6 +192,7 @@ public class SensorDtoTests
             DigitalPin: null,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             IntervalSeconds: 60,
             MinIntervalSeconds: 2,
             WarmupTimeMs: 1000,
@@ -1574,6 +1575,7 @@ public class NodeSensorAssignmentDtoAdditionalTests
             DigitalPin: null,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             OffsetCorrection: 0,
             GainCorrection: 1
         );
@@ -1596,6 +1598,7 @@ public class NodeSensorAssignmentDtoAdditionalTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: 30,
             IsActive: true,
             LastSeenAt: DateTime.UtcNow,
@@ -1620,7 +1623,7 @@ public class NodeSensorAssignmentDtoAdditionalTests
     public void NodeSensorAssignmentDto_ShouldAllowNullOptionalValues()
     {
         // Act
-        var effectiveConfig = new EffectiveConfigDto(60, null, null, null, null, null, null, null, null, 0, 1);
+        var effectiveConfig = new EffectiveConfigDto(60, null, null, null, null, null, null, null, null, null, 0, 1);
         var dto = new NodeSensorAssignmentDto(
             Id: Guid.NewGuid(),
             NodeId: Guid.NewGuid(),
@@ -1638,6 +1641,7 @@ public class NodeSensorAssignmentDtoAdditionalTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: null,
             IsActive: false,
             LastSeenAt: null,
@@ -2372,6 +2376,7 @@ public class SensorDtoExtendedTests
             DigitalPin: null,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             IntervalSeconds: 60,
             MinIntervalSeconds: 10,
             WarmupTimeMs: 100,
@@ -2420,6 +2425,7 @@ public class NodeSensorAssignmentDtoExtendedTests
             DigitalPin: null,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             IntervalSeconds: 120,
             OffsetCorrection: 0.5,
             GainCorrection: 1.02
@@ -2442,6 +2448,7 @@ public class NodeSensorAssignmentDtoExtendedTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: 120,
             IsActive: true,
             LastSeenAt: DateTime.UtcNow,
@@ -2926,9 +2933,9 @@ public class NodeSensorAssignmentDtoCoverageTests
             EndpointId: 1, Alias: "Alias", I2CAddressOverride: "0x77",
             SdaPinOverride: 19, SclPinOverride: 18, OneWirePinOverride: 5,
             AnalogPinOverride: 35, DigitalPinOverride: 6, TriggerPinOverride: 14,
-            EchoPinOverride: 15, IntervalSecondsOverride: 60, IsActive: true,
+            EchoPinOverride: 15, BaudRateOverride: null, IntervalSecondsOverride: 60, IsActive: true,
             LastSeenAt: DateTime.UtcNow, AssignedAt: DateTime.UtcNow,
-            EffectiveConfig: new EffectiveConfigDto(30, "0x76", 21, 22, 4, 34, 5, 12, 13, 0.5, 1.1)
+            EffectiveConfig: new EffectiveConfigDto(30, "0x76", 21, 22, 4, 34, 5, 12, 13, null, 0.5, 1.1)
         );
         dto.SdaPinOverride.Should().Be(19);
         dto.EchoPinOverride.Should().Be(15);
@@ -2975,6 +2982,7 @@ public class SensorDtoCoverageTests
             DigitalPin: null,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             IntervalSeconds: 60,
             MinIntervalSeconds: 1,
             WarmupTimeMs: 100,
@@ -3236,9 +3244,9 @@ public class NodeSensorAssignmentDtoExtendedCoverageTests
             EndpointId: 1, Alias: null, I2CAddressOverride: null,
             SdaPinOverride: null, SclPinOverride: null, OneWirePinOverride: null,
             AnalogPinOverride: null, DigitalPinOverride: null, TriggerPinOverride: null,
-            EchoPinOverride: null, IntervalSecondsOverride: null, IsActive: true,
+            EchoPinOverride: null, BaudRateOverride: null, IntervalSecondsOverride: null, IsActive: true,
             LastSeenAt: null, AssignedAt: DateTime.UtcNow,
-            EffectiveConfig: new EffectiveConfigDto(30, null, null, null, null, null, null, null, null, 0, 1)
+            EffectiveConfig: new EffectiveConfigDto(30, null, null, null, null, null, null, null, null, null, 0, 1)
         );
         dto.Alias.Should().BeNull();
         dto.I2CAddressOverride.Should().BeNull();

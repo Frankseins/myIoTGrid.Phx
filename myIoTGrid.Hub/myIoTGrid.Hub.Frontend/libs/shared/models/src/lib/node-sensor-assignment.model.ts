@@ -19,6 +19,7 @@ export interface NodeSensorAssignment {
   digitalPinOverride?: number;
   triggerPinOverride?: number;
   echoPinOverride?: number;
+  baudRateOverride?: number;
   intervalSecondsOverride?: number;
   isActive: boolean;
   lastSeenAt?: string;
@@ -41,6 +42,7 @@ export interface CreateNodeSensorAssignmentDto {
   digitalPinOverride?: number;
   triggerPinOverride?: number;
   echoPinOverride?: number;
+  baudRateOverride?: number;
   intervalSecondsOverride?: number;
 }
 
@@ -57,6 +59,7 @@ export interface UpdateNodeSensorAssignmentDto {
   digitalPinOverride?: number;
   triggerPinOverride?: number;
   echoPinOverride?: number;
+  baudRateOverride?: number;
   intervalSecondsOverride?: number;
   isActive?: boolean;
 }
@@ -75,6 +78,7 @@ export interface EffectiveConfig {
   digitalPin?: number;
   triggerPin?: number;
   echoPin?: number;
+  baudRate?: number;
   offsetCorrection: number;
   gainCorrection: number;
 }

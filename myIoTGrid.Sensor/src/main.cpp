@@ -28,6 +28,7 @@
 #include "sensor_simulator.h"
 #include "hardware_scanner.h"
 #include "sensor_reader.h"
+#include "led_controller.h"
 
 #ifdef PLATFORM_ESP32
 #include "ble_service.h"
@@ -53,10 +54,16 @@ DiscoveryClient discoveryClient;
 SensorSimulator sensorSimulator;
 HardwareScanner hardwareScanner;
 SensorReader sensorReader;
+LEDController ledController;
 
 #ifdef PLATFORM_ESP32
 BLEProvisioningService bleService;
 WPSManager wpsManager;
+
+// RE_PAIRING Configuration (Story 4)
+static const unsigned long RE_PAIRING_WIFI_RETRY_INTERVAL_MS = 30000;  // 30 seconds
+static unsigned long lastRePairingWifiRetry = 0;
+static bool rePairingActive = false;
 
 // Boot button for WPS mode and Factory Reset
 static const int BOOT_BUTTON_PIN = 0;  // GPIO0 = Boot button on most ESP32 boards
@@ -550,6 +557,45 @@ void onBLEConfigReceived(const BLEConfig& config) {
         stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
     }
 }
+
+/**
+ * Callback for RE_PAIRING mode - new WiFi config received via BLE (Story 4)
+ */
+void onReProvisioningConfigReceived(const BLEConfig& config) {
+    Serial.println("[Main] ========================================");
+    Serial.println("[Main] RE_PAIRING: NEW WIFI CONFIG RECEIVED");
+    Serial.println("[Main] ========================================");
+    Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
+    Serial.printf("[Main] WiFi SSID: %s\n", config.wifiSsid.c_str());
+
+    // Save new configuration to NVS
+    StoredConfig storedConfig;
+    storedConfig.nodeId = config.nodeId;
+    storedConfig.apiKey = config.apiKey;
+    storedConfig.wifiSsid = config.wifiSsid;
+    storedConfig.wifiPassword = config.wifiPassword;
+    storedConfig.hubApiUrl = config.hubApiUrl;
+    storedConfig.isValid = true;
+
+    if (configManager.saveConfig(storedConfig)) {
+        Serial.println("[Main] RE_PAIRING: New configuration saved to NVS");
+
+        // Stop BLE service
+        bleService.stop();
+        rePairingActive = false;
+
+        // Configure API client if Hub URL is provided
+        if (config.hubApiUrl.length() > 0) {
+            Serial.println("[Main] Configuring API client with Hub URL from BLE...");
+            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+        }
+
+        // Signal NEW_WIFI_RECEIVED event
+        stateMachine.processEvent(StateEvent::NEW_WIFI_RECEIVED);
+    } else {
+        Serial.println("[Main] RE_PAIRING: Failed to save configuration!");
+    }
+}
 #endif
 
 // ============================================================================
@@ -704,6 +750,77 @@ double generateSimulatedValue(const String& sensorCode, const String& unit) {
     // Soil moisture sensors
     if (code.indexOf("soil") >= 0 || code.indexOf("moisture") >= 0) {
         return sensorSimulator.getSoilMoisture();
+    }
+
+    // GPS satellites (simulate 0-12, mostly 6-10)
+    if (code.indexOf("gps_satellite") >= 0 || code.indexOf("satellite") >= 0) {
+        // Simulate satellite count with occasional cold start (0 satellites)
+        static int lastSatellites = 0;
+        static unsigned long lastSatUpdate = 0;
+        unsigned long now = millis();
+
+        if (now - lastSatUpdate > 5000) {  // Update every 5 seconds
+            lastSatUpdate = now;
+            // 10% chance of cold start (0 satellites)
+            if (random(100) < 10) {
+                lastSatellites = 0;
+            } else {
+                // Normal operation: 4-12 satellites
+                lastSatellites = random(4, 13);
+            }
+        }
+        return (double)lastSatellites;
+    }
+
+    // GPS fix type (0=none, 2=2D, 3=3D)
+    if (code.indexOf("gps_fix") >= 0 || code.indexOf("fix_type") >= 0) {
+        // Simulate fix type based on "satellite" count (correlate with satellites)
+        static int lastFixType = 0;
+        static unsigned long lastFixUpdate = 0;
+        unsigned long now = millis();
+
+        if (now - lastFixUpdate > 5000) {
+            lastFixUpdate = now;
+            // 10% chance no fix, 20% chance 2D, 70% chance 3D
+            int r = random(100);
+            if (r < 10) lastFixType = 0;
+            else if (r < 30) lastFixType = 2;
+            else lastFixType = 3;
+        }
+        return (double)lastFixType;
+    }
+
+    // GPS HDOP (lower is better: <1=ideal, 1-2=excellent, 2-5=good, 5-10=moderate, >10=poor)
+    if (code.indexOf("gps_hdop") >= 0 || code.indexOf("hdop") >= 0) {
+        // Simulate HDOP with mostly good values
+        static double lastHdop = 1.5;
+        static unsigned long lastHdopUpdate = 0;
+        unsigned long now = millis();
+
+        if (now - lastHdopUpdate > 5000) {
+            lastHdopUpdate = now;
+            // Random HDOP between 0.5 and 5.0 (mostly good)
+            lastHdop = 0.5 + (random(450) / 100.0);  // 0.5 to 5.0
+        }
+        return lastHdop;
+    }
+
+    // GPS latitude/longitude/altitude/speed (simulate with fixed location + drift)
+    if (code.indexOf("latitude") >= 0 || code.indexOf("lat") >= 0) {
+        // Simulate latitude (e.g., Berlin area: ~52.52)
+        return 52.52 + (random(-100, 100) / 10000.0);  // Small drift
+    }
+    if (code.indexOf("longitude") >= 0 || code.indexOf("lng") >= 0 || code.indexOf("lon") >= 0) {
+        // Simulate longitude (e.g., Berlin area: ~13.40)
+        return 13.40 + (random(-100, 100) / 10000.0);
+    }
+    if (code.indexOf("altitude") >= 0 || code.indexOf("alt") >= 0) {
+        // Simulate altitude (e.g., ~34m for Berlin)
+        return 34.0 + (random(-50, 50) / 10.0);
+    }
+    if (code.indexOf("speed") >= 0) {
+        // Simulate speed (0-5 km/h for stationary with drift)
+        return random(0, 50) / 10.0;
     }
 
     // Default: Use temperature as fallback
@@ -1208,6 +1325,8 @@ void handlePairingState() {
 
 void handleConfiguredState() {
     static bool nodeRegistered = false;
+    static unsigned long lastWiFiAttempt = 0;
+    static bool waitingForRetry = false;
 
 #ifdef PLATFORM_NATIVE
     // Native mode: Already "connected" via network, register with Hub
@@ -1231,13 +1350,35 @@ void handleConfiguredState() {
     static bool apiConfigured = false;
     static bool discoveryAttempted = false;
 
+    // Check if we're in RE_PAIRING state (max retries reached)
+    if (stateMachine.getState() != NodeState::CONFIGURED) {
+        return;
+    }
+
+    // If waiting for retry after failed attempt, check timer
+    if (waitingForRetry) {
+        int retryDelay = stateMachine.getRetryDelay();
+        if (millis() - lastWiFiAttempt < (unsigned long)retryDelay) {
+            // Still waiting
+            return;
+        }
+        // Retry time reached
+        waitingForRetry = false;
+        wifiConnecting = false;
+        Serial.println("[Main] Retry timer expired, attempting WiFi reconnect...");
+    }
+
     // If WiFi not connected, try to connect
     if (!wifiManager.isConnected() && !wifiConnecting) {
         StoredConfig config = configManager.loadConfig();
         if (config.isValid) {
-            Serial.printf("[Main] Connecting to WiFi: %s\n", config.wifiSsid.c_str());
+            int retryCount = stateMachine.getRetryCount();
+            int maxRetries = stateMachine.getMaxRetries();
+            Serial.printf("[Main] WiFi connecting (attempt %d/%d): %s\n",
+                         retryCount + 1, maxRetries, config.wifiSsid.c_str());
             wifiManager.connect(config.wifiSsid, config.wifiPassword);
             wifiConnecting = true;
+            lastWiFiAttempt = millis();
         } else {
             Serial.println("[Main] Invalid stored configuration!");
             stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
@@ -1246,6 +1387,22 @@ void handleConfiguredState() {
 
     // Run WiFi manager loop
     wifiManager.loop();
+
+    // Check if WiFi connection failed (callback already sent WIFI_FAILED event)
+    // If still in CONFIGURED state after WIFI_FAILED, start retry timer
+    if (wifiConnecting && !wifiManager.isConnected() &&
+        wifiManager.getStatus() == WiFiStatus::FAILED) {
+        wifiConnecting = false;
+
+        // Check if we should retry or if max retries reached (would be in RE_PAIRING)
+        if (stateMachine.getState() == NodeState::CONFIGURED) {
+            int retryDelay = stateMachine.getRetryDelay();
+            Serial.printf("[Main] WiFi failed, waiting %d ms before retry...\n", retryDelay);
+            waitingForRetry = true;
+            lastWiFiAttempt = millis();
+            return;
+        }
+    }
 
     // If WiFi connected but API not configured yet
     if (wifiManager.isConnected() && !apiConfigured) {
@@ -1347,12 +1504,19 @@ void handleOperationalState() {
 }
 
 void handleErrorState() {
-    Serial.println("[Main] In error state - checking for recovery...");
+    int retryCount = stateMachine.getRetryCount();
+    int maxRetries = stateMachine.getMaxRetries();
+    int retryDelay = stateMachine.getRetryDelay();
+
+    Serial.println("[Main] ========================================");
+    Serial.printf("[Main] ERROR STATE - Retry %d/%d\n", retryCount + 1, maxRetries);
+    Serial.printf("[Main] Next retry delay: %d ms\n", retryDelay);
+    Serial.println("[Main] ========================================");
 
     // Check if we have valid config
     if (configManager.hasConfig()) {
-        Serial.println("[Main] Config exists, attempting recovery...");
-        delay(stateMachine.getRetryDelay());
+        Serial.printf("[Main] Config exists, waiting %d ms before retry...\n", retryDelay);
+        delay(retryDelay);
         stateMachine.processEvent(StateEvent::RETRY_TIMEOUT);
     } else {
         Serial.println("[Main] No config, need BLE pairing...");
@@ -1361,6 +1525,112 @@ void handleErrorState() {
         configManager.clearConfig();
         stateMachine.processEvent(StateEvent::RESET_REQUESTED);
     }
+}
+
+/**
+ * Handle RE_PAIRING state (Story 4: Paralleler WiFi-Retry)
+ *
+ * In this state:
+ * - BLE is advertising with "-SETUP" suffix (so frontend can detect RE_PAIRING)
+ * - WiFi retry happens every 30 seconds with old credentials
+ * - LED shows RE_PAIRING pattern (2x blink every 2s)
+ *
+ * Exit conditions:
+ * - NEW_WIFI_RECEIVED: New WiFi credentials received via BLE
+ * - OLD_WIFI_FOUND: Old WiFi came back online
+ * - RESET_REQUESTED: Factory reset
+ */
+void handleRePairingState() {
+#ifdef PLATFORM_ESP32
+    // Initialize RE_PAIRING mode if not already active
+    if (!rePairingActive) {
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] ENTERING RE_PAIRING STATE");
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] - BLE advertising with '-SETUP' suffix");
+        Serial.println("[Main] - WiFi retry every 30 seconds");
+        Serial.println("[Main] - LED: 2x blink pattern");
+
+        // Start BLE in RE_PAIRING mode (adds -SETUP suffix)
+        bleService.setConfigCallback(onBLEConfigReceived);
+        bleService.setReProvisioningCallback(onReProvisioningConfigReceived);
+
+        if (bleService.startForReProvisioning()) {
+            Serial.println("[Main] BLE RE_PAIRING mode started");
+        } else {
+            Serial.println("[Main] Failed to start BLE RE_PAIRING mode!");
+        }
+
+        // Set LED pattern for RE_PAIRING
+        ledController.setPattern(LEDPattern::RE_PAIRING_BLINK);
+
+        // Reset retry timer
+        lastRePairingWifiRetry = millis();
+        rePairingActive = true;
+    }
+
+    // Process BLE events
+    bleService.loop();
+
+    // Check for WiFi retry timer (Story 4: Parallel WiFi Retry)
+    unsigned long now = millis();
+    if (now - lastRePairingWifiRetry >= RE_PAIRING_WIFI_RETRY_INTERVAL_MS) {
+        lastRePairingWifiRetry = now;
+
+        // Signal timer event to state machine
+        stateMachine.processEvent(StateEvent::WIFI_RETRY_TIMER);
+
+        // Attempt to connect with stored (old) WiFi credentials
+        StoredConfig config = configManager.loadConfig();
+        if (config.isValid && config.wifiSsid.length() > 0) {
+            Serial.println("[Main] RE_PAIRING: Attempting WiFi reconnect with old credentials...");
+            Serial.printf("[Main] SSID: %s\n", config.wifiSsid.c_str());
+
+            // Temporarily stop BLE advertising to avoid conflicts
+            // (WiFi and BLE can interfere on some ESP32 boards)
+            // Note: We don't stop BLE here to allow parallel operation
+
+            // Try non-blocking WiFi connection
+            WiFi.disconnect(true);
+            WiFi.mode(WIFI_STA);
+            WiFi.begin(config.wifiSsid.c_str(), config.wifiPassword.c_str());
+
+            // Wait briefly for connection (non-blocking approach)
+            // Full connection is handled in the next iteration via WiFi callbacks
+            unsigned long wifiAttemptStart = millis();
+            while (WiFi.status() != WL_CONNECTED &&
+                   (millis() - wifiAttemptStart) < 5000) {
+                delay(100);
+            }
+
+            if (WiFi.status() == WL_CONNECTED) {
+                Serial.println("[Main] RE_PAIRING: Old WiFi RECONNECTED!");
+                Serial.printf("[Main] IP: %s\n", WiFi.localIP().toString().c_str());
+
+                // Stop BLE
+                bleService.stop();
+                rePairingActive = false;
+
+                // Signal OLD_WIFI_FOUND event
+                stateMachine.processEvent(StateEvent::OLD_WIFI_FOUND);
+                return;
+            } else {
+                Serial.println("[Main] RE_PAIRING: WiFi retry failed, continuing BLE advertising...");
+                // Disconnect to clean up
+                WiFi.disconnect(true);
+            }
+        } else {
+            Serial.println("[Main] RE_PAIRING: No valid WiFi config for retry");
+        }
+    }
+
+    // Update LED pattern
+    ledController.update();
+#else
+    // Native platform - just wait
+    Serial.println("[Main] RE_PAIRING not fully supported on native platform");
+    delay(5000);
+#endif
 }
 
 // ============================================================================
@@ -1377,6 +1647,11 @@ void setup() {
     Serial.printf("  Firmware: %s\n", FIRMWARE_VERSION);
     Serial.println("========================================");
     Serial.println();
+
+    // Initialize LED controller (GPIO 2 = built-in LED on most ESP32)
+    ledController.init(2, false);
+    ledController.setPattern(LEDPattern::SLOW_BLINK);  // Initial pattern
+    Serial.println("[Main] LED controller initialized");
 
     // Initialize configuration manager (NVS)
     if (!configManager.init()) {
@@ -1501,7 +1776,14 @@ void loop() {
         case NodeState::ERROR:
             handleErrorState();
             break;
+
+        case NodeState::RE_PAIRING:
+            handleRePairingState();
+            break;
     }
+
+    // Update LED controller (for all states)
+    ledController.update();
 
     // Small delay to prevent busy-looping
     delay(10);

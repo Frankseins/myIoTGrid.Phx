@@ -104,6 +104,9 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     @Input() filterTitle = 'Filter';
     currentFilters: Record<string, unknown> = {};
 
+    // Delete Button
+    @Input() showDeleteButton = false;
+
     // Slot für Filter
     @ContentChild('filterTemplate', { static: false }) filterTemplate!: TemplateRef<unknown>;
 
@@ -120,6 +123,7 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     @Output() lazyLoad = new EventEmitter<ListLazyEvent>();
     @Output() filterChange = new EventEmitter<Record<string, unknown>>();
     @Output() refresh = new EventEmitter<void>();
+    @Output() deleteClicked = new EventEmitter<void>();
 
     // Material Table
     displayedColumns: string[] = [];

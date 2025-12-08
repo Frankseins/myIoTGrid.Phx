@@ -49,7 +49,16 @@
             </div>
         }
 
-        <!-- Custom Toolbar Actions (z.B. Delete Button) -->
+        <!-- Delete Button (4. von links) -->
+        @if (showDeleteButton) {
+            <button type="button" mat-icon-button class="tbar-icon warn"
+                    aria-label="Löschen" (click)="deleteClicked.emit()"
+                    matTooltip="Löschen">
+                <mat-icon>delete</mat-icon>
+            </button>
+        }
+
+        <!-- Custom Toolbar Actions (zusätzliche Buttons) -->
         @if (toolbarActionsTemplate) {
             <ng-container *ngTemplateOutlet="toolbarActionsTemplate"></ng-container>
         }

@@ -177,6 +177,8 @@
                           <span class="sensor-model">{{ sensor.sensorModel }}</span>
                         </div>
                       </div>
+
+                      <!-- Sensor measurements (same for all sensors including GPS) -->
                       <div class="sensor-measurements">
                         @for (m of sensor.measurements; track m.measurementType) {
                           <div class="measurement-row">
@@ -185,6 +187,7 @@
                           </div>
                         }
                       </div>
+
                       <div class="sensor-timestamp">
                         @if (sensor.measurements.length > 0) {
                           {{ getRelativeTime(sensor.measurements[0].timestamp) }}
@@ -203,7 +206,8 @@
               <div class="section-header">
                 <h3>Zugeordnete Sensoren</h3>
                 @if (!isViewMode()) {
-                  <button mat-stroked-button color="primary" type="button"
+                  <button mat-flat-button color="primary" type="button"
+                          class="action-button"
                           (click)="openAssignmentForm()"
                           [disabled]="getUnassignedSensors().length === 0">
                     <mat-icon>add</mat-icon>
@@ -228,130 +232,122 @@
                   @for (assignment of assignments(); track assignment.id) {
                     <mat-expansion-panel class="assignment-panel" [class.inactive]="!assignment.isActive">
                       <mat-expansion-panel-header>
-                        <mat-panel-title>
-                          <div class="assignment-header">
-                            <div class="sensor-icon" [style.background-color]="getSensorColor(assignment.sensorCode)">
-                              <mat-icon>{{ getSensorIcon(assignment.sensorCode) }}</mat-icon>
-                            </div>
-                            <div class="assignment-info">
-                              <span class="sensor-name">{{ assignment.alias || assignment.sensorName }}</span>
-                              <span class="sensor-type">{{ assignment.sensorCode }}</span>
-                            </div>
-                          </div>
-                        </mat-panel-title>
-                        <mat-panel-description>
-                          @for (cap of getSensorCapabilities(assignment.sensorCode); track cap) {
-                            <mat-chip class="capability-chip">{{ cap }}</mat-chip>
-                          }
-                          <mat-chip [class.active]="assignment.isActive" [class.inactive]="!assignment.isActive">
-                            {{ assignment.isActive ? 'Aktiv' : 'Inaktiv' }}
-                          </mat-chip>
-                          <span class="endpoint-badge">Endpoint {{ assignment.endpointId }}</span>
-                        </mat-panel-description>
-                      </mat-expansion-panel-header>
-
-                      <div class="assignment-details">
-                        <!-- Effective Config -->
-                        <div class="config-section">
-                          <h4>Effektive Konfiguration</h4>
-                          <div class="config-grid">
-                            <div class="config-item">
-                              <span class="label">Intervall</span>
-                              <span class="value">{{ assignment.effectiveConfig.intervalSeconds }}s</span>
-                            </div>
-                            @if (assignment.effectiveConfig.i2cAddress) {
-                              <div class="config-item">
-                                <span class="label">I2C-Adresse</span>
-                                <span class="value">{{ assignment.effectiveConfig.i2cAddress }}</span>
-                              </div>
+                        <!-- Icon -->
+                        <div class="header-icon" [style.background-color]="getSensorColor(assignment.sensorCode)">
+                          <mat-icon>{{ getSensorIcon(assignment.sensorCode) }}</mat-icon>
+                        </div>
+                        <!-- Name + Code + Chips (stacked) -->
+                        <div class="header-info">
+                          <span class="sensor-name">{{ assignment.alias || assignment.sensorName }}</span>
+                          <span class="sensor-code">{{ assignment.sensorCode }}</span>
+                          <div class="header-chips">
+                            @for (cap of getSensorCapabilities(assignment.sensorCode); track cap) {
+                              <span class="capability-tag">{{ cap }}</span>
                             }
-                            @if (assignment.effectiveConfig.sdaPin !== null && assignment.effectiveConfig.sdaPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">SDA Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.sdaPin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.sclPin !== null && assignment.effectiveConfig.sclPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">SCL Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.sclPin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.oneWirePin !== null && assignment.effectiveConfig.oneWirePin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">OneWire Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.oneWirePin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.analogPin !== null && assignment.effectiveConfig.analogPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">Analog Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.analogPin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.digitalPin !== null && assignment.effectiveConfig.digitalPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">Digital Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.digitalPin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.triggerPin !== null && assignment.effectiveConfig.triggerPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">Trigger Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.triggerPin }}</span>
-                              </div>
-                            }
-                            @if (assignment.effectiveConfig.echoPin !== null && assignment.effectiveConfig.echoPin !== undefined) {
-                              <div class="config-item">
-                                <span class="label">Echo Pin</span>
-                                <span class="value">GPIO {{ assignment.effectiveConfig.echoPin }}</span>
-                              </div>
-                            }
-                            <div class="config-item">
-                              <span class="label">Offset</span>
-                              <span class="value">{{ assignment.effectiveConfig.offsetCorrection }}</span>
-                            </div>
-                            <div class="config-item">
-                              <span class="label">Gain</span>
-                              <span class="value">{{ assignment.effectiveConfig.gainCorrection }}</span>
-                            </div>
                           </div>
                         </div>
+                        <!-- Status Icon + Endpoint (right side, horizontal) -->
+                        <div class="header-status">
+                          <span class="endpoint-badge" matTooltip="Endpoint">{{ assignment.endpointId }}</span>
+                          <mat-icon class="status-icon" [class.active]="assignment.isActive" [class.inactive]="!assignment.isActive"
+                                    [matTooltip]="assignment.isActive ? 'Aktiv' : 'Inaktiv'">
+                            {{ assignment.isActive ? 'check_circle' : 'cancel' }}
+                          </mat-icon>
+                        </div>
+                      </mat-expansion-panel-header>
 
-                        <!-- Overrides Info -->
-                        @if (assignment.intervalSecondsOverride || assignment.i2cAddressOverride ||
-                             assignment.sdaPinOverride !== null || assignment.sclPinOverride !== null) {
-                          <div class="overrides-section">
-                            <h4>Überschriebene Werte</h4>
-                            <div class="overrides-list">
-                              @if (assignment.intervalSecondsOverride) {
-                                <mat-chip>Intervall: {{ assignment.intervalSecondsOverride }}s</mat-chip>
-                              }
-                              @if (assignment.i2cAddressOverride) {
-                                <mat-chip>I2C: {{ assignment.i2cAddressOverride }}</mat-chip>
-                              }
-                              @if (assignment.sdaPinOverride !== null) {
-                                <mat-chip>SDA: GPIO {{ assignment.sdaPinOverride }}</mat-chip>
-                              }
-                              @if (assignment.sclPinOverride !== null) {
-                                <mat-chip>SCL: GPIO {{ assignment.sclPinOverride }}</mat-chip>
-                              }
-                            </div>
+                      <div class="sensor-details">
+                        <!-- Alias falls vorhanden -->
+                        @if (assignment.alias) {
+                          <div class="detail-row">
+                            <span class="detail-label">Alias:</span>
+                            <span class="detail-value">{{ assignment.alias }}</span>
                           </div>
                         }
 
-                        <!-- Assignment Actions -->
+                        <!-- Pin-Konfiguration -->
+                        <h4>Konfiguration</h4>
+                        <div class="config-grid">
+                          <div class="config-item">
+                            <span class="label">Intervall</span>
+                            <span class="value">{{ assignment.effectiveConfig.intervalSeconds }}s</span>
+                          </div>
+                          @if (assignment.effectiveConfig.i2cAddress) {
+                            <div class="config-item highlight">
+                              <span class="label">I²C-Adresse</span>
+                              <span class="value">{{ assignment.effectiveConfig.i2cAddress }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.sdaPin !== null && assignment.effectiveConfig.sdaPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">SDA Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.sdaPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.sclPin !== null && assignment.effectiveConfig.sclPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">SCL Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.sclPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.oneWirePin !== null && assignment.effectiveConfig.oneWirePin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">OneWire Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.oneWirePin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.analogPin !== null && assignment.effectiveConfig.analogPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">Analog Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.analogPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.digitalPin !== null && assignment.effectiveConfig.digitalPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">Digital Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.digitalPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.triggerPin !== null && assignment.effectiveConfig.triggerPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">Trigger Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.triggerPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.echoPin !== null && assignment.effectiveConfig.echoPin !== undefined) {
+                            <div class="config-item">
+                              <span class="label">Echo Pin</span>
+                              <span class="value">GPIO {{ assignment.effectiveConfig.echoPin }}</span>
+                            </div>
+                          }
+                          @if (assignment.effectiveConfig.baudRate !== null && assignment.effectiveConfig.baudRate !== undefined) {
+                            <div class="config-item">
+                              <span class="label">Baudrate</span>
+                              <span class="value">{{ assignment.effectiveConfig.baudRate }}</span>
+                            </div>
+                          }
+                          <div class="config-item">
+                            <span class="label">Offset</span>
+                            <span class="value">{{ assignment.effectiveConfig.offsetCorrection }}</span>
+                          </div>
+                          <div class="config-item">
+                            <span class="label">Gain</span>
+                            <span class="value">{{ assignment.effectiveConfig.gainCorrection }}</span>
+                          </div>
+                        </div>
+
+                        <!-- Actions -->
                         @if (!isViewMode()) {
-                          <div class="assignment-actions">
-                            <button mat-button type="button" (click)="toggleAssignmentActive(assignment)">
+                          <div class="detail-actions">
+                            <button mat-stroked-button type="button" (click)="toggleAssignmentActive(assignment)">
                               <mat-icon>{{ assignment.isActive ? 'pause' : 'play_arrow' }}</mat-icon>
                               {{ assignment.isActive ? 'Deaktivieren' : 'Aktivieren' }}
                             </button>
-                            <button mat-button type="button" (click)="openAssignmentForm(assignment)">
+                            <button mat-stroked-button type="button" (click)="openAssignmentForm(assignment)">
                               <mat-icon>edit</mat-icon>
                               Bearbeiten
                             </button>
-                            <button mat-button color="warn" type="button" (click)="deleteAssignment(assignment)">
+                            <button mat-stroked-button color="warn" type="button" (click)="deleteAssignment(assignment)">
                               <mat-icon>delete</mat-icon>
                               Entfernen
                             </button>
@@ -376,11 +372,13 @@
                 [totalRecords]="historyTotalRecords()"
                 [loading]="isLoadingHistory()"
                 [showFilter]="true"
+                [showDeleteButton]="isEditMode()"
                 filterTitle="Messwerte filtern"
                 stateKey="node-reading-history"
                 dataKey="id"
                 (lazyLoad)="loadReadingsLazy($event)"
-                (filterChange)="onHistoryFilterChange($event)">
+                (filterChange)="onHistoryFilterChange($event)"
+                (deleteClicked)="openDeleteDrawer()">
 
                 <!-- Filter Template -->
                 <ng-template #filterTemplate let-filters>
@@ -413,18 +411,6 @@
                   </div>
                 </ng-template>
 
-                <!-- Toolbar Actions Template (Delete Readings Button) -->
-                <ng-template #toolbarActionsTemplate>
-                  @if (isEditMode()) {
-                    <button mat-icon-button class="tbar-icon warn"
-                            matTooltip="Messwerte löschen"
-                            [disabled]="historyTotalRecords() === 0"
-                            (click)="openDeleteDrawer()">
-                      <mat-icon>delete_sweep</mat-icon>
-                    </button>
-                  }
-                </ng-template>
-
                 <!-- Custom timestamp column -->
                 <ng-template myiotgridListColumnTemplate="timestamp" let-row>
                   {{ formatTimestamp(row.timestamp) }}
@@ -450,15 +436,15 @@
       <!-- Footer Action Bar (nur im Edit/Create Modus sichtbar) -->
       @if (!isViewMode()) {
         <div class="form-footer">
-          <div class="actions">
-            <button mat-button type="button" (click)="onCancel()">
-              <mat-icon>close</mat-icon>
+          <!-- Rechte Seite: Abbrechen & Speichern -->
+          <div class="footer-right">
+            <button mat-stroked-button type="button" (click)="onCancel()">
               Abbrechen
             </button>
             <button mat-flat-button color="primary" type="button"
                     [disabled]="form.invalid || isSaving()"
                     (click)="onSave()">
-              <mat-icon>{{ isSaving() ? 'sync' : 'check' }}</mat-icon>
+              <mat-icon class="{{ isSaving() ? 'spin' : '' }}">{{ isSaving() ? 'sync' : 'check' }}</mat-icon>
               {{ isSaving() ? 'Speichern...' : (isCreateMode() ? 'Erstellen' : 'Speichern') }}
             </button>
           </div>
@@ -594,18 +580,24 @@
           </mat-form-field>
         </div>
 
-        <div class="form-row single">
+        <div class="form-row">
           <mat-form-field appearance="outline">
             <mat-label>Echo Pin</mat-label>
             <input matInput type="number" formControlName="echoPinOverride">
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Baudrate</mat-label>
+            <input matInput type="number" formControlName="baudRateOverride" placeholder="z.B. 115200">
+            <mat-hint>UART Übertragungsrate</mat-hint>
           </mat-form-field>
         </div>
       </form>
     </div>
 
     <div class="drawer-buttons">
-      <button mat-button type="button" (click)="closeAssignmentDrawer()">Abbrechen</button>
-      <button mat-flat-button color="primary" type="button"
+      <button mat-stroked-button type="button" class="action-button" (click)="closeAssignmentDrawer()">Abbrechen</button>
+      <button mat-flat-button color="primary" type="button" class="action-button"
               (click)="saveAssignment()"
               [disabled]="assignmentForm.invalid">
         {{ editingAssignment() ? 'Speichern' : 'Zuordnen' }}
@@ -621,4 +613,65 @@
     (close)="closeDeleteDrawer()"
     (deleted)="onDeleteReadingsComplete($event)">
   </myiotgrid-delete-readings-drawer>
+</ng-template>
+
+<!-- Delete Node Drawer Template -->
+<ng-template #deleteNodeDrawer>
+  <div class="gt-drawer">
+    <div class="gt-drawer__header">
+      <h2 class="gt-drawer__title">Node löschen</h2>
+      <button mat-icon-button (click)="closeDeleteNodeDrawer()" aria-label="Schließen">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+
+    <div class="gt-drawer__body">
+      @if (node(); as currentNode) {
+        <div class="delete-node-content">
+          <!-- Node Info -->
+          <div class="node-info-card">
+            <div class="node-icon">
+              <mat-icon>router</mat-icon>
+            </div>
+            <div class="node-details">
+              <span class="node-name">{{ currentNode.name }}</span>
+              <span class="node-id">{{ currentNode.nodeId }}</span>
+            </div>
+          </div>
+
+          <!-- Warning -->
+          <div class="warning-box">
+            <mat-icon>warning</mat-icon>
+            <div class="warning-text">
+              <strong>Achtung:</strong> Das Löschen dieses Nodes kann nicht rückgängig gemacht werden!
+              Alle zugehörigen Sensorzuordnungen und Messwerte werden ebenfalls gelöscht.
+            </div>
+          </div>
+
+          <!-- Confirmation Input -->
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Bestätigung</mat-label>
+            <input matInput
+                   [(ngModel)]="deleteConfirmInput"
+                   placeholder="Tippe DELETE zum Bestätigen">
+            <mat-hint>Tippe "DELETE" um das Löschen zu bestätigen</mat-hint>
+          </mat-form-field>
+        </div>
+      }
+    </div>
+
+    <div class="drawer-buttons">
+      <button mat-stroked-button class="action-button" (click)="closeDeleteNodeDrawer()">Abbrechen</button>
+      <button mat-flat-button color="warn"
+              (click)="confirmDeleteNode()"
+              [disabled]="deleteConfirmInput !== 'DELETE' || isDeleting()">
+        @if (isDeleting()) {
+          <mat-spinner diameter="20" class="button-spinner"></mat-spinner>
+        } @else {
+          <mat-icon>delete</mat-icon>
+        }
+        Node löschen
+      </button>
+    </div>
+  </div>
 </ng-template>

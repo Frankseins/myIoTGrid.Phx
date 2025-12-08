@@ -482,6 +482,7 @@ public class NodeSensorAssignmentsControllerTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: null,
             IsActive: true,
             LastSeenAt: null,
@@ -496,6 +497,7 @@ public class NodeSensorAssignmentsControllerTests
                 DigitalPin: null,
                 TriggerPin: null,
                 EchoPin: null,
+                BaudRate: null,
                 OffsetCorrection: 0,
                 GainCorrection: 1
             )
@@ -580,6 +582,7 @@ public class SensorAssignmentsControllerTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: null,
             IsActive: true,
             LastSeenAt: null,
@@ -594,6 +597,7 @@ public class SensorAssignmentsControllerTests
                 DigitalPin: null,
                 TriggerPin: null,
                 EchoPin: null,
+                BaudRate: null,
                 OffsetCorrection: 0,
                 GainCorrection: 1
             )

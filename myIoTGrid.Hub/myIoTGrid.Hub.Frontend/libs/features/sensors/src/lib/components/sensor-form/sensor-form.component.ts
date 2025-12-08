@@ -220,6 +220,9 @@ export class SensorFormComponent implements OnInit {
       triggerPin: [null],
       echoPin: [null],
 
+      // Hardware Configuration - UART
+      baudRate: [null],
+
       // Timing Configuration
       intervalSeconds: [60, [Validators.required, Validators.min(1)]],
       minIntervalSeconds: [1, [Validators.required, Validators.min(1)]],
@@ -287,6 +290,7 @@ export class SensorFormComponent implements OnInit {
       digitalPin: sensor.digitalPin ?? null,
       triggerPin: sensor.triggerPin ?? null,
       echoPin: sensor.echoPin ?? null,
+      baudRate: sensor.baudRate ?? null,
 
       // Timing
       intervalSeconds: sensor.intervalSeconds ?? 60,
@@ -419,6 +423,7 @@ export class SensorFormComponent implements OnInit {
         digitalPin: formValue.digitalPin ?? undefined,
         triggerPin: formValue.triggerPin ?? undefined,
         echoPin: formValue.echoPin ?? undefined,
+        baudRate: formValue.baudRate ?? undefined,
 
         // Timing
         intervalSeconds: formValue.intervalSeconds ?? undefined,
@@ -480,6 +485,7 @@ export class SensorFormComponent implements OnInit {
         digitalPin: formValue.digitalPin ?? undefined,
         triggerPin: formValue.triggerPin ?? undefined,
         echoPin: formValue.echoPin ?? undefined,
+        baudRate: formValue.baudRate ?? undefined,
 
         // Timing
         intervalSeconds: formValue.intervalSeconds ?? undefined,
@@ -563,13 +569,17 @@ export class SensorFormComponent implements OnInit {
     return this.selectedProtocol() === CommunicationProtocol.UltraSonic;
   }
 
+  showUARTPins(): boolean {
+    return this.selectedProtocol() === CommunicationProtocol.UART;
+  }
+
   showPinConfiguration(): boolean {
     return this.selectedProtocol() !== null;
   }
 
   hasPinFields(): boolean {
     return this.showI2CPins() || this.showOneWirePin() || this.showAnalogPin() ||
-           this.showDigitalPin() || this.showUltraSonicPins();
+           this.showDigitalPin() || this.showUltraSonicPins() || this.showUARTPins();
   }
 
   // ===== Helper Methods =====

@@ -1,0 +1,247 @@
+:host {
+  display: inline-block;
+}
+
+.gps-status-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: var(--mat-sys-surface-container);
+  border-radius: 8px;
+  font-size: 13px;
+
+  &.compact {
+    gap: 4px;
+    padding: 4px 8px;
+    background: transparent;
+  }
+
+  &.no-gps {
+    opacity: 0.5;
+  }
+}
+
+// Satellite indicator with signal bars
+.satellite-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  .gps-icon {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+  }
+
+  // Quality-based icon colors
+  &.quality-excellent .gps-icon {
+    color: #2e7d32;
+  }
+
+  &.quality-good .gps-icon {
+    color: #558b2f;
+  }
+
+  &.quality-moderate .gps-icon {
+    color: #f9a825;
+  }
+
+  &.quality-poor .gps-icon {
+    color: #ef6c00;
+  }
+
+  &.quality-nofix .gps-icon {
+    color: #c62828;
+  }
+}
+
+.signal-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 16px;
+
+  .bar {
+    width: 3px;
+    background: var(--mat-sys-outline-variant);
+    border-radius: 1px;
+    transition: background-color 0.2s ease;
+
+    &.active {
+      background: currentColor;
+    }
+  }
+}
+
+// Quality-based signal bar colors
+.quality-excellent .signal-bars .bar.active {
+  background: #2e7d32;
+}
+
+.quality-good .signal-bars .bar.active {
+  background: #558b2f;
+}
+
+.quality-moderate .signal-bars .bar.active {
+  background: #f9a825;
+}
+
+.quality-poor .signal-bars .bar.active {
+  background: #ef6c00;
+}
+
+.quality-nofix .signal-bars .bar.active {
+  background: #c62828;
+}
+
+// Satellite count
+.satellite-count {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1.1;
+
+  .count {
+    font-size: 16px;
+    font-weight: 600;
+  }
+
+  .label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+// Compact mode count
+.compact-count {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+// Fix type badge
+.fix-badge {
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+
+  &.fix-3d {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.fix-2d {
+    background: #fff8e1;
+    color: #f9a825;
+  }
+
+  &.fix-none {
+    background: #ffebee;
+    color: #c62828;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .fix-badge {
+    &.fix-3d {
+      background: rgba(46, 125, 50, 0.2);
+      color: #81c784;
+    }
+
+    &.fix-2d {
+      background: rgba(249, 168, 37, 0.2);
+      color: #ffd54f;
+    }
+
+    &.fix-none {
+      background: rgba(198, 40, 40, 0.2);
+      color: #ef9a9a;
+    }
+  }
+}
+
+// HDOP quality badge
+.hdop-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 4px;
+  line-height: 1.1;
+
+  .value {
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .label {
+    font-size: 9px;
+    text-transform: uppercase;
+    opacity: 0.8;
+  }
+
+  &.quality-excellent {
+    background: #e8f5e9;
+    color: #2e7d32;
+  }
+
+  &.quality-good {
+    background: #f1f8e9;
+    color: #558b2f;
+  }
+
+  &.quality-moderate {
+    background: #fff8e1;
+    color: #f9a825;
+  }
+
+  &.quality-poor {
+    background: #fff3e0;
+    color: #ef6c00;
+  }
+
+  &.quality-nofix {
+    background: #ffebee;
+    color: #c62828;
+  }
+}
+
+// Dark mode HDOP badges
+@media (prefers-color-scheme: dark) {
+  .hdop-badge {
+    &.quality-excellent {
+      background: rgba(46, 125, 50, 0.2);
+      color: #81c784;
+    }
+
+    &.quality-good {
+      background: rgba(85, 139, 47, 0.2);
+      color: #aed581;
+    }
+
+    &.quality-moderate {
+      background: rgba(249, 168, 37, 0.2);
+      color: #ffd54f;
+    }
+
+    &.quality-poor {
+      background: rgba(239, 108, 0, 0.2);
+      color: #ffb74d;
+    }
+
+    &.quality-nofix {
+      background: rgba(198, 40, 40, 0.2);
+      color: #ef9a9a;
+    }
+  }
+}
+
+// No GPS label
+.no-gps-label {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant);
+}

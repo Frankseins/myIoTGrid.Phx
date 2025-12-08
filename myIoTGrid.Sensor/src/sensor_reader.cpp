@@ -5,6 +5,8 @@
  */
 
 #include "sensor_reader.h"
+#include "hardware_scanner.h"
+#include "uart_manager.h"
 
 // Default I2C pins for ESP32
 #define DEFAULT_SDA_PIN 21
@@ -35,7 +37,7 @@ SensorReader::SensorReader()
     , _ads1115_0x48_ready(false), _ads1115_0x49_ready(false)
     , _dht22(nullptr), _dht22_ready(false), _dht22_pin(-1)
     , _ultrasonic_trigger_pin(-1), _ultrasonic_echo_pin(-1), _ultrasonic_ready(false)
-    , _gps(nullptr), _gpsSerial(nullptr), _gps_ready(false), _gps_rx_pin(-1), _gps_tx_pin(-1)
+    , _gps(nullptr), _gpsSerial(nullptr), _gps_ready(false), _gps_rx_pin(-1), _gps_tx_pin(-1), _gps_debug_ran(false)
     , _sr04m2Serial(nullptr), _sr04m2_ready(false), _sr04m2_rx_pin(-1), _sr04m2_tx_pin(-1)
     , _currentSdaPin(-1), _currentSclPin(-1)
 #endif
@@ -469,13 +471,26 @@ bool SensorReader::initGPS(int rxPin, int txPin) {
     }
 
     if (!_gps) _gps = new TinyGPSPlus();
-    if (!_gpsSerial) _gpsSerial = new HardwareSerial(2);  // Use Serial2
 
-    _gpsSerial->begin(9600, SERIAL_8N1, rxPin, txPin);
+    // Use UARTManager to allocate UART dynamically based on pins
+    UARTManager& uartMgr = UARTManager::getInstance();
+    int uartNum = uartMgr.allocate(rxPin, txPin, 9600, "GPS", false);  // Use Arduino API
+
+    if (uartNum < 0) {
+        Serial.println("[SensorReader] Failed to allocate UART for GPS!");
+        return false;
+    }
+
+    _gpsSerial = uartMgr.getSerial(uartNum);
+    if (!_gpsSerial) {
+        Serial.println("[SensorReader] Failed to get GPS serial!");
+        return false;
+    }
+
     _gps_rx_pin = rxPin;
     _gps_tx_pin = txPin;
     _gps_ready = true;
-    Serial.println("[SensorReader] GPS initialized");
+    Serial.printf("[SensorReader] GPS initialized on UART%d\n", uartNum);
     return true;
 }
 
@@ -486,63 +501,37 @@ bool SensorReader::initGPS(int rxPin, int txPin) {
 // Static baud rate tracking for SR04M-2 / JSN-SR04T / A02YYUW
 // UART mode default is 9600 baud (MODE pin open = UART mode)
 // TX output is 3.3V TTL compatible - no level shifter needed!
-// FIXED to 9600 baud - the sensor spec says 9600
-static int sr04m2_current_baud = 9600;
+// Try 115200 first (some sensors use higher baud), fallback to 9600
+static int sr04m2_current_baud = 115200;
 static int sr04m2_fail_count = 0;
 static bool sr04m2_auto_mode_detected = false;
 static bool sr04m2_try_inverted = false;  // Standard UART (not inverted)
 
-bool SensorReader::initSR04M2(int rxPin, int txPin) {
+bool SensorReader::initSR04M2(int rxPin, int txPin, int baudRate) {
     // RX pin is required, TX pin is optional (can be -1 for RX-only mode)
     if (rxPin < 0) return false;
 
-    // Use UART_PIN_NO_CHANGE (-1) if TX pin not specified
-    int actualTxPin = (txPin < 0) ? UART_PIN_NO_CHANGE : txPin;
+    // Use passed baud rate if valid, otherwise use default from static variable
+    int actualBaudRate = (baudRate > 0) ? baudRate : sr04m2_current_baud;
+    sr04m2_current_baud = actualBaudRate;  // Update static variable for future reads
 
     Serial.printf("[SensorReader] Initializing SR04M-2 (UART) RX=%d, TX=%s at %d baud...\n",
-                  rxPin, txPin < 0 ? "none" : String(txPin).c_str(), sr04m2_current_baud);
+                  rxPin, txPin < 0 ? "none" : String(txPin).c_str(), actualBaudRate);
 
-    // Use ESP-IDF UART API directly for reliable UART1 operation
-    const uart_port_t uart_num = UART_NUM_1;
+    // Use UARTManager to allocate UART dynamically based on pins
+    UARTManager& uartMgr = UARTManager::getInstance();
+    int uartNum = uartMgr.allocate(rxPin, txPin, actualBaudRate, "SR04M2", true);  // Use ESP-IDF API
 
-    // Always reconfigure UART (to allow baud rate changes)
-    uart_driver_delete(uart_num);
-
-    uart_config_t uart_config = {
-        .baud_rate = sr04m2_current_baud,
-        .data_bits = UART_DATA_8_BITS,
-        .parity = UART_PARITY_DISABLE,
-        .stop_bits = UART_STOP_BITS_1,
-        .flow_ctrl = UART_HW_FLOWCTRL_DISABLE,
-        .rx_flow_ctrl_thresh = 0,
-        .source_clk = UART_SCLK_APB,
-    };
-
-    esp_err_t err = uart_param_config(uart_num, &uart_config);
-    if (err != ESP_OK) {
-        Serial.printf("[SR04M-2] uart_param_config failed: %d\n", err);
-        return false;
-    }
-
-    // Set pins: TX (ESP->Sensor), RX (Sensor->ESP)
-    // For RX-only mode, use UART_PIN_NO_CHANGE for TX
-    err = uart_set_pin(uart_num, actualTxPin, rxPin, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    if (err != ESP_OK) {
-        Serial.printf("[SR04M-2] uart_set_pin failed: %d\n", err);
-        return false;
-    }
-
-    // Install UART driver with RX buffer
-    err = uart_driver_install(uart_num, 256, 0, 0, NULL, 0);
-    if (err != ESP_OK) {
-        Serial.printf("[SR04M-2] uart_driver_install failed: %d\n", err);
+    if (uartNum < 0) {
+        Serial.println("[SensorReader] Failed to allocate UART for SR04M-2!");
         return false;
     }
 
     // Try inverted RX if we're getting garbage data (0x00, 0xC0 instead of 0xFF, 0xFE)
     // Some sensors have inverted UART output
     if (sr04m2_try_inverted) {
-        err = uart_set_line_inverse(uart_num, UART_SIGNAL_RXD_INV);
+        uart_port_t uart_port = (uartNum == 1) ? UART_NUM_1 : UART_NUM_2;
+        esp_err_t err = uart_set_line_inverse(uart_port, UART_SIGNAL_RXD_INV);
         if (err == ESP_OK) {
             Serial.println("[SR04M-2] RX signal INVERTED enabled");
         }
@@ -551,8 +540,8 @@ bool SensorReader::initSR04M2(int rxPin, int txPin) {
     _sr04m2_rx_pin = rxPin;
     _sr04m2_tx_pin = txPin;
     _sr04m2_ready = true;
-    Serial.printf("[SensorReader] SR04M-2 initialized at %d baud (RX-only: %s, inverted: %s)\n",
-                  sr04m2_current_baud, txPin < 0 ? "yes" : "no", sr04m2_try_inverted ? "yes" : "no");
+    Serial.printf("[SensorReader] SR04M-2 initialized on UART%d at %d baud (RX-only: %s, inverted: %s)\n",
+                  uartNum, actualBaudRate, txPin < 0 ? "yes" : "no", sr04m2_try_inverted ? "yes" : "no");
     return true;
 }
 
@@ -685,6 +674,10 @@ SensorReading SensorReader::readValue(const String& measurementType, const Senso
     if (type.indexOf("longitude") >= 0 || type.indexOf("lng") >= 0 || type.indexOf("lon") >= 0) return readLongitude(config);
     if (type.indexOf("altitude") >= 0 || type.indexOf("alt") >= 0) return readAltitude(config);
     if (type.indexOf("speed") >= 0) return readSpeed(config);
+    // GPS Status readings
+    if (type.indexOf("gps_satellites") >= 0 || type.indexOf("satellites") >= 0) return readGpsSatellites(config);
+    if (type.indexOf("gps_fix") >= 0 || type.indexOf("fix_type") >= 0) return readGpsFix(config);
+    if (type.indexOf("gps_hdop") >= 0 || type.indexOf("hdop") >= 0) return readGpsHdop(config);
 
     return SensorReading("Unknown measurement type: " + measurementType);
 }
@@ -1193,16 +1186,23 @@ SensorReading SensorReader::readWaterLevel(const SensorAssignmentConfig& config)
         int rxPin = config.analogPin > 0 ? config.analogPin : 23;   // ESP RX <- Sensor TX (GPIO 23 default)
         int txPin = config.digitalPin > 0 ? config.digitalPin : -1; // ESP TX -> not used for auto-mode
 
-        Serial.printf("[SR04M-2] UART mode - RX=GPIO%d, TX=%s, Baud=%d\n",
-                      rxPin, txPin < 0 ? "none" : String(txPin).c_str(), sr04m2_current_baud);
+        int baudRate = config.baudRate > 0 ? config.baudRate : 115200;  // Default to 115200 if not configured
+        Serial.printf("[SR04M-2] UART mode - RX=GPIO%d, TX=%s, Baud=%d (from config: %d)\n",
+                      rxPin, txPin < 0 ? "none" : String(txPin).c_str(), baudRate, config.baudRate);
 
         // Always reinitialize to apply current baud rate
         _sr04m2_ready = false;
-        if (!initSR04M2(rxPin, txPin)) {
+        if (!initSR04M2(rxPin, txPin, baudRate)) {
             return SensorReading("SR04M-2 not available");
         }
 
-        const uart_port_t uart_num = UART_NUM_1;
+        // Get UART port from UARTManager (dynamically allocated)
+        UARTManager& uartMgr = UARTManager::getInstance();
+        int uartNum_int = uartMgr.getUartForOwner("SR04M2");
+        if (uartNum_int < 0) {
+            return SensorReading("SR04M-2 UART not allocated");
+        }
+        const uart_port_t uart_num = (uartNum_int == 1) ? UART_NUM_1 : UART_NUM_2;
 
         // Clear RX buffer first
         uart_flush_input(uart_num);
@@ -1385,6 +1385,27 @@ SensorReading SensorReader::readLatitude(const SensorAssignmentConfig& config) {
             Serial.printf("[SensorReader] GPS Latitude: %.6f°\n", lat);
             return SensorReading(lat);
         }
+
+        // Auto-start GPS debug diagnostics once when no fix
+        if (!_gps_debug_ran) {
+            Serial.println("\n[SensorReader] GPS no fix detected - running diagnostics automatically...\n");
+            _gps_debug_ran = true;
+
+            // Release GPS UART allocation via UARTManager to avoid conflict with debugGPS
+            UARTManager& uartMgr = UARTManager::getInstance();
+            uartMgr.releaseByOwner("GPS");
+            _gpsSerial = nullptr;
+            _gps_ready = false;
+
+            // Run GPS debug diagnostics (15 seconds)
+            HardwareScanner scanner;
+            scanner.debugGPS(rxPin, txPin, 15);
+
+            // Re-initialize GPS after debug (UARTManager will allocate fresh)
+            Serial.println("\n[SensorReader] Re-initializing GPS after diagnostics...");
+            initGPS(rxPin, txPin);
+        }
+
         return SensorReading("GPS no fix");
     }
 
@@ -1509,6 +1530,143 @@ SensorReading SensorReader::readSpeed(const SensorAssignmentConfig& config) {
             return SensorReading(speed);
         }
         return SensorReading("GPS speed not available");
+    }
+
+    return SensorReading("No GPS sensor: " + config.sensorCode);
+#else
+    return SensorReading("Hardware not available on native");
+#endif
+}
+
+// ============================================================================
+// GPS Satellites Reading (NEO-6M)
+// ============================================================================
+
+SensorReading SensorReader::readGpsSatellites(const SensorAssignmentConfig& config) {
+#ifdef PLATFORM_ESP32
+    String sensorCode = config.sensorCode;
+    sensorCode.toUpperCase();
+
+    if (sensorCode.indexOf("NEO-6M") >= 0 || sensorCode.indexOf("NEO6M") >= 0 ||
+        sensorCode.indexOf("GPS") >= 0 || sensorCode.indexOf("UBLOX") >= 0) {
+
+        int rxPin = config.analogPin > 0 ? config.analogPin : 16;
+        int txPin = config.digitalPin > 0 ? config.digitalPin : 17;
+
+        if (!_gps_ready && !initGPS(rxPin, txPin)) {
+            return SensorReading("GPS not available");
+        }
+
+        // Read GPS data (up to 100ms)
+        unsigned long start = millis();
+        while (millis() - start < 100) {
+            while (_gpsSerial->available() > 0) {
+                _gps->encode(_gpsSerial->read());
+            }
+        }
+
+        if (_gps->satellites.isValid()) {
+            int satellites = _gps->satellites.value();
+            Serial.printf("[SensorReader] GPS Satellites: %d\n", satellites);
+            return SensorReading((double)satellites);
+        }
+        // Return 0 satellites if not valid (cold start)
+        Serial.println("[SensorReader] GPS Satellites: 0 (no valid data)");
+        return SensorReading(0.0);
+    }
+
+    return SensorReading("No GPS sensor: " + config.sensorCode);
+#else
+    return SensorReading("Hardware not available on native");
+#endif
+}
+
+// ============================================================================
+// GPS Fix Type Reading (NEO-6M)
+// Returns: 0 = no fix, 1 = GPS fix, 2 = DGPS fix
+// ============================================================================
+
+SensorReading SensorReader::readGpsFix(const SensorAssignmentConfig& config) {
+#ifdef PLATFORM_ESP32
+    String sensorCode = config.sensorCode;
+    sensorCode.toUpperCase();
+
+    if (sensorCode.indexOf("NEO-6M") >= 0 || sensorCode.indexOf("NEO6M") >= 0 ||
+        sensorCode.indexOf("GPS") >= 0 || sensorCode.indexOf("UBLOX") >= 0) {
+
+        int rxPin = config.analogPin > 0 ? config.analogPin : 16;
+        int txPin = config.digitalPin > 0 ? config.digitalPin : 17;
+
+        if (!_gps_ready && !initGPS(rxPin, txPin)) {
+            return SensorReading("GPS not available");
+        }
+
+        // Read GPS data (up to 100ms)
+        unsigned long start = millis();
+        while (millis() - start < 100) {
+            while (_gpsSerial->available() > 0) {
+                _gps->encode(_gpsSerial->read());
+            }
+        }
+
+        // Determine fix type based on location validity and satellite count
+        // TinyGPS++ doesn't expose fix quality directly, so we infer it
+        int fixType = 0;
+        if (_gps->location.isValid()) {
+            // Has valid fix
+            if (_gps->satellites.isValid() && _gps->satellites.value() >= 4) {
+                fixType = 3; // 3D fix (4+ satellites)
+            } else {
+                fixType = 2; // 2D fix (less than 4 satellites)
+            }
+        }
+
+        Serial.printf("[SensorReader] GPS Fix Type: %d\n", fixType);
+        return SensorReading((double)fixType);
+    }
+
+    return SensorReading("No GPS sensor: " + config.sensorCode);
+#else
+    return SensorReading("Hardware not available on native");
+#endif
+}
+
+// ============================================================================
+// GPS HDOP (Horizontal Dilution of Precision) Reading (NEO-6M)
+// Lower is better: <1 = Ideal, 1-2 = Excellent, 2-5 = Good, 5-10 = Moderate
+// ============================================================================
+
+SensorReading SensorReader::readGpsHdop(const SensorAssignmentConfig& config) {
+#ifdef PLATFORM_ESP32
+    String sensorCode = config.sensorCode;
+    sensorCode.toUpperCase();
+
+    if (sensorCode.indexOf("NEO-6M") >= 0 || sensorCode.indexOf("NEO6M") >= 0 ||
+        sensorCode.indexOf("GPS") >= 0 || sensorCode.indexOf("UBLOX") >= 0) {
+
+        int rxPin = config.analogPin > 0 ? config.analogPin : 16;
+        int txPin = config.digitalPin > 0 ? config.digitalPin : 17;
+
+        if (!_gps_ready && !initGPS(rxPin, txPin)) {
+            return SensorReading("GPS not available");
+        }
+
+        // Read GPS data (up to 100ms)
+        unsigned long start = millis();
+        while (millis() - start < 100) {
+            while (_gpsSerial->available() > 0) {
+                _gps->encode(_gpsSerial->read());
+            }
+        }
+
+        if (_gps->hdop.isValid()) {
+            double hdop = _gps->hdop.hdop();
+            Serial.printf("[SensorReader] GPS HDOP: %.2f\n", hdop);
+            return SensorReading(hdop);
+        }
+        // Return 99.99 as invalid/unknown HDOP
+        Serial.println("[SensorReader] GPS HDOP: 99.99 (no valid data)");
+        return SensorReading(99.99);
     }
 
     return SensorReading("No GPS sensor: " + config.sensorCode);

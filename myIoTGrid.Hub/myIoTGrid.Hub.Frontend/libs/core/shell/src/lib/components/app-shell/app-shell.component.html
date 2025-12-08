@@ -1,9 +1,20 @@
-<div class="app-shell">
-  @if (showNavigation()) {
+<div class="app-shell" [class.mobile]="isMobile()" [class.tablet]="isTablet()" [class.desktop]="isDesktop()">
+  <!-- Desktop/Tablet: Side Navigation Rail -->
+  @if (shouldShowSideNav()) {
     <myiotgrid-navigation-rail></myiotgrid-navigation-rail>
   }
 
-  <main class="main-content" [class.no-nav]="!showNavigation()">
+  <!-- Main Content Area -->
+  <main
+    class="main-content"
+    [class.no-nav]="!shouldShowNav()"
+    [class.with-bottom-nav]="shouldShowBottomNav()"
+    [style.padding.px]="contentPadding()">
     <ng-content></ng-content>
   </main>
+
+  <!-- Mobile: Bottom Navigation -->
+  @if (shouldShowBottomNav()) {
+    <myiotgrid-bottom-nav></myiotgrid-bottom-nav>
+  }
 </div>

@@ -39,6 +39,7 @@ struct BLEConfig {
 using OnBLEConfigReceived = std::function<void(const BLEConfig& config)>;
 using OnPairingStarted = std::function<void()>;
 using OnPairingCompleted = std::function<void()>;
+using OnReProvisioningConfigReceived = std::function<void(const BLEConfig& config)>;
 
 /**
  * BLE Provisioning Service for Node Setup
@@ -97,6 +98,25 @@ public:
      * Stop BLE for WPS mode (doesn't deinit, just stops advertising)
      */
     void stopForWPS();
+
+    /**
+     * Start BLE for RE_PAIRING mode
+     * - Adds "-SETUP" suffix to device name
+     * - Allows receiving new WiFi credentials
+     * Returns true if successfully started
+     */
+    bool startForReProvisioning();
+
+    /**
+     * Check if currently in RE_PAIRING mode
+     */
+    bool isReProvisioning() const { return _isReProvisioning; }
+
+    /**
+     * Set callback for re-provisioning config received
+     * This is called instead of normal config callback when in RE_PAIRING mode
+     */
+    void setReProvisioningCallback(OnReProvisioningConfigReceived callback);
 
     /**
      * Get MAC address
@@ -168,12 +188,15 @@ private:
     bool _initialized;
     bool _connected;
     bool _advertising_active;
+    bool _isReProvisioning;  // True when in RE_PAIRING mode
     String _macAddress;
     String _firmwareVersion;
+    String _deviceName;      // Store current device name for re-init
 
     OnBLEConfigReceived _onConfigReceived;
     OnPairingStarted _onPairingStarted;
     OnPairingCompleted _onPairingCompleted;
+    OnReProvisioningConfigReceived _onReProvisioningConfig;
 
     BLEConfig _pendingConfig;
 

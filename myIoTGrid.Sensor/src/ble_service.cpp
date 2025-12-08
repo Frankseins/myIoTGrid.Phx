@@ -16,6 +16,7 @@ BLEProvisioningService::BLEProvisioningService()
     : _initialized(false)
     , _connected(false)
     , _advertising_active(false)
+    , _isReProvisioning(false)
 #ifdef PLATFORM_ESP32
     , _server(nullptr)
     , _nimbleService(nullptr)
@@ -39,6 +40,10 @@ BLEProvisioningService::~BLEProvisioningService() {
 bool BLEProvisioningService::init(const String& deviceName) {
 #ifdef PLATFORM_ESP32
     Serial.printf("[BLE] Initializing with name: %s\n", deviceName.c_str());
+
+    // Store device name for potential re-initialization
+    _deviceName = deviceName;
+    _isReProvisioning = false;
 
     NimBLEDevice::init(deviceName.c_str());
     NimBLEDevice::setPower(ESP_PWR_LVL_P9);
@@ -173,6 +178,126 @@ void BLEProvisioningService::stopForWPS() {
     delay(200);
     Serial.println("[BLE] BLE paused for WPS");
 #endif
+}
+
+bool BLEProvisioningService::startForReProvisioning() {
+#ifdef PLATFORM_ESP32
+    Serial.println("[BLE] ========================================");
+    Serial.println("[BLE] Starting RE_PAIRING Mode");
+    Serial.println("[BLE] ========================================");
+
+    // Set re-provisioning flag
+    _isReProvisioning = true;
+
+    // If already initialized, we need to restart with new name
+    if (_initialized) {
+        // Stop current advertising
+        if (_advertising) {
+            _advertising->stop();
+        }
+        _advertising_active = false;
+
+        // Create new device name with -SETUP suffix
+        String reProvisioningName = _deviceName + "-SETUP";
+        Serial.printf("[BLE] Re-initializing with name: %s\n", reProvisioningName.c_str());
+
+        // NimBLE doesn't support changing device name without deinit
+        // So we'll just update the advertising data with new name
+        // The -SETUP suffix is added to help frontend distinguish RE_PAIRING mode
+
+        // Actually, we need to deinit and reinit to change the name
+        // This is a limitation of NimBLE
+        NimBLEDevice::deinit(true);
+        delay(100);
+
+        // Reinitialize with new name
+        NimBLEDevice::init(reProvisioningName.c_str());
+        NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+
+        // Recreate server
+        _server = NimBLEDevice::createServer();
+        _server->setCallbacks(new ServerCallbacks(this));
+
+        // Recreate service
+        _nimbleService = _server->createService(SERVICE_UUID);
+
+        // Recreate characteristics
+        _regChar = _nimbleService->createCharacteristic(
+            CHAR_REGISTRATION_UUID,
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+        );
+
+        // Set registration value
+        std::string nodeId = std::string("ESP32-") + _macAddress.c_str();
+        _regChar->setValue(nodeId);
+
+        _wifiChar = _nimbleService->createCharacteristic(
+            CHAR_WIFI_CONFIG_UUID,
+            NIMBLE_PROPERTY::WRITE
+        );
+        _wifiChar->setCallbacks(new CharacteristicCallbacks(this));
+
+        _apiChar = _nimbleService->createCharacteristic(
+            CHAR_API_CONFIG_UUID,
+            NIMBLE_PROPERTY::WRITE
+        );
+        _apiChar->setCallbacks(new CharacteristicCallbacks(this));
+
+        _statusChar = _nimbleService->createCharacteristic(
+            CHAR_STATUS_UUID,
+            NIMBLE_PROPERTY::READ | NIMBLE_PROPERTY::NOTIFY
+        );
+
+        // Start service
+        _nimbleService->start();
+
+        // Configure advertising
+        _advertising = NimBLEDevice::getAdvertising();
+        _advertising->addServiceUUID(SERVICE_UUID);
+        _advertising->setAppearance(0x0540); // Generic Sensor
+        _advertising->setScanResponse(true);
+    } else {
+        // Not initialized yet - initialize with -SETUP suffix
+        String reProvisioningName = "myIoTGrid-SETUP";
+
+        // Get MAC for naming
+        WiFi.mode(WIFI_STA);
+        delay(10);
+        uint8_t mac[6];
+        WiFi.macAddress(mac);
+        char macBuf[8];
+        snprintf(macBuf, sizeof(macBuf), "%02X%02X", mac[4], mac[5]);
+        reProvisioningName = String("myIoTGrid-") + macBuf + "-SETUP";
+
+        if (!init(reProvisioningName)) {
+            Serial.println("[BLE] Failed to initialize for RE_PAIRING");
+            _isReProvisioning = false;
+            return false;
+        }
+    }
+
+    // Start advertising
+    Serial.println("[BLE] Starting RE_PAIRING advertising...");
+    _advertising->start();
+    _advertising_active = true;
+
+    if (_onPairingStarted) {
+        _onPairingStarted();
+    }
+
+    Serial.println("[BLE] RE_PAIRING mode active - waiting for new WiFi credentials");
+    Serial.println("[BLE] Device name has '-SETUP' suffix for frontend detection");
+    return true;
+#else
+    Serial.println("[BLE] RE_PAIRING not supported on this platform");
+    _isReProvisioning = true;
+    _advertising_active = true;
+    return true;
+#endif
+}
+
+void BLEProvisioningService::setReProvisioningCallback(OnReProvisioningConfigReceived callback) {
+    _onReProvisioningConfig = callback;
 }
 
 void BLEProvisioningService::loop() {
@@ -321,11 +446,16 @@ void BLEProvisioningService::checkConfiguration() {
                 _onPairingCompleted();
             }
 
-            if (_onConfigReceived) {
+            // Call appropriate callback based on mode
+            if (_isReProvisioning && _onReProvisioningConfig) {
+                Serial.println("[BLE] RE_PAIRING: Calling onReProvisioningConfig callback");
+                _onReProvisioningConfig(_pendingConfig);
+                _isReProvisioning = false;  // Reset flag after successful config
+            } else if (_onConfigReceived) {
                 Serial.println("[BLE] Calling onConfigReceived callback");
                 _onConfigReceived(_pendingConfig);
             } else {
-                Serial.println("[BLE] WARNING: No onConfigReceived callback set!");
+                Serial.println("[BLE] WARNING: No config callback set!");
             }
 
             // Reset pending config after full config is processed

@@ -94,8 +94,8 @@
   </div>
 
   <div class="drawer-buttons">
-    <button mat-button (click)="onReset()" [disabled]="isDeleting()">
-      <mat-icon>clear</mat-icon> Zurücksetzen
+    <button mat-stroked-button (click)="onClose()" [disabled]="isDeleting()">
+      Abbrechen
     </button>
     <button mat-flat-button color="warn"
             (click)="onDelete()"

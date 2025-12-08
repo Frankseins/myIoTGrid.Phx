@@ -460,6 +460,7 @@ public class SensorsControllerTests
             DigitalPin: 4,
             TriggerPin: null,
             EchoPin: null,
+            BaudRate: null,
             IntervalSeconds: 60,
             MinIntervalSeconds: 1,
             WarmupTimeMs: 0,

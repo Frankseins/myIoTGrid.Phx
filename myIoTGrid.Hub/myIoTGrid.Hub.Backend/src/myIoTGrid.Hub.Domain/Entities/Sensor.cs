@@ -72,6 +72,11 @@ public class Sensor : ITenantEntity
     /// <summary>Echo pin for ultrasonic sensors</summary>
     public int? EchoPin { get; set; }
 
+    // === UART Configuration ===
+
+    /// <summary>Baud rate for UART communication (e.g., 9600, 115200)</summary>
+    public int? BaudRate { get; set; }
+
     // === Timing Configuration (previously in SensorType) ===
 
     /// <summary>Measurement interval in seconds</summary>

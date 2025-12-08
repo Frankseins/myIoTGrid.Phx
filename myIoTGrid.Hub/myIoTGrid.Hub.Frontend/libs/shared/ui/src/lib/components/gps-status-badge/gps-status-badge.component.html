@@ -1,0 +1,47 @@
+@if (hasGps()) {
+  <div class="gps-status-badge" [class.compact]="compact" [matTooltip]="tooltip()">
+    <!-- Satellite Icon with Signal Bars -->
+    <div class="satellite-indicator" [class]="qualityClass()">
+      <mat-icon class="gps-icon">{{ satelliteIcon() }}</mat-icon>
+      <div class="signal-bars">
+        @for (bar of [1, 2, 3, 4]; track bar) {
+          <div
+            class="bar"
+            [class.active]="signalBars().includes(bar)"
+            [style.height.px]="bar * 3 + 2"
+          ></div>
+        }
+      </div>
+    </div>
+
+    @if (!compact) {
+      <!-- Satellite Count -->
+      <div class="satellite-count">
+        <span class="count">{{ satellites() }}</span>
+        <span class="label">Sat</span>
+      </div>
+
+      <!-- Fix Type Badge -->
+      <div class="fix-badge" [class]="fixBadgeClass()">
+        {{ fixTypeText() }}
+      </div>
+
+      <!-- HDOP Quality Badge -->
+      <div class="hdop-badge" [class]="qualityClass()">
+        <span class="value">{{ hdop().toFixed(1) }}</span>
+        <span class="label">HDOP</span>
+      </div>
+    } @else {
+      <!-- Compact Mode: Just satellite count -->
+      <span class="compact-count">{{ satellites() }}</span>
+    }
+  </div>
+} @else {
+  <!-- No GPS Module -->
+  <div class="gps-status-badge no-gps" [class.compact]="compact" matTooltip="Kein GPS-Modul">
+    <mat-icon class="gps-icon">gps_off</mat-icon>
+    @if (!compact) {
+      <span class="no-gps-label">Kein GPS</span>
+    }
+  </div>
+}

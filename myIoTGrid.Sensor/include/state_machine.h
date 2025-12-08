@@ -23,7 +23,8 @@ enum class NodeState {
     PAIRING,       // BLE pairing mode active
     CONFIGURED,    // Configured, connecting to WiFi
     OPERATIONAL,   // Fully operational, sending data
-    ERROR          // Error state
+    ERROR,         // Error state (temporary, will retry)
+    RE_PAIRING     // Re-provisioning mode: BLE active + WiFi retry parallel
 };
 
 /**
@@ -41,7 +42,13 @@ enum class StateEvent {
     API_FAILED,        // API validation failed
     RESET_REQUESTED,   // Factory reset requested
     ERROR_OCCURRED,    // Error occurred
-    RETRY_TIMEOUT      // Retry timeout expired
+    RETRY_TIMEOUT,     // Retry timeout expired
+
+    // RE_PAIRING Events (Story 1)
+    MAX_RETRIES_REACHED,   // Maximum retry count exceeded → enter RE_PAIRING
+    NEW_WIFI_RECEIVED,     // New WiFi credentials received via BLE
+    OLD_WIFI_FOUND,        // Old WiFi credentials worked during retry
+    WIFI_RETRY_TIMER       // Timer tick for parallel WiFi retry (every 30s)
 };
 
 /**
@@ -106,7 +113,12 @@ public:
     /**
      * Get maximum retry count before giving up
      */
-    static constexpr int MAX_RETRIES = 5;
+    static constexpr int MAX_RETRIES = 3;
+
+    /**
+     * Get max retries (for display)
+     */
+    int getMaxRetries() const { return MAX_RETRIES; }
 
     /**
      * Get retry delay in milliseconds
@@ -117,9 +129,9 @@ private:
     NodeState _currentState;
     int _retryCount;
 
-    // Callbacks (5 states now)
-    StateEnterCallback _enterCallbacks[5];
-    StateExitCallback _exitCallbacks[5];
+    // Callbacks (6 states including RE_PAIRING)
+    StateEnterCallback _enterCallbacks[6];
+    StateExitCallback _exitCallbacks[6];
 
     /**
      * Transition to a new state

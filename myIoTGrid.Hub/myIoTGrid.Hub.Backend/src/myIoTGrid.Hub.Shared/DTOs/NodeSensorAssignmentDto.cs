@@ -22,6 +22,7 @@ public record NodeSensorAssignmentDto(
     int? DigitalPinOverride,
     int? TriggerPinOverride,
     int? EchoPinOverride,
+    int? BaudRateOverride,
     int? IntervalSecondsOverride,
     bool IsActive,
     DateTime? LastSeenAt,
@@ -44,6 +45,7 @@ public record CreateNodeSensorAssignmentDto(
     int? DigitalPinOverride = null,
     int? TriggerPinOverride = null,
     int? EchoPinOverride = null,
+    int? BaudRateOverride = null,
     int? IntervalSecondsOverride = null
 );
 
@@ -60,6 +62,7 @@ public record UpdateNodeSensorAssignmentDto(
     int? DigitalPinOverride = null,
     int? TriggerPinOverride = null,
     int? EchoPinOverride = null,
+    int? BaudRateOverride = null,
     int? IntervalSecondsOverride = null,
     bool? IsActive = null
 );
@@ -79,6 +82,7 @@ public record EffectiveConfigDto(
     int? DigitalPin,
     int? TriggerPin,
     int? EchoPin,
+    int? BaudRate,
     double OffsetCorrection,
     double GainCorrection
 );

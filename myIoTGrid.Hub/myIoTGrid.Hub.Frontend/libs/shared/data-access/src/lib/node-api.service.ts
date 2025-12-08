@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApiService } from './base-api.service';
-import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest } from '@myiotgrid/shared/models';
+import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest, NodeGpsStatus } from '@myiotgrid/shared/models';
 import { queryParamsToObject } from './api-query.helper';
 
 @Injectable({ providedIn: 'root' })
@@ -95,5 +95,13 @@ export class NodeApiService extends BaseApiService {
    */
   getSensorsLatest(nodeId: string): Observable<NodeSensorsLatest> {
     return this.get<NodeSensorsLatest>(`${this.endpoint}/${nodeId}/sensors/latest`);
+  }
+
+  /**
+   * Get GPS status for a node (satellites, fix type, HDOP, position).
+   * GET /api/nodes/{id}/gps-status
+   */
+  getGpsStatus(nodeId: string): Observable<NodeGpsStatus> {
+    return this.get<NodeGpsStatus>(`${this.endpoint}/${nodeId}/gps-status`);
   }
 }

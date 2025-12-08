@@ -39,6 +39,7 @@ public static class NodeSensorAssignmentMappingExtensions
             DigitalPinOverride: assignment.DigitalPinOverride,
             TriggerPinOverride: assignment.TriggerPinOverride,
             EchoPinOverride: assignment.EchoPinOverride,
+            BaudRateOverride: assignment.BaudRateOverride,
             IntervalSecondsOverride: assignment.IntervalSecondsOverride,
             IsActive: assignment.IsActive,
             LastSeenAt: assignment.LastSeenAt,
@@ -67,6 +68,7 @@ public static class NodeSensorAssignmentMappingExtensions
             DigitalPinOverride = dto.DigitalPinOverride,
             TriggerPinOverride = dto.TriggerPinOverride,
             EchoPinOverride = dto.EchoPinOverride,
+            BaudRateOverride = dto.BaudRateOverride,
             IntervalSecondsOverride = dto.IntervalSecondsOverride,
             IsActive = true,
             AssignedAt = DateTime.UtcNow
@@ -104,6 +106,9 @@ public static class NodeSensorAssignmentMappingExtensions
 
         if (dto.EchoPinOverride.HasValue)
             assignment.EchoPinOverride = dto.EchoPinOverride;
+
+        if (dto.BaudRateOverride.HasValue)
+            assignment.BaudRateOverride = dto.BaudRateOverride;
 
         if (dto.IntervalSecondsOverride.HasValue)
             assignment.IntervalSecondsOverride = dto.IntervalSecondsOverride;

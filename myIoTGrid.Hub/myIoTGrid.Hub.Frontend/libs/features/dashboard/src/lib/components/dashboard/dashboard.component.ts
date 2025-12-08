@@ -35,6 +35,7 @@ import {
   EmptyStateComponent,
   SensorWidgetComponent
 } from '@myiotgrid/shared/ui';
+import { LayoutService } from '@myiotgrid/core/shell';
 import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
 
 @Component({
@@ -74,9 +75,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly signalRService = inject(SignalRService);
   private readonly dashboardApiService = inject(DashboardApiService);
   private readonly alertApiService = inject(AlertApiService);
+  readonly layout = inject(LayoutService);
 
   private filterOverlayRef: OverlayRef | null = null;
   private periodOverlayRef: OverlayRef | null = null;
+
+  // Responsive layout signals
+  readonly isMobile = this.layout.isMobile;
+  readonly isTablet = this.layout.isTablet;
+  readonly isDesktop = this.layout.isDesktop;
 
   readonly isLoading = signal(true);
   readonly initialLoadDone = signal(false);

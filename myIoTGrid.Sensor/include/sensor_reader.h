@@ -161,6 +161,21 @@ public:
     SensorReading readSpeed(const SensorAssignmentConfig& config);
 
     /**
+     * Read GPS satellite count (NEO-6M)
+     */
+    SensorReading readGpsSatellites(const SensorAssignmentConfig& config);
+
+    /**
+     * Read GPS fix type: 0=none, 2=2D, 3=3D (NEO-6M)
+     */
+    SensorReading readGpsFix(const SensorAssignmentConfig& config);
+
+    /**
+     * Read GPS HDOP (Horizontal Dilution of Precision) (NEO-6M)
+     */
+    SensorReading readGpsHdop(const SensorAssignmentConfig& config);
+
+    /**
      * Check if a sensor is available/detected
      */
     bool isSensorAvailable(const SensorAssignmentConfig& config);
@@ -254,6 +269,7 @@ private:
     bool _gps_ready;
     int _gps_rx_pin;
     int _gps_tx_pin;
+    bool _gps_debug_ran;  // Track if GPS debug diagnostics have been run once
 
     // SR04M-2 Ultrasonic UART mode
     HardwareSerial* _sr04m2Serial;
@@ -291,7 +307,7 @@ private:
     bool initADS1115(uint8_t address);
     bool initUltrasonic(int triggerPin, int echoPin);
     bool initGPS(int rxPin, int txPin);
-    bool initSR04M2(int rxPin, int txPin);
+    bool initSR04M2(int rxPin, int txPin, int baudRate = 115200);
 
     // Sensor getter functions
     Adafruit_BME280* getBME280(uint8_t address);

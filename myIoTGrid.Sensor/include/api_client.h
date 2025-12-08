@@ -75,6 +75,7 @@ struct SensorAssignmentConfig {
     int digitalPin;
     int triggerPin;
     int echoPin;
+    int baudRate;
     double offsetCorrection;
     double gainCorrection;
     std::vector<SensorCapabilityConfig> capabilities;

@@ -122,3 +122,52 @@ export interface LatestMeasurement {
   timestamp: string;
 }
 
+// === GPS Status DTOs ===
+
+/**
+ * GPS status aggregated from latest readings.
+ * Provides fix quality, satellite count, and position data.
+ */
+export interface NodeGpsStatus {
+  nodeId: string;
+  nodeName: string;
+  hasGps: boolean;
+  satellites: number;
+  fixType: number;
+  fixTypeText: string;
+  hdop: number;
+  hdopQuality: string;
+  latitude?: number;
+  longitude?: number;
+  altitude?: number;
+  speed?: number;
+  lastUpdate?: string;
+}
+
+/**
+ * GPS quality level for visual display
+ */
+export type GpsQualityLevel = 'excellent' | 'good' | 'moderate' | 'poor' | 'nofix';
+
+/**
+ * Helper to determine GPS quality level from HDOP
+ */
+export function getGpsQualityLevel(hdop: number, hasFix: boolean): GpsQualityLevel {
+  if (!hasFix) return 'nofix';
+  if (hdop < 2) return 'excellent';
+  if (hdop < 5) return 'good';
+  if (hdop < 10) return 'moderate';
+  return 'poor';
+}
+
+/**
+ * GPS position data
+ */
+export interface GpsPosition {
+  latitude: number;
+  longitude: number;
+  altitude?: number;
+  speed?: number;
+  timestamp: string;
+}
+

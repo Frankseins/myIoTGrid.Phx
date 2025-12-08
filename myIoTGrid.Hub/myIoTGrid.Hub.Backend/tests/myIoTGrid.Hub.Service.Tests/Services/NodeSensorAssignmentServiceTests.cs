@@ -35,7 +35,7 @@ public class NodeSensorAssignmentServiceTests : IDisposable
 
         // Setup default effective config behavior
         _effectiveConfigMock.Setup(x => x.GetEffectiveConfig(It.IsAny<NodeSensorAssignment>(), It.IsAny<Sensor>()))
-            .Returns(new EffectiveConfigDto(60, null, null, null, null, null, 4, null, null, 0, 1.0));
+            .Returns(new EffectiveConfigDto(60, null, null, null, null, null, 4, null, null, null, 0, 1.0));
 
         // Create Hub
         _hubId = Guid.NewGuid();

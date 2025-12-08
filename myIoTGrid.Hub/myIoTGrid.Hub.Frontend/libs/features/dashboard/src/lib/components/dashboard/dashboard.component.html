@@ -1,4 +1,4 @@
-<div class="dashboard-page">
+<div class="dashboard-page" [class.mobile]="isMobile()" [class.tablet]="isTablet()" [class.desktop]="isDesktop()">
   @if (!initialLoadDone()) {
     <myiotgrid-loading-spinner message="Dashboard wird geladen..."></myiotgrid-loading-spinner>
   } @else if (totalWidgets() === 0 && !hasActiveFilters()) {

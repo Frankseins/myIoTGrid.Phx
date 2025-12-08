@@ -148,13 +148,11 @@
                   color="primary"
                   type="submit"
                   [disabled]="form.invalid || isSaving()">
-                  @if (isSaving()) {
-                    <mat-icon class="spin">sync</mat-icon>
-                    Speichern...
-                  } @else {
-                    <mat-icon>save</mat-icon>
-                    Speichern
-                  }
+                  <ng-container>
+                    <mat-icon *ngIf="isSaving()" class="spin">sync</mat-icon>
+                    <mat-icon *ngIf="!isSaving()">save</mat-icon>
+                  </ng-container>
+                  {{ isSaving() ? 'Speichern...' : 'Speichern' }}
                 </button>
               </div>
             }
@@ -305,13 +303,11 @@
                   color="primary"
                   type="submit"
                   [disabled]="form.invalid || isSaving()">
-                  @if (isSaving()) {
-                    <mat-icon class="spin">sync</mat-icon>
-                    Speichern...
-                  } @else {
-                    <mat-icon>save</mat-icon>
-                    Speichern
-                  }
+                  <ng-container>
+                    <mat-icon *ngIf="isSaving()" class="spin">sync</mat-icon>
+                    <mat-icon *ngIf="!isSaving()">save</mat-icon>
+                  </ng-container>
+                  {{ isSaving() ? 'Speichern...' : 'Speichern' }}
                 </button>
               </div>
             }

@@ -292,6 +292,9 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Property<DateTime>("AssignedAt")
                         .HasColumnType("TEXT");
 
+                    b.Property<int?>("BaudRateOverride")
+                        .HasColumnType("INTEGER");
+
                     b.Property<int?>("DigitalPinOverride")
                         .HasColumnType("INTEGER");
 
@@ -421,6 +424,9 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                         .HasColumnType("TEXT");
 
                     b.Property<int?>("AnalogPin")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<int?>("BaudRate")
                         .HasColumnType("INTEGER");
 
                     b.Property<DateTime?>("CalibrationDueAt")

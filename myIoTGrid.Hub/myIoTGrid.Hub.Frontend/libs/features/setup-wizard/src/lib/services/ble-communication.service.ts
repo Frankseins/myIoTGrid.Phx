@@ -43,6 +43,14 @@ export interface NodeRegistration {
 export type BleConnectionState = 'disconnected' | 'connecting' | 'connected' | 'error';
 
 /**
+ * Device provisioning mode (Story 5 - Sprint S1.2)
+ * - 'pairing': Initial pairing mode (new sensor)
+ * - 're-pairing': RE_PAIRING mode (device name ends with -SETUP)
+ * - 'unknown': Mode not yet determined
+ */
+export type DeviceProvisioningMode = 'pairing' | 're-pairing' | 'unknown';
+
+/**
  * Service for Web Bluetooth communication with ESP32 sensors
  */
 @Injectable({
@@ -60,6 +68,37 @@ export class BleCommunicationService {
   readonly connectionState = signal<BleConnectionState>('disconnected');
   readonly connectedDevice = signal<{ id: string; name: string; macAddress: string; nodeId: string } | null>(null);
   readonly lastError = signal<string | null>(null);
+
+  /**
+   * Current device provisioning mode (Story 5 - RE_PAIRING detection)
+   * Determined by checking if device name ends with "-SETUP"
+   */
+  readonly provisioningMode = signal<DeviceProvisioningMode>('unknown');
+
+  /**
+   * Helper: Check if currently connected device is in RE_PAIRING mode
+   */
+  isRePairingMode(): boolean {
+    return this.provisioningMode() === 're-pairing';
+  }
+
+  /**
+   * Helper: Check if device name indicates RE_PAIRING mode
+   * Device names with "-SETUP" suffix indicate the sensor is in RE_PAIRING state
+   */
+  private detectProvisioningMode(deviceName: string | undefined): DeviceProvisioningMode {
+    if (!deviceName) return 'unknown';
+
+    // RE_PAIRING mode: device name ends with "-SETUP"
+    // Example: "myIoTGrid-A1B2-SETUP" or "ESP32-001122334455-SETUP"
+    if (deviceName.endsWith('-SETUP')) {
+      console.log('[BLE] RE_PAIRING mode detected (device name ends with -SETUP)');
+      return 're-pairing';
+    }
+
+    // Normal pairing mode
+    return 'pairing';
+  }
 
   /**
    * Check if Web Bluetooth is supported
@@ -92,6 +131,11 @@ export class BleCommunicationService {
       });
 
       this.device = device;
+
+      // Detect provisioning mode based on device name (Story 5 - RE_PAIRING)
+      const mode = this.detectProvisioningMode(device.name);
+      this.provisioningMode.set(mode);
+      console.log('[BLE] Device provisioning mode:', mode, '(device name:', device.name, ')');
 
       // Listen for disconnection
       device.addEventListener('gattserverdisconnected', () => {
@@ -385,6 +429,7 @@ export class BleCommunicationService {
     this.statusCharacteristic = null;
     this.connectionState.set('disconnected');
     this.connectedDevice.set(null);
+    this.provisioningMode.set('unknown');  // Reset provisioning mode (Story 5)
     console.log('[BLE] Disconnected');
   }
 

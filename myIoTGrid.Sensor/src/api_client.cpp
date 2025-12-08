@@ -267,6 +267,7 @@ NodeConfigurationResponse ApiClient::fetchConfiguration(const String& serialNumb
                 sensor.digitalPin = sensorObj["digitalPin"] | -1;
                 sensor.triggerPin = sensorObj["triggerPin"] | -1;
                 sensor.echoPin = sensorObj["echoPin"] | -1;
+                sensor.baudRate = sensorObj["baudRate"] | -1;
                 sensor.offsetCorrection = sensorObj["offsetCorrection"] | 0.0;
                 sensor.gainCorrection = sensorObj["gainCorrection"] | 1.0;
 

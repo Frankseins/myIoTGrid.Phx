@@ -1,3 +1,4 @@
+
 #ifndef HARDWARE_SCANNER_H
 #define HARDWARE_SCANNER_H
 
@@ -13,7 +14,7 @@ struct I2CDevice {
     String sensorType;  // Matches backend sensor types
 };
 
-// Known UART/GPS devices
+
 struct UARTDevice {
     String protocol;      // "NMEA", "UBX", etc.
     String name;
@@ -66,10 +67,13 @@ public:
     std::vector<DetectedDevice> scanOneWire(int pin);
     std::vector<DetectedDevice> scanAnalogPins();
     std::vector<DetectedDevice> scanUART(int rxPin, int txPin, int baudRate = 9600);
-    std::vector<DetectedDevice> scanSR04M2(int rxPin, int txPin);
+    std::vector<DetectedDevice> scanSR04M2(int rxPin, int txPin, int baudRate = 115200);
 
     // Validate configured sensors against detected hardware
     ValidationSummary validateConfiguration(const std::vector<SensorAssignmentConfig>& configs);
+
+    // GPS Diagnostics - outputs raw NMEA data, satellite info, and troubleshooting tips
+    void debugGPS(int rxPin = 16, int txPin = 17, int durationSeconds = 30);
 
     // Print scan results to Serial
     void printResults(const std::vector<DetectedDevice>& devices);

@@ -23,6 +23,7 @@ public class NodesController : ControllerBase
     private readonly IHubService _hubService;
     private readonly INodeSensorAssignmentService _assignmentService;
     private readonly ISensorService _sensorService;
+    private readonly IReadingService _readingService;
     private readonly IHubContext<SensorHub> _hubContext;
     private readonly IConfiguration _configuration;
     private readonly ILogger<NodesController> _logger;
@@ -32,6 +33,7 @@ public class NodesController : ControllerBase
         IHubService hubService,
         INodeSensorAssignmentService assignmentService,
         ISensorService sensorService,
+        IReadingService readingService,
         IHubContext<SensorHub> hubContext,
         IConfiguration configuration,
         ILogger<NodesController> logger)
@@ -40,6 +42,7 @@ public class NodesController : ControllerBase
         _hubService = hubService;
         _assignmentService = assignmentService;
         _sensorService = sensorService;
+        _readingService = readingService;
         _hubContext = hubContext;
         _configuration = configuration;
         _logger = logger;
@@ -120,6 +123,84 @@ public class NodesController : ControllerBase
             return NotFound();
 
         return Ok(result);
+    }
+
+    /// <summary>
+    /// Returns the GPS status for a node (aggregated from latest GPS readings).
+    /// Provides satellites, fix type, HDOP quality, and last known position.
+    /// </summary>
+    /// <param name="id">Node-ID</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>GPS status information</returns>
+    [HttpGet("{id:guid}/gps-status")]
+    [ProducesResponseType(typeof(NodeGpsStatusDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetGpsStatus(Guid id, CancellationToken ct)
+    {
+        var node = await _nodeService.GetByIdAsync(id, ct);
+        if (node == null)
+            return NotFound();
+
+        // Get latest readings for this node
+        var latestReadings = await _readingService.GetLatestByNodeAsync(id, ct);
+        var readings = latestReadings.ToList();
+
+        // Check if node has GPS readings
+        var gpsMeasurementTypes = new[] { "gps_satellites", "gps_fix", "gps_hdop", "latitude", "longitude", "altitude", "speed" };
+        var hasGps = readings.Any(r => gpsMeasurementTypes.Contains(r.MeasurementType.ToLower()));
+
+        // Extract GPS values
+        var satellites = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "gps_satellites");
+        var fixType = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "gps_fix");
+        var hdop = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "gps_hdop");
+        var latitude = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "latitude");
+        var longitude = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "longitude");
+        var altitude = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "altitude");
+        var speed = readings.FirstOrDefault(r => r.MeasurementType.ToLower() == "speed");
+
+        // Calculate HDOP quality
+        var hdopValue = hdop?.Value ?? 99.99;
+        var hdopQuality = hdopValue switch
+        {
+            < 1 => "Ideal",
+            < 2 => "Excellent",
+            < 5 => "Good",
+            < 10 => "Moderate",
+            < 20 => "Fair",
+            _ => "Poor"
+        };
+
+        // Calculate fix type text
+        var fixValue = (int)(fixType?.Value ?? 0);
+        var fixTypeText = fixValue switch
+        {
+            3 => "3D Fix",
+            2 => "2D Fix",
+            1 => "GPS Fix",
+            _ => "No Fix"
+        };
+
+        // Get the most recent update timestamp
+        var gpsReadings = readings.Where(r => gpsMeasurementTypes.Contains(r.MeasurementType.ToLower()));
+        var lastUpdate = gpsReadings.Any() ? gpsReadings.Max(r => r.Timestamp) : (DateTime?)null;
+
+        var gpsStatus = new NodeGpsStatusDto(
+            NodeId: id,
+            NodeName: node.Name,
+            HasGps: hasGps,
+            Satellites: (int)(satellites?.Value ?? 0),
+            FixType: fixValue,
+            FixTypeText: fixTypeText,
+            Hdop: hdopValue,
+            HdopQuality: hdopQuality,
+            Latitude: latitude?.Value,
+            Longitude: longitude?.Value,
+            Altitude: altitude?.Value,
+            Speed: speed?.Value,
+            LastUpdate: lastUpdate
+        );
+
+        return Ok(gpsStatus);
     }
 
     /// <summary>

@@ -1,9 +1,11 @@
 #include "hardware_scanner.h"
+#include "uart_manager.h"
 
 #ifdef PLATFORM_ESP32
 #include <Wire.h>
 #include <OneWire.h>
 #include <DallasTemperature.h>
+#include <driver/uart.h>  // For UART_PIN_NO_CHANGE
 
 // Known I2C devices database
 const I2CDevice HardwareScanner::KNOWN_I2C_DEVICES[] = {
@@ -341,9 +343,21 @@ std::vector<DetectedDevice> HardwareScanner::scanUART(int rxPin, int txPin, int 
 
     Serial.printf("[UART] Scanning RX=%d, TX=%d at %d baud...\n", rxPin, txPin, baudRate);
 
-    // Create a HardwareSerial instance for GPS
-    HardwareSerial gpsSerial(1);  // Use UART1
-    gpsSerial.begin(baudRate, SERIAL_8N1, rxPin, txPin);
+    // Use UARTManager to allocate UART dynamically
+    UARTManager& uartMgr = UARTManager::getInstance();
+    int uartNum = uartMgr.allocate(rxPin, txPin, baudRate, "GPS_SCAN", false);  // Arduino API
+
+    if (uartNum < 0) {
+        Serial.println("[UART] Failed to allocate UART for GPS scan!");
+        return devices;
+    }
+
+    HardwareSerial* gpsSerial = uartMgr.getSerial(uartNum);
+    if (!gpsSerial) {
+        Serial.println("[UART] Failed to get serial for GPS scan!");
+        uartMgr.release(uartNum);
+        return devices;
+    }
 
     // Wait a bit for data
     unsigned long startTime = millis();
@@ -352,8 +366,8 @@ std::vector<DetectedDevice> HardwareScanner::scanUART(int rxPin, int txPin, int 
 
     // Listen for up to 2 seconds for NMEA sentences
     while (millis() - startTime < 2000) {
-        while (gpsSerial.available()) {
-            char c = gpsSerial.read();
+        while (gpsSerial->available()) {
+            char c = gpsSerial->read();
             buffer += c;
 
             // Check for NMEA sentence start
@@ -374,7 +388,8 @@ std::vector<DetectedDevice> HardwareScanner::scanUART(int rxPin, int txPin, int 
         delay(10);
     }
 
-    gpsSerial.end();
+    // Release UART allocation after scan
+    uartMgr.releaseByOwner("GPS_SCAN");
 
     if (foundNMEA) {
         DetectedDevice device;
@@ -396,34 +411,58 @@ std::vector<DetectedDevice> HardwareScanner::scanUART(int rxPin, int txPin, int 
     return devices;
 }
 
-std::vector<DetectedDevice> HardwareScanner::scanSR04M2(int rxPin, int txPin) {
+std::vector<DetectedDevice> HardwareScanner::scanSR04M2(int rxPin, int txPin, int baudRate) {
     std::vector<DetectedDevice> devices;
 
-    Serial.printf("[SR04M-2] Scanning UART for SR04M-2 on RX=%d, TX=%d...\n", rxPin, txPin);
+    // Handle RX-only mode (TX=-1 means no TX pin)
+    bool rxOnlyMode = (txPin < 0);
 
-    // Use Serial1 for SR04M-2
-    HardwareSerial sr04Serial(1);
-    sr04Serial.begin(9600, SERIAL_8N1, rxPin, txPin);
+    // Use configured baud rate or default to 115200
+    int actualBaudRate = (baudRate > 0) ? baudRate : 115200;
+
+    Serial.printf("[SR04M-2] Scanning UART for SR04M-2 on RX=%d, TX=%s (%d baud, RX-only=%s)...\n",
+                  rxPin, txPin < 0 ? "none" : String(txPin).c_str(), actualBaudRate, rxOnlyMode ? "yes" : "no");
+
+    // Use UARTManager to allocate UART dynamically
+    UARTManager& uartMgr = UARTManager::getInstance();
+    int uartNum = uartMgr.allocate(rxPin, txPin, actualBaudRate, "SR04M2_SCAN", false);  // Arduino API
+
+    if (uartNum < 0) {
+        Serial.println("[SR04M-2] Failed to allocate UART for SR04M-2 scan!");
+        return devices;
+    }
+
+    HardwareSerial* sr04Serial = uartMgr.getSerial(uartNum);
+    if (!sr04Serial) {
+        Serial.println("[SR04M-2] Failed to get serial for SR04M-2 scan!");
+        uartMgr.release(uartNum);
+        return devices;
+    }
+
     delay(100);  // Allow serial to stabilize
 
     // Clear any pending data
-    while (sr04Serial.available()) {
-        sr04Serial.read();
+    while (sr04Serial->available()) {
+        sr04Serial->read();
     }
 
-    // Send trigger command (0x55)
-    sr04Serial.write(0x55);
-    sr04Serial.flush();
+    // Only send trigger command if TX is connected
+    // SR04M-2 in auto-mode sends data continuously without trigger
+    if (!rxOnlyMode) {
+        sr04Serial->write(0x55);
+        sr04Serial->flush();
+    }
 
-    // Wait for response and search for 0xFF header (up to 500ms timeout)
-    // The sensor might be in auto-mode or we might read mid-packet
+    // Wait for response and search for 0xFF 0xFE header (up to 500ms timeout)
+    // Frame format: 0xFF 0xFE DIST_HIGH DIST_LOW CHECKSUM
     unsigned long startTime = millis();
     bool foundHeader = false;
     uint8_t header = 0;
 
     while (millis() - startTime < 500) {
-        if (sr04Serial.available() > 0) {
-            uint8_t byte = sr04Serial.read();
+        if (sr04Serial->available() > 0) {
+            uint8_t byte = sr04Serial->read();
+            // Look for 0xFF header (first byte of frame)
             if (byte == 0xFF) {
                 header = byte;
                 foundHeader = true;
@@ -434,38 +473,48 @@ std::vector<DetectedDevice> HardwareScanner::scanSR04M2(int rxPin, int txPin) {
     }
 
     if (!foundHeader) {
-        Serial.printf("[SR04M-2] No valid header found on RX=%d, TX=%d\n", rxPin, txPin);
-        sr04Serial.end();
+        Serial.printf("[SR04M-2] No valid header found on RX=%d, TX=%s\n", rxPin, txPin < 0 ? "none" : String(txPin).c_str());
+        uartMgr.releaseByOwner("SR04M2_SCAN");
         return devices;
     }
 
-    // Wait for remaining 3 bytes (HIGH, LOW, CHECKSUM)
+    // Wait for remaining 3 bytes (0xFE, DIST_H, DIST_L) + checksum
+    // Frame: 0xFF 0xFE DIST_HIGH DIST_LOW CHECKSUM
     startTime = millis();
-    while (sr04Serial.available() < 3) {
-        if (millis() - startTime > 100) {
-            Serial.printf("[SR04M-2] Incomplete data after header on RX=%d, TX=%d\n", rxPin, txPin);
-            sr04Serial.end();
+    while (sr04Serial->available() < 4) {
+        if (millis() - startTime > 200) {
+            Serial.printf("[SR04M-2] Incomplete data after 0xFF on RX=%d, TX=%s\n", rxPin, txPin < 0 ? "none" : String(txPin).c_str());
+            uartMgr.releaseByOwner("SR04M2_SCAN");
             return devices;
         }
         delay(1);
     }
 
-    // Read remaining 3 bytes
-    uint8_t highByte = sr04Serial.read();
-    uint8_t lowByte = sr04Serial.read();
-    uint8_t checksum = sr04Serial.read();
+    // Read remaining 4 bytes: 0xFE, DIST_HIGH, DIST_LOW, CHECKSUM
+    uint8_t secondHeader = sr04Serial->read();  // Should be 0xFE
+    uint8_t highByte = sr04Serial->read();
+    uint8_t lowByte = sr04Serial->read();
+    uint8_t checksum = sr04Serial->read();
 
-    sr04Serial.end();
+    // Release UART allocation after scan
+    uartMgr.releaseByOwner("SR04M2_SCAN");
 
-    // Validate checksum
-    uint8_t calculatedChecksum = (header + highByte + lowByte) & 0xFF;
+    // Verify second header byte
+    if (secondHeader != 0xFE) {
+        Serial.printf("[SR04M-2] Invalid second header: expected 0xFE, got 0x%02X\n", secondHeader);
+        return devices;
+    }
+
+    // Validate checksum: (DIST_HIGH + DIST_LOW) & 0xFF
+    uint8_t calculatedChecksum = (highByte + lowByte) & 0xFF;
     if (calculatedChecksum != checksum) {
         Serial.printf("[SR04M-2] Checksum error: calc=0x%02X, recv=0x%02X\n", calculatedChecksum, checksum);
         return devices;
     }
 
-    // Calculate distance in cm
-    float distance_cm = (highByte * 256 + lowByte) / 10.0;
+    // Calculate distance in mm (highByte * 256 + lowByte)
+    uint16_t distance_mm = (highByte << 8) | lowByte;
+    float distance_cm = distance_mm / 10.0;
 
     // Valid response - SR04M-2 detected
     DetectedDevice device;
@@ -479,9 +528,182 @@ std::vector<DetectedDevice> HardwareScanner::scanSR04M2(int rxPin, int txPin) {
     device.value = distance_cm;
 
     devices.push_back(device);
-    Serial.printf("[SR04M-2] Detected on RX=%d, TX=%d (distance: %.1f cm)\n", rxPin, txPin, distance_cm);
+    Serial.printf("[SR04M-2] Detected on RX=%d, TX=%s (distance: %.1f cm)\n", rxPin, txPin < 0 ? "none" : String(txPin).c_str(), distance_cm);
 
     return devices;
+}
+
+void HardwareScanner::debugGPS(int rxPin, int txPin, int durationSeconds) {
+    Serial.println("\n╔════════════════════════════════════════════════════════════╗");
+    Serial.println("║               GPS DIAGNOSTICS (NEO-6M)                     ║");
+    Serial.println("╠════════════════════════════════════════════════════════════╣");
+    Serial.printf("║ RX Pin: %d, TX Pin: %d, Duration: %d seconds               \n", rxPin, txPin, durationSeconds);
+    Serial.println("╠════════════════════════════════════════════════════════════╣");
+    Serial.println("║ TROUBLESHOOTING TIPS:                                      ║");
+    Serial.println("║ 1. Antenna: Ceramic side (beige/brown) facing UP (sky)     ║");
+    Serial.println("║ 2. First fix: Can take 2-3 minutes outdoors                ║");
+    Serial.println("║ 3. Power: 3.3V may be marginal, try 5V if available        ║");
+    Serial.println("║ 4. Location: Clear view of sky, no metal/concrete above    ║");
+    Serial.println("║ 5. LED: Some modules have LED that blinks on fix           ║");
+    Serial.println("╠════════════════════════════════════════════════════════════╣");
+    Serial.println("║ Waiting for NMEA data...                                   ║");
+    Serial.println("╚════════════════════════════════════════════════════════════╝\n");
+
+    // Use UARTManager to allocate UART dynamically
+    UARTManager& uartMgr = UARTManager::getInstance();
+    int uartNum = uartMgr.allocate(rxPin, txPin, 9600, "GPS_DEBUG", false);  // Arduino API
+
+    if (uartNum < 0) {
+        Serial.println("[GPS DEBUG] Failed to allocate UART!");
+        return;
+    }
+
+    HardwareSerial* gpsSerial = uartMgr.getSerial(uartNum);
+    if (!gpsSerial) {
+        Serial.println("[GPS DEBUG] Failed to get serial!");
+        uartMgr.release(uartNum);
+        return;
+    }
+    delay(100);
+
+    unsigned long startTime = millis();
+    unsigned long duration = durationSeconds * 1000UL;
+    int nmeaCount = 0;
+    int gsvCount = 0;      // Satellites in view
+    int ggaCount = 0;      // Fix data
+    int rmcCount = 0;      // Recommended minimum
+    int bytesReceived = 0;
+    bool hasValidFix = false;
+    int satellitesInView = 0;
+    int satellitesUsed = 0;
+    String lastGGA = "";
+    String lastRMC = "";
+    String buffer = "";
+    unsigned long lastStatusPrint = 0;
+
+    Serial.println("[GPS DEBUG] Raw NMEA Output:");
+    Serial.println("────────────────────────────────────────────────────────────");
+
+    while (millis() - startTime < duration) {
+        while (gpsSerial->available()) {
+            char c = gpsSerial->read();
+            bytesReceived++;
+            Serial.print(c);  // Raw output
+
+            buffer += c;
+
+            if (c == '\n') {
+                // Parse NMEA sentence
+                if (buffer.startsWith("$GPGGA") || buffer.startsWith("$GNGGA")) {
+                    ggaCount++;
+                    lastGGA = buffer;
+                    // Parse fix quality and satellites
+                    // $GPGGA,time,lat,N/S,lon,E/W,fix,sats,hdop,alt,M,...
+                    int commaCount = 0;
+                    for (unsigned int i = 0; i < buffer.length() && commaCount < 8; i++) {
+                        if (buffer[i] == ',') {
+                            commaCount++;
+                            if (commaCount == 6) {
+                                // Fix quality (0=invalid, 1=GPS, 2=DGPS)
+                                int fixQuality = buffer.substring(i+1, buffer.indexOf(',', i+1)).toInt();
+                                hasValidFix = (fixQuality > 0);
+                            }
+                            if (commaCount == 7) {
+                                // Number of satellites
+                                satellitesUsed = buffer.substring(i+1, buffer.indexOf(',', i+1)).toInt();
+                            }
+                        }
+                    }
+                }
+                else if (buffer.startsWith("$GPGSV") || buffer.startsWith("$GNGSV") || buffer.startsWith("$GLGSV")) {
+                    gsvCount++;
+                    // Parse total satellites in view from first GSV sentence
+                    // $GPGSV,totalMsgs,msgNum,totalSats,...
+                    int commaCount = 0;
+                    for (unsigned int i = 0; i < buffer.length() && commaCount < 4; i++) {
+                        if (buffer[i] == ',') {
+                            commaCount++;
+                            if (commaCount == 3) {
+                                int sats = buffer.substring(i+1, buffer.indexOf(',', i+1)).toInt();
+                                if (sats > satellitesInView) satellitesInView = sats;
+                            }
+                        }
+                    }
+                }
+                else if (buffer.startsWith("$GPRMC") || buffer.startsWith("$GNRMC")) {
+                    rmcCount++;
+                    lastRMC = buffer;
+                }
+
+                if (buffer.startsWith("$GP") || buffer.startsWith("$GN") || buffer.startsWith("$GL")) {
+                    nmeaCount++;
+                }
+
+                buffer = "";
+            }
+
+            // Prevent buffer overflow
+            if (buffer.length() > 120) {
+                buffer = "";
+            }
+        }
+
+        // Status update every 5 seconds
+        unsigned long elapsed = (millis() - startTime) / 1000;
+        if (elapsed > 0 && elapsed % 5 == 0 && millis() - lastStatusPrint > 4000) {
+            Serial.printf("\n[GPS] Status at %lus: %d bytes, %d NMEA sentences, %d sats in view\n",
+                elapsed, bytesReceived, nmeaCount, satellitesInView);
+            lastStatusPrint = millis();
+        }
+    }
+
+    // Release UART allocation
+    uartMgr.releaseByOwner("GPS_DEBUG");
+
+    // Final summary
+    Serial.println("\n════════════════════════════════════════════════════════════");
+    Serial.println("                    GPS DIAGNOSTIC SUMMARY");
+    Serial.println("════════════════════════════════════════════════════════════");
+    Serial.printf("Total bytes received:     %d\n", bytesReceived);
+    Serial.printf("Total NMEA sentences:     %d\n", nmeaCount);
+    Serial.printf("  - GGA (Fix data):       %d\n", ggaCount);
+    Serial.printf("  - RMC (Position):       %d\n", rmcCount);
+    Serial.printf("  - GSV (Satellites):     %d\n", gsvCount);
+    Serial.printf("Satellites in view:       %d\n", satellitesInView);
+    Serial.printf("Satellites used for fix:  %d\n", satellitesUsed);
+    Serial.printf("Valid fix obtained:       %s\n", hasValidFix ? "YES" : "NO");
+    Serial.println("════════════════════════════════════════════════════════════");
+
+    // Diagnosis
+    Serial.println("\nDIAGNOSIS:");
+    if (bytesReceived == 0) {
+        Serial.println("[X] NO DATA RECEIVED!");
+        Serial.printf("    -> Check wiring: GPS TX -> ESP32 RX (GPIO %d)\n", rxPin);
+        Serial.println("    -> Check power: GPS needs stable 3.3V or 5V");
+        Serial.println("    -> Check baud rate: NEO-6M default is 9600");
+    } else if (nmeaCount == 0) {
+        Serial.println("[X] Data received but NO valid NMEA sentences!");
+        Serial.println("    -> Wrong baud rate? Try 4800 or 38400");
+        Serial.println("    -> GPS module may be damaged");
+    } else if (!hasValidFix && satellitesInView == 0) {
+        Serial.println("[!] NMEA data OK, but NO satellites in view!");
+        Serial.println("    -> Antenna not connected or damaged?");
+        Serial.println("    -> Ceramic antenna facing wrong direction?");
+        Serial.println("    -> Indoor location - need clear sky view");
+    } else if (!hasValidFix && satellitesInView > 0) {
+        Serial.printf("[!] Satellites visible (%d) but NO FIX yet!\n", satellitesInView);
+        Serial.println("    -> Cold start: Wait 2-3 minutes for first fix");
+        Serial.println("    -> Need 4+ satellites for 3D fix");
+        Serial.println("    -> Move to location with better sky view");
+    } else if (hasValidFix) {
+        Serial.println("[OK] GPS is working! Fix obtained.");
+        Serial.printf("     -> Using %d satellites\n", satellitesUsed);
+        if (lastGGA.length() > 0) {
+            Serial.printf("     -> Last GGA: %s", lastGGA.c_str());
+        }
+    }
+
+    Serial.println("════════════════════════════════════════════════════════════\n");
 }
 
 ValidationSummary HardwareScanner::validateConfiguration(const std::vector<SensorAssignmentConfig>& configs) {
@@ -520,16 +742,17 @@ ValidationSummary HardwareScanner::validateConfiguration(const std::vector<Senso
 
         // Check for SR04M-2 sensors that need UART scan
         if (sensorLower.indexOf("sr04m") >= 0) {
-            // Default SR04M-2 pins
-            int rxPin = 19;  // Default RX
-            int txPin = 18;  // Default TX
+            // Default SR04M-2 pins - RX only mode (auto-send sensor)
+            int rxPin = 4;   // Default RX (sensor TX -> ESP32 RX)
+            int txPin = -1;  // Not used for auto-send mode
+            int baudRate = config.baudRate;  // Use configured baud rate from database
 
             // Use configured pins if available (analogPin for RX, digitalPin for TX)
             if (config.analogPin > 0) rxPin = config.analogPin;
             if (config.digitalPin > 0) txPin = config.digitalPin;
 
-            // Try to detect SR04M-2 by sending a ping
-            auto sr04m2Devices = scanSR04M2(rxPin, txPin);
+            // Try to detect SR04M-2 (RX-only mode for auto-send sensors)
+            auto sr04m2Devices = scanSR04M2(rxPin, txPin, baudRate);
             _lastResults.insert(_lastResults.end(), sr04m2Devices.begin(), sr04m2Devices.end());
         }
     }
@@ -765,6 +988,10 @@ std::vector<DetectedDevice> HardwareScanner::scanAnalogPins() {
 
 std::vector<DetectedDevice> HardwareScanner::scanUART(int rxPin, int txPin, int baudRate) {
     return std::vector<DetectedDevice>();
+}
+
+void HardwareScanner::debugGPS(int rxPin, int txPin, int durationSeconds) {
+    Serial.println("[GPS DEBUG] Not available on native platform");
 }
 
 I2CDevice HardwareScanner::identifyI2CDevice(uint8_t address) {

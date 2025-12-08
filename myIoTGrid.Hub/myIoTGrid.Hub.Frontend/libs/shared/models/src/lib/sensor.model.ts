@@ -98,6 +98,7 @@ export interface Sensor {
   digitalPin?: number;
   triggerPin?: number;
   echoPin?: number;
+  baudRate?: number;
 
   // Timing Configuration
   intervalSeconds: number;
@@ -166,6 +167,7 @@ export interface CreateSensorDto {
   digitalPin?: number;
   triggerPin?: number;
   echoPin?: number;
+  baudRate?: number;
 
   // Timing Configuration
   intervalSeconds?: number;
@@ -227,6 +229,7 @@ export interface UpdateSensorDto {
   digitalPin?: number;
   triggerPin?: number;
   echoPin?: number;
+  baudRate?: number;
 
   // Timing Configuration
   intervalSeconds?: number;

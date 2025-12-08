@@ -35,6 +35,9 @@ public record SensorDto(
     int? TriggerPin,
     int? EchoPin,
 
+    // === UART Configuration ===
+    int? BaudRate,
+
     // === Timing Configuration ===
     int IntervalSeconds,
     int MinIntervalSeconds,
@@ -111,6 +114,9 @@ public record CreateSensorDto(
     int? TriggerPin = null,
     int? EchoPin = null,
 
+    // === Optional UART Configuration ===
+    int? BaudRate = null,
+
     // === Optional Timing Configuration ===
     int IntervalSeconds = 60,
     int MinIntervalSeconds = 1,
@@ -167,6 +173,9 @@ public record UpdateSensorDto(
     int? DigitalPin = null,
     int? TriggerPin = null,
     int? EchoPin = null,
+
+    // === UART Configuration ===
+    int? BaudRate = null,
 
     // === Timing Configuration ===
     int? IntervalSeconds = null,

@@ -26,6 +26,7 @@ public class EffectiveConfigService : IEffectiveConfigService
             DigitalPin: assignment.DigitalPinOverride ?? sensor.DigitalPin,
             TriggerPin: assignment.TriggerPinOverride ?? sensor.TriggerPin,
             EchoPin: assignment.EchoPinOverride ?? sensor.EchoPin,
+            BaudRate: assignment.BaudRateOverride ?? sensor.BaudRate,
             OffsetCorrection: GetEffectiveOffset(sensor),
             GainCorrection: GetEffectiveGain(sensor)
         );

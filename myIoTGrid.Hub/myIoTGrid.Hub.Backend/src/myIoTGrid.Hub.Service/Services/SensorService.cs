@@ -510,7 +510,10 @@ public class SensorService : ISensorService
                     CreateCapability("latitude", "Breitengrad", "°", -90, 90, 0.000001, 2.5),
                     CreateCapability("longitude", "Längengrad", "°", -180, 180, 0.000001, 2.5),
                     CreateCapability("altitude", "Höhe", "m", -500, 50000, 0.1, 10),
-                    CreateCapability("speed", "Geschwindigkeit", "km/h", 0, 500, 0.1, 0.5)
+                    CreateCapability("speed", "Geschwindigkeit", "km/h", 0, 500, 0.1, 0.5),
+                    CreateCapability("gps_satellites", "Satelliten", "", 0, 50, 1, 0),
+                    CreateCapability("gps_fix", "Fix-Status", "", 0, 3, 1, 0),
+                    CreateCapability("gps_hdop", "HDOP", "", 0, 100, 0.01, 0.1)
                 },
                 now: now
             ));
@@ -549,6 +552,82 @@ public class SensorService : ISensorService
             InvalidateCache(tenantId);
 
             _logger.LogInformation("{Count} default Sensors created", newSensors.Count);
+        }
+
+        // Add missing capabilities to existing sensors
+        await AddMissingCapabilitiesToExistingSensorsAsync(tenantId, ct);
+    }
+
+    /// <summary>
+    /// Adds missing capabilities to existing sensors based on the expected seed definitions.
+    /// This ensures that sensors created before new capabilities were added get updated.
+    /// </summary>
+    private async Task AddMissingCapabilitiesToExistingSensorsAsync(Guid tenantId, CancellationToken ct)
+    {
+        // Define expected capabilities per sensor code
+        var expectedCapabilities = new Dictionary<string, SensorCapability[]>
+        {
+            ["neo-6m"] = new[]
+            {
+                CreateCapability("latitude", "Breitengrad", "°", -90, 90, 0.000001, 2.5),
+                CreateCapability("longitude", "Längengrad", "°", -180, 180, 0.000001, 2.5),
+                CreateCapability("altitude", "Höhe", "m", -500, 50000, 0.1, 10),
+                CreateCapability("speed", "Geschwindigkeit", "km/h", 0, 500, 0.1, 0.5),
+                CreateCapability("gps_satellites", "Satelliten", "", 0, 50, 1, 0),
+                CreateCapability("gps_fix", "Fix-Status", "", 0, 3, 1, 0),
+                CreateCapability("gps_hdop", "HDOP", "", 0, 100, 0.01, 0.1)
+            }
+        };
+
+        // Get existing sensors with their capabilities
+        var existingSensors = await _context.Sensors
+            .Include(s => s.Capabilities)
+            .Where(s => s.TenantId == tenantId && expectedCapabilities.Keys.Contains(s.Code))
+            .ToListAsync(ct);
+
+        var capabilitiesAdded = 0;
+
+        foreach (var sensor in existingSensors)
+        {
+            if (!expectedCapabilities.TryGetValue(sensor.Code, out var expected))
+                continue;
+
+            var existingMeasurementTypes = sensor.Capabilities
+                .Select(c => c.MeasurementType)
+                .ToHashSet();
+
+            foreach (var expectedCap in expected)
+            {
+                if (!existingMeasurementTypes.Contains(expectedCap.MeasurementType))
+                {
+                    // Add the missing capability
+                    var newCap = CreateCapability(
+                        expectedCap.MeasurementType,
+                        expectedCap.DisplayName,
+                        expectedCap.Unit,
+                        expectedCap.MinValue,
+                        expectedCap.MaxValue,
+                        expectedCap.Resolution,
+                        expectedCap.Accuracy,
+                        expectedCap.MatterClusterId,
+                        expectedCap.MatterClusterName
+                    );
+                    newCap.SensorId = sensor.Id;
+                    sensor.Capabilities.Add(newCap);
+                    capabilitiesAdded++;
+
+                    _logger.LogInformation(
+                        "Added missing capability '{Capability}' to sensor '{SensorCode}'",
+                        expectedCap.MeasurementType, sensor.Code);
+                }
+            }
+        }
+
+        if (capabilitiesAdded > 0)
+        {
+            await _unitOfWork.SaveChangesAsync(ct);
+            InvalidateCache(tenantId);
+            _logger.LogInformation("{Count} missing capabilities added to existing sensors", capabilitiesAdded);
         }
     }
 

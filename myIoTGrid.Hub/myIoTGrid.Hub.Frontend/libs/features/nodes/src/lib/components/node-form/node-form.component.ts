@@ -15,6 +15,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
 import { NodeApiService, HubApiService, NodeSensorAssignmentApiService, SensorApiService, SignalRService, ReadingApiService } from '@myiotgrid/shared/data-access';
@@ -49,6 +50,7 @@ type FormMode = 'view' | 'edit' | 'create';
     MatTooltipModule,
     MatDialogModule,
     MatSlideToggleModule,
+    MatProgressSpinnerModule,
     OverlayModule,
     LoadingSpinnerComponent,
     GenericListComponent,
@@ -61,6 +63,7 @@ type FormMode = 'view' | 'edit' | 'create';
 export class NodeFormComponent implements OnInit, OnDestroy {
   @ViewChild('assignmentDrawer') assignmentDrawerTemplate!: TemplateRef<unknown>;
   @ViewChild('deleteReadingsDrawer') deleteReadingsDrawerTemplate!: TemplateRef<unknown>;
+  @ViewChild('deleteNodeDrawer') deleteNodeDrawerTemplate!: TemplateRef<unknown>;
 
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -78,7 +81,12 @@ export class NodeFormComponent implements OnInit, OnDestroy {
 
   private assignmentOverlayRef: OverlayRef | null = null;
   private deleteOverlayRef: OverlayRef | null = null;
+  private deleteNodeOverlayRef: OverlayRef | null = null;
   private timestampInterval: ReturnType<typeof setInterval> | null = null;
+  private currentNodeId: string | null = null; // For SignalR group cleanup
+
+  // Delete Node Drawer
+  deleteConfirmInput = '';
 
   // Effect to sync isSimulation FormControl disabled state with view mode
   private readonly modeEffect = effect(() => {
@@ -197,22 +205,99 @@ export class NodeFormComponent implements OnInit, OnDestroy {
     if (this.timestampInterval) {
       clearInterval(this.timestampInterval);
     }
-    // Cleanup SignalR subscription
+    // Cleanup SignalR: leave node group and unsubscribe
+    if (this.currentNodeId) {
+      this.signalRService.leaveNodeGroup(this.currentNodeId).catch(err =>
+        console.warn('[NodeForm] Failed to leave node group:', err)
+      );
+    }
     this.signalRService.off('NewReading');
+    // Cleanup overlays
+    this.assignmentOverlayRef?.dispose();
+    this.deleteOverlayRef?.dispose();
+    this.deleteNodeOverlayRef?.dispose();
   }
 
-  private setupSignalR(nodeId: string): void {
-    // Subscribe to new readings - reload sensorsLatest when new reading for this node arrives
+  private async setupSignalR(nodeId: string): Promise<void> {
+    // Ensure SignalR is connected before subscribing
+    if (this.signalRService.connectionState() !== 'connected') {
+      console.log('[NodeForm] SignalR not connected, waiting...');
+      try {
+        await this.signalRService.startConnection();
+      } catch (error) {
+        console.error('[NodeForm] Failed to connect SignalR:', error);
+        return;
+      }
+    }
+
+    console.log('[NodeForm] Setting up SignalR subscription for nodeId:', nodeId);
+
+    // Store nodeId for cleanup
+    this.currentNodeId = nodeId;
+
+    // WICHTIG: Join Node Group um Events zu empfangen!
+    // Das Backend sendet an Gruppen, nicht broadcast.
+    try {
+      await this.signalRService.joinNodeGroup(nodeId);
+      console.log('[NodeForm] Joined node group:', nodeId);
+    } catch (error) {
+      console.error('[NodeForm] Failed to join node group:', error);
+    }
+
+    // Subscribe to new readings - update sensorsLatest directly (no HTTP call = no flicker)
     this.signalRService.onNewReading((reading: Reading) => {
-      if (reading.nodeId === nodeId) {
-        // Reload latest sensor readings
-        this.loadSensorsLatest(nodeId);
-        // Add to history at the beginning (keep max 10 items for display)
-        const currentHistory = this.readingHistory();
-        this.readingHistory.set([reading, ...currentHistory.slice(0, 9)]);
-        this.historyTotalRecords.update(c => c + 1);
+      console.log('[NodeForm] Received reading:', reading.nodeId, 'current nodeId:', nodeId);
+      // Case-insensitive comparison for GUIDs
+      if (reading.nodeId?.toLowerCase() === nodeId?.toLowerCase()) {
+        console.log('[NodeForm] Match! Updating sensorsLatest directly...');
+
+        // Update sensorsLatest directly without HTTP call (no flicker!)
+        this.updateSensorsLatestFromReading(reading);
+
+        // Update history: If on first page, just reload from server to avoid duplicates
+        // Otherwise just update total count
+        if (this.lastHistoryEvent && this.lastHistoryEvent.first === 0) {
+          // Reload first page from server (will include the new reading)
+          this.loadReadingsLazy(this.lastHistoryEvent);
+        } else {
+          // Just increment total so pagination shows correct count
+          this.historyTotalRecords.update(c => c + 1);
+        }
       }
     });
+  }
+
+  /**
+   * Update sensorsLatest signal directly from a SignalR reading.
+   * This avoids HTTP calls and prevents UI flicker.
+   */
+  private updateSensorsLatestFromReading(reading: Reading): void {
+    const current = this.sensorsLatest();
+    if (!current) return;
+
+    // Find the sensor by assignmentId
+    const updatedSensors = current.sensors.map(sensor => {
+      if (sensor.assignmentId === reading.assignmentId) {
+        // Update the specific measurement
+        const updatedMeasurements = sensor.measurements.map(m => {
+          if (m.measurementType === reading.measurementType) {
+            return {
+              ...m,
+              readingId: reading.id,
+              rawValue: reading.rawValue,
+              value: reading.value,
+              timestamp: reading.timestamp
+            };
+          }
+          return m;
+        });
+
+        return { ...sensor, measurements: updatedMeasurements };
+      }
+      return sensor;
+    });
+
+    this.sensorsLatest.set({ ...current, sensors: updatedSensors });
   }
 
   private initForm(): void {
@@ -241,6 +326,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
       digitalPinOverride: [null],
       triggerPinOverride: [null],
       echoPinOverride: [null],
+      baudRateOverride: [null],
       intervalSecondsOverride: [null],
       isActive: [true]
     });
@@ -558,6 +644,21 @@ export class NodeFormComponent implements OnInit, OnDestroy {
     return sensor?.capabilities?.map(c => c.displayName) || [];
   }
 
+  // Max visible chips in header (overflow shows +X badge)
+  readonly maxVisibleChips = 3;
+
+  getVisibleCapabilities(sensorCode: string): string[] {
+    return this.getSensorCapabilities(sensorCode).slice(0, this.maxVisibleChips);
+  }
+
+  getHiddenCapabilitiesCount(sensorCode: string): number {
+    return Math.max(0, this.getSensorCapabilities(sensorCode).length - this.maxVisibleChips);
+  }
+
+  getHiddenCapabilitiesTooltip(sensorCode: string): string {
+    return this.getSensorCapabilities(sensorCode).slice(this.maxVisibleChips).join(', ');
+  }
+
   getUnassignedSensors(): Sensor[] {
     const assignedSensorIds = this.assignments().map(a => a.sensorId);
     return this.availableSensors().filter(s => !assignedSensorIds.includes(s.id));
@@ -582,6 +683,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
         digitalPinOverride: assignment.digitalPinOverride,
         triggerPinOverride: assignment.triggerPinOverride,
         echoPinOverride: assignment.echoPinOverride,
+        baudRateOverride: assignment.baudRateOverride,
         intervalSecondsOverride: assignment.intervalSecondsOverride,
         isActive: assignment.isActive
       });
@@ -600,6 +702,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
         digitalPinOverride: null,
         triggerPinOverride: null,
         echoPinOverride: null,
+        baudRateOverride: null,
         intervalSecondsOverride: null,
         isActive: true
       });
@@ -663,6 +766,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
       digitalPinOverride: sensor.digitalPin ?? null,
       triggerPinOverride: sensor.triggerPin ?? null,
       echoPinOverride: sensor.echoPin ?? null,
+      baudRateOverride: sensor.baudRate ?? null,
       intervalSecondsOverride: sensor.intervalSeconds ?? null
     });
   }
@@ -719,6 +823,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
         digitalPinOverride: formValue.digitalPinOverride,
         triggerPinOverride: formValue.triggerPinOverride,
         echoPinOverride: formValue.echoPinOverride,
+        baudRateOverride: formValue.baudRateOverride,
         intervalSecondsOverride: formValue.intervalSecondsOverride,
         isActive: formValue.isActive
       };
@@ -749,6 +854,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
         digitalPinOverride: formValue.digitalPinOverride,
         triggerPinOverride: formValue.triggerPinOverride,
         echoPinOverride: formValue.echoPinOverride,
+        baudRateOverride: formValue.baudRateOverride,
         intervalSecondsOverride: formValue.intervalSecondsOverride
       };
 
@@ -819,32 +925,67 @@ export class NodeFormComponent implements OnInit, OnDestroy {
 
   /** Node löschen */
   deleteNode(): void {
-    const node = this.node();
-    if (!node) return;
+    this.openDeleteNodeDrawer();
+  }
 
-    const dialogRef = this.dialog.open(ConfirmDialogComponent, {
-      data: {
-        title: 'Node löschen',
-        message: `Möchten Sie den Node "${node.name}" wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.`,
-        confirmText: 'Löschen',
-        cancelText: 'Abbrechen'
-      }
+  // === Delete Node Drawer Methods ===
+
+  openDeleteNodeDrawer(): void {
+    if (this.deleteNodeOverlayRef) return;
+
+    this.deleteConfirmInput = '';
+
+    const positionStrategy = this.overlay.position()
+      .global()
+      .right('0')
+      .top('0');
+
+    this.deleteNodeOverlayRef = this.overlay.create({
+      positionStrategy,
+      hasBackdrop: true,
+      backdropClass: 'gt-drawer-backdrop',
+      panelClass: ['gt-drawer-panel'],
+      width: '400px',
+      height: '100vh',
+      scrollStrategy: this.overlay.scrollStrategies.block()
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.isDeleting.set(true);
-        this.nodeApiService.remove(node.id).subscribe({
-          next: () => {
-            this.snackBar.open('Node gelöscht', 'Schließen', { duration: 3000 });
-            this.router.navigate(['/nodes']);
-          },
-          error: (error) => {
-            console.error('Error deleting node:', error);
-            this.snackBar.open('Fehler beim Löschen des Nodes', 'Schließen', { duration: 5000 });
-            this.isDeleting.set(false);
-          }
-        });
+    this.deleteNodeOverlayRef.backdropClick().subscribe(() => this.closeDeleteNodeDrawer());
+
+    const portal = new TemplatePortal(this.deleteNodeDrawerTemplate, this.viewContainerRef);
+    this.deleteNodeOverlayRef.attach(portal);
+
+    requestAnimationFrame(() => {
+      this.deleteNodeOverlayRef?.addPanelClass('open');
+    });
+  }
+
+  closeDeleteNodeDrawer(): void {
+    if (this.deleteNodeOverlayRef) {
+      this.deleteNodeOverlayRef.removePanelClass('open');
+      setTimeout(() => {
+        this.deleteNodeOverlayRef?.dispose();
+        this.deleteNodeOverlayRef = null;
+      }, 200);
+    }
+    this.deleteConfirmInput = '';
+  }
+
+  confirmDeleteNode(): void {
+    const node = this.node();
+    if (!node || this.deleteConfirmInput !== 'DELETE') return;
+
+    this.isDeleting.set(true);
+    this.nodeApiService.remove(node.id).subscribe({
+      next: () => {
+        this.closeDeleteNodeDrawer();
+        this.snackBar.open('Node gelöscht', 'Schließen', { duration: 3000 });
+        this.router.navigate(['/nodes']);
+      },
+      error: (error) => {
+        console.error('Error deleting node:', error);
+        this.snackBar.open('Fehler beim Löschen des Nodes', 'Schließen', { duration: 5000 });
+        this.isDeleting.set(false);
       }
     });
   }
@@ -874,6 +1015,7 @@ export class NodeFormComponent implements OnInit, OnDestroy {
     const portal = new TemplatePortal(this.deleteReadingsDrawerTemplate, this.viewContainerRef);
     this.deleteOverlayRef.attach(portal);
 
+    // Trigger animation after attach
     requestAnimationFrame(() => {
       this.deleteOverlayRef?.addPanelClass('open');
     });

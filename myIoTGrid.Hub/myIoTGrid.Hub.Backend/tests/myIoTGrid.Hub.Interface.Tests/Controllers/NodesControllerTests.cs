@@ -24,6 +24,7 @@ public class NodesControllerTests
     private readonly Mock<IHubService> _hubServiceMock;
     private readonly Mock<INodeSensorAssignmentService> _assignmentServiceMock;
     private readonly Mock<ISensorService> _sensorServiceMock;
+    private readonly Mock<IReadingService> _readingServiceMock;
     private readonly Mock<IHubContext<SensorHub>> _hubContextMock;
     private readonly Mock<IClientProxy> _clientProxyMock;
     private readonly Mock<IConfiguration> _configurationMock;
@@ -42,6 +43,7 @@ public class NodesControllerTests
         _hubServiceMock = new Mock<IHubService>();
         _assignmentServiceMock = new Mock<INodeSensorAssignmentService>();
         _sensorServiceMock = new Mock<ISensorService>();
+        _readingServiceMock = new Mock<IReadingService>();
         _hubContextMock = new Mock<IHubContext<SensorHub>>();
         _clientProxyMock = new Mock<IClientProxy>();
         _configurationMock = new Mock<IConfiguration>();
@@ -57,6 +59,7 @@ public class NodesControllerTests
             _hubServiceMock.Object,
             _assignmentServiceMock.Object,
             _sensorServiceMock.Object,
+            _readingServiceMock.Object,
             _hubContextMock.Object,
             _configurationMock.Object,
             _loggerMock.Object);
@@ -978,6 +981,7 @@ public class NodesControllerTests
             DigitalPinOverride: null,
             TriggerPinOverride: null,
             EchoPinOverride: null,
+            BaudRateOverride: null,
             IntervalSecondsOverride: null,
             IsActive: true,
             LastSeenAt: DateTime.UtcNow,
@@ -991,6 +995,7 @@ public class NodesControllerTests
                 DigitalPin: null,
                 TriggerPin: null,
                 EchoPin: null,
+                BaudRate: null,
                 IntervalSeconds: 60,
                 OffsetCorrection: 0.0,
                 GainCorrection: 1.0

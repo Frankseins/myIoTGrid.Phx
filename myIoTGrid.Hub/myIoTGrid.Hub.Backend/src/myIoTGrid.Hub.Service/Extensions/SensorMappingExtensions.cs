@@ -44,6 +44,9 @@ public static class SensorMappingExtensions
             TriggerPin: sensor.TriggerPin,
             EchoPin: sensor.EchoPin,
 
+            // === UART Configuration ===
+            BaudRate: sensor.BaudRate,
+
             // === Timing Configuration ===
             IntervalSeconds: sensor.IntervalSeconds,
             MinIntervalSeconds: sensor.MinIntervalSeconds,
@@ -127,6 +130,9 @@ public static class SensorMappingExtensions
             DigitalPin = dto.DigitalPin,
             TriggerPin = dto.TriggerPin,
             EchoPin = dto.EchoPin,
+
+            // === UART Configuration ===
+            BaudRate = dto.BaudRate,
 
             // === Timing Configuration ===
             IntervalSeconds = dto.IntervalSeconds,
@@ -225,6 +231,10 @@ public static class SensorMappingExtensions
 
         if (dto.EchoPin.HasValue)
             sensor.EchoPin = dto.EchoPin;
+
+        // === UART Configuration ===
+        if (dto.BaudRate.HasValue)
+            sensor.BaudRate = dto.BaudRate;
 
         // === Timing Configuration ===
         if (dto.IntervalSeconds.HasValue)

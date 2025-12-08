@@ -36,7 +36,7 @@ public:
     /**
      * Connect to WiFi network
      */
-    bool connect(const String& ssid, const String& password, int timeoutMs = 30000);
+    bool connect(const String& ssid, const String& password, int timeoutMs = 15000);
 
     /**
      * Disconnect from WiFi

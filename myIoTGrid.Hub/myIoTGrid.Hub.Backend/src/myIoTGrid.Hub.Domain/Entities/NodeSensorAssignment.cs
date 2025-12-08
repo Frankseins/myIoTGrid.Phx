@@ -52,6 +52,9 @@ public class NodeSensorAssignment : IEntity
     /// <summary>Override echo pin (ultrasonic)</summary>
     public int? EchoPinOverride { get; set; }
 
+    /// <summary>Override baud rate for UART sensors</summary>
+    public int? BaudRateOverride { get; set; }
+
     // === Timing Override ===
 
     /// <summary>Override measurement interval (null = use Sensor default)</summary>

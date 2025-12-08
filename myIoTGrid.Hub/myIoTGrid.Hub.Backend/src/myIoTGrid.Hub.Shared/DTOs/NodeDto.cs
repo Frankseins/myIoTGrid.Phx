@@ -193,3 +193,36 @@ public record SensorCapabilityConfigDto(
     string DisplayName,
     string Unit
 );
+
+// === GPS Status DTOs ===
+
+/// <summary>
+/// GPS status aggregated from latest readings.
+/// Provides fix quality, satellite count, and position data.
+/// </summary>
+public record NodeGpsStatusDto(
+    Guid NodeId,
+    string NodeName,
+    bool HasGps,
+    int Satellites,
+    int FixType,
+    string FixTypeText,
+    double Hdop,
+    string HdopQuality,
+    double? Latitude,
+    double? Longitude,
+    double? Altitude,
+    double? Speed,
+    DateTime? LastUpdate
+);
+
+/// <summary>
+/// GPS position data
+/// </summary>
+public record GpsPositionDto(
+    double Latitude,
+    double Longitude,
+    double? Altitude,
+    double? Speed,
+    DateTime Timestamp
+);

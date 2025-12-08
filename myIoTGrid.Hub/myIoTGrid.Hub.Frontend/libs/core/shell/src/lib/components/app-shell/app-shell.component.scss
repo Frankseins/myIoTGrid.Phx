@@ -1,11 +1,53 @@
+// App Shell - Responsive Layout
+// Supports Desktop (Rail Nav) and Mobile (Bottom Nav)
+
+// Layout Variables
 $sidebar-width-expanded: 240px;
 $sidebar-width-collapsed: 72px;
+$bottom-nav-height: 80px;
+$toolbar-height: 56px;
+
+// Transitions
+$transition-duration: 250ms;
+$transition-easing: cubic-bezier(0.4, 0, 0.2, 1);
 
 .app-shell {
   display: flex;
   min-height: 100vh;
   width: 100%;
-  background-color: #fafafa;
+  background-color: var(--mat-sys-surface-container-lowest, #fafafa);
+  position: relative;
+
+  // Mobile Layout
+  &.mobile {
+    flex-direction: column;
+
+    .main-content {
+      margin-left: 0;
+      margin-bottom: $bottom-nav-height;
+      min-height: calc(100vh - #{$bottom-nav-height});
+      padding: 16px;
+
+      // Account for safe area at bottom
+      padding-bottom: calc(16px + env(safe-area-inset-bottom, 0));
+    }
+  }
+
+  // Tablet Layout
+  &.tablet {
+    .main-content {
+      margin-left: $sidebar-width-collapsed;
+      padding: 20px;
+    }
+  }
+
+  // Desktop Layout
+  &.desktop {
+    .main-content {
+      margin-left: var(--global-rail-width, #{$sidebar-width-expanded});
+      padding: 24px;
+    }
+  }
 }
 
 .main-content {
@@ -13,18 +55,77 @@ $sidebar-width-collapsed: 72px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  margin-left: $sidebar-width-expanded;
-  transition: margin-left 250ms cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 24px;
+  margin-left: var(--global-rail-width, #{$sidebar-width-expanded});
+  transition: margin-left $transition-duration $transition-easing,
+              padding $transition-duration $transition-easing;
+  overflow-x: hidden;
 
+  // No navigation mode (e.g., setup wizard)
   &.no-nav {
+    margin-left: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  // With bottom navigation (mobile)
+  &.with-bottom-nav {
     margin-left: 0;
+    // Additional padding at bottom for bottom nav
+    padding-bottom: calc(var(--content-padding, 16px) + #{$bottom-nav-height} + env(safe-area-inset-bottom, 0));
   }
 }
 
+// Smooth transitions between layouts
 @media (max-width: 767px) {
   .main-content {
     margin-left: 0;
     padding: 16px;
+    min-height: calc(100vh - #{$bottom-nav-height});
+  }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .main-content {
+    margin-left: $sidebar-width-collapsed;
+    padding: 20px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .main-content {
+    margin-left: var(--global-rail-width, #{$sidebar-width-expanded});
+    padding: 24px;
+  }
+}
+
+// Large screens
+@media (min-width: 1920px) {
+  .main-content {
+    padding: 32px;
+    max-width: 1800px;
+    margin-right: auto;
+  }
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  .app-shell {
+    background-color: var(--mat-sys-surface-container-lowest, #121212);
+  }
+}
+
+// Print styles
+@media print {
+  .app-shell {
+    display: block;
+
+    myiotgrid-navigation-rail,
+    myiotgrid-bottom-nav {
+      display: none !important;
+    }
+
+    .main-content {
+      margin: 0 !important;
+      padding: 0 !important;
+    }
   }
 }
