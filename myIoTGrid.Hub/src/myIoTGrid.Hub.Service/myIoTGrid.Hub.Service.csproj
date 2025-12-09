@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>myIoTGrid.Hub.Service</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\myIoTGrid.Hub.Domain\myIoTGrid.Hub.Domain.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Hub.Shared\myIoTGrid.Hub.Shared.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Hub.Infrastructure\myIoTGrid.Hub.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Common\myIoTGrid.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Contracts\myIoTGrid.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Utilities\myIoTGrid.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="11.11.0" />
+    <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="11.11.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.0-*" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-*" />
+  </ItemGroup>
+
+</Project>

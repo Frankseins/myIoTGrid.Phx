@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>myIoTGrid.Hub.Shared</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Shared Libraries für Hub UND Cloud -->
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Common\myIoTGrid.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Contracts\myIoTGrid.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Utilities\myIoTGrid.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

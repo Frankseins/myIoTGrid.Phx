@@ -1,0 +1,16 @@
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/bin/Debug/net9.0/myIoTGrid.Shared.Contracts.deps.json
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/bin/Debug/net9.0/myIoTGrid.Shared.Contracts.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/bin/Debug/net9.0/myIoTGrid.Shared.Contracts.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/bin/Debug/net9.0/myIoTGrid.Shared.Common.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/bin/Debug/net9.0/myIoTGrid.Shared.Common.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.csproj.AssemblyReference.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.GeneratedMSBuildEditorConfig.editorconfig
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.AssemblyInfoInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.AssemblyInfo.cs
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.csproj.CoreCompileInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.sourcelink.json
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGri.6FFCC42A.Up2Date
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/refint/myIoTGrid.Shared.Contracts.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/myIoTGrid.Shared.Contracts.pdb
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/myIoTGrid.Shared.Contracts/obj/Debug/net9.0/ref/myIoTGrid.Shared.Contracts.dll

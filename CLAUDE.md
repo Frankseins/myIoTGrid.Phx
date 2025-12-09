@@ -1,7 +1,7 @@
 # myIoTGrid - Claude Code Memory & Style Guide
 
-**Version:** 2.0
-**Letzte Aktualisierung:** 27. November 2025
+**Version:** 3.0
+**Letzte Aktualisierung:** 9. Dezember 2025
 **Projekt:** myIoTGrid - Open-Source IoT-Plattform für Sensordaten
 **Technologie:** .NET 10 Backend + Angular 21 Frontend + ESP32 Firmware
 
@@ -83,21 +83,34 @@ Hub ◀────KI-Alert──── Grid.Cloud
 
 ```
 myIoTGrid/
-├── myIoTGrid.Cloud/              → Cloud-Backend (.NET 10, PostgreSQL)
+├── .github/workflows/            → CI/CD Pipeline (GitHub Actions)
+├── myIoTGrid.Cloud/              → Cloud-Backend (.NET 10, PostgreSQL) [TODO]
 ├── myIoTGrid.Docs/               → Dokumentation
-├── myIoTGrid.Hub/
-│   └── myIoTGrid.Hub.Backend/
-│       ├── src/
-│       │   ├── myIoTGrid.Hub.Api/
-│       │   ├── myIoTGrid.Hub.Domain/
-│       │   ├── myIoTGrid.Hub.Shared/
-│       │   ├── myIoTGrid.Hub.Service/
-│       │   ├── myIoTGrid.Hub.Infrastructure/
-│       │   └── myIoTGrid.Hub.Interface/
-│       ├── tests/
-│       └── docker/
-│   └── myIoTGrid.Hub.Frontend/   → Hub-Frontend (Angular 21)
+├── myIoTGrid.Hub/                → Hub-Backend (.NET 10, SQLite)
+│   ├── src/
+│   │   ├── myIoTGrid.Hub.Api/         → Startup, Program.cs, Composition Root
+│   │   ├── myIoTGrid.Hub.Domain/      → Hub-spezifische Domain-Logik
+│   │   ├── myIoTGrid.Hub.Shared/      → Hub-spezifische Type Aliases & Re-Exports
+│   │   ├── myIoTGrid.Hub.Service/     → Service-Implementierungen (SQLite)
+│   │   ├── myIoTGrid.Hub.Infrastructure/ → EF Core, DbContext, Repositories
+│   │   └── myIoTGrid.Hub.Interface/   → Controllers, SignalR Hubs, Middleware
+│   ├── tests/
+│   │   ├── myIoTGrid.Hub.Service.Tests/
+│   │   └── myIoTGrid.Hub.Interface.Tests/
+│   ├── docker/
+│   └── myIoTGrid.Hub.sln
+├── myIoTGrid.Shared/             → Shared Libraries (Hub + Cloud gemeinsam)
+│   ├── myIoTGrid.Shared.Common/       → Entities, DTOs, Enums, ValueObjects
+│   ├── myIoTGrid.Shared.Contracts/    → Service-Interfaces (IHubService, etc.)
+│   ├── myIoTGrid.Shared.Utilities/    → Extensions, Converters, Helpers
+│   ├── Tests/
+│   │   └── myIoTGrid.Shared.Common.Tests/
+│   └── myIoTGrid.Shared.sln
 ├── myIoTGrid.Sensor/             → ESP32 Firmware
+├── myIoTGrid.Apps/               → Mobile Apps (Angular/Capacitor)
+├── myIoTGrid.MatterBridge/       → Matter Smart Home Bridge
+├── docker-compose.yml            → Docker Stack für lokale Entwicklung
+└── CLAUDE.md                     → Diese Datei
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -105,21 +118,70 @@ myIoTGrid/
 
 ---
 
-## 🧠 HUB BACKEND ARCHITEKTUR (.NET 10)
+## 🧠 BACKEND ARCHITEKTUR (.NET 10)
 
-### Clean Architecture Layers
+### Zwei-Ebenen-Struktur: Shared + Hub
+
+Die Backend-Architektur basiert auf zwei Ebenen:
+
+1. **myIoTGrid.Shared** - Gemeinsame Bibliotheken für Hub UND Cloud
+2. **myIoTGrid.Hub** - Hub-spezifische Implementierung (SQLite)
 
 ```
-myIoTGrid.Hub.Backend/src/
-├── myIoTGrid.Hub.Api/              → Startup, Program.cs, Composition Root
-├── myIoTGrid.Hub.Domain/           → Entities, Enums, Interfaces
-├── myIoTGrid.Hub.Shared/           → DTOs, Constants, Extensions
-├── myIoTGrid.Hub.Service/          → Business Logic, Service Interfaces
-├── myIoTGrid.Hub.Infrastructure/   → EF Core, DbContext, Repositories, MQTT
-└── myIoTGrid.Hub.Interface/        → Controllers, SignalR Hubs, Middleware
+┌─────────────────────────────────────────────────────────────────┐
+│                    myIoTGrid.Shared                             │
+│         (Gemeinsame Basis für Hub UND Cloud)                    │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│   ┌─────────────────┐ ┌─────────────────┐ ┌─────────────────┐  │
+│   │ Shared.Common   │ │Shared.Contracts │ │Shared.Utilities │  │
+│   │                 │ │                 │ │                 │  │
+│   │ • Entities      │ │ • IHubService   │ │ • Extensions    │  │
+│   │ • DTOs          │ │ • INodeService  │ │ • Converters    │  │
+│   │ • Enums         │ │ • ISensorService│ │ • Helpers       │  │
+│   │ • ValueObjects  │ │ • IAlertService │ │                 │  │
+│   │ • Interfaces    │ │ • etc.          │ │                 │  │
+│   │ • Options       │ │                 │ │                 │  │
+│   │ • Constants     │ │                 │ │                 │  │
+│   └─────────────────┘ └─────────────────┘ └─────────────────┘  │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+                               │
+           ┌───────────────────┴───────────────────┐
+           ▼                                       ▼
+┌─────────────────────────┐           ┌─────────────────────────┐
+│     myIoTGrid.Hub       │           │    myIoTGrid.Cloud      │
+│      (SQLite)           │           │    (PostgreSQL)         │
+├─────────────────────────┤           ├─────────────────────────┤
+│ • Hub.Api               │           │ • Cloud.Api             │
+│ • Hub.Service           │           │ • Cloud.Service         │
+│ • Hub.Infrastructure    │           │ • Cloud.Infrastructure  │
+│ • Hub.Interface         │           │ • Cloud.Interface       │
+│ • Hub.Domain            │           │ • Cloud.Domain          │
+│ • Hub.Shared (Aliases)  │           │ • Cloud.Shared (Aliases)│
+└─────────────────────────┘           └─────────────────────────┘
 ```
 
-### Layer-Abhängigkeiten
+### Shared Libraries - Was liegt wo?
+
+| Bibliothek | Inhalt | Beispiele |
+|------------|--------|-----------|
+| **Shared.Common** | Entities, DTOs, Enums, ValueObjects, Interfaces, Options, Constants | `Hub`, `Node`, `Sensor`, `Reading`, `HubDto`, `AlertLevel`, `Location`, `IEntity` |
+| **Shared.Contracts** | Service-Interfaces | `IHubService`, `INodeService`, `ISensorService`, `IReadingService`, `IAlertService` |
+| **Shared.Utilities** | Extensions, Converters, Helpers | `MappingExtensions`, `JsonConverters` |
+
+### Hub-Projekt - Was liegt wo?
+
+| Projekt | Inhalt | Beispiele |
+|---------|--------|-----------|
+| **Hub.Api** | Startup, DI-Konfiguration, Composition Root | `Program.cs`, `appsettings.json` |
+| **Hub.Service** | Service-Implementierungen (SQLite-spezifisch) | `HubService`, `NodeService`, `ReadingService` |
+| **Hub.Infrastructure** | DbContext, Repositories, EF Core Migrations | `HubDbContext`, `HubRepository`, `Migrations/` |
+| **Hub.Interface** | Controllers, SignalR Hubs, Middleware | `HubController`, `SensorHub`, `TenantMiddleware` |
+| **Hub.Domain** | Hub-spezifische Domain-Logik (falls nötig) | Aktuell leer - Entities sind in Shared |
+| **Hub.Shared** | Type Aliases für Backwards-Compatibility | `SharedTypeAliases.cs`, `GlobalUsings.cs` |
+
+### Layer-Abhängigkeiten (Neu)
 
 ```
                     ┌─────────────────────┐
@@ -135,118 +197,123 @@ myIoTGrid.Hub.Backend/src/
              └─────────────────┼─────────────────┘
                                ▼
                     ┌─────────────────────┐
-                    │       Domain        │
+                    │    Hub.Domain       │  ← Hub-spezifisch (meist leer)
                     └──────────┬──────────┘
                                ▼
                     ┌─────────────────────┐
-                    │       Shared        │
-                    └─────────────────────┘
+                    │    Hub.Shared       │  ← Type Aliases
+                    └──────────┬──────────┘
+                               ▼
+    ┌──────────────────────────┼──────────────────────────┐
+    ▼                          ▼                          ▼
+┌─────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│Shared.Common│     │Shared.Contracts │     │Shared.Utilities │
+└─────────────┘     └─────────────────┘     └─────────────────┘
 ```
 
-### Projekt-Referenzen
+### Projekt-Referenzen (Aktuell)
 
 | Projekt | Referenziert |
 |---------|--------------|
-| Api | Interface, Service, Infrastructure, Shared |
-| Interface | Service, Domain, Shared |
-| Service | Domain, Shared |
-| Infrastructure | Domain, Shared |
-| Domain | Shared |
-| Shared | (keine) |
+| Hub.Api | Hub.Interface, Hub.Service, Hub.Infrastructure, Hub.Shared |
+| Hub.Interface | Hub.Service, Hub.Shared, Shared.* |
+| Hub.Service | Hub.Shared, Shared.* |
+| Hub.Infrastructure | Hub.Shared, Shared.* |
+| Hub.Domain | Hub.Shared |
+| Hub.Shared | Shared.Common, Shared.Contracts, Shared.Utilities |
+| Shared.Contracts | Shared.Common |
+| Shared.Utilities | Shared.Common |
+| Shared.Common | (keine) |
+
+### Warum diese Struktur?
+
+1. **Code-Wiederverwendung**: Entities, DTOs und Interfaces sind identisch für Hub und Cloud
+2. **Konsistenz**: Gleiche Datenmodelle garantieren Kompatibilität zwischen Hub und Cloud
+3. **Separation of Concerns**: Implementierungen (SQLite vs PostgreSQL) sind getrennt
+4. **Einfache Cloud-Integration**: Cloud referenziert nur Shared.* und implementiert eigene Services
 
 ---
 
 ## 🚨 KRITISCHE ARCHITEKTUR-REGELN (HÖCHSTE PRIORITÄT!)
 
-### 1. Entities gehören IMMER ins Domain-Projekt
+### 1. Entities gehören IMMER ins Shared.Common-Projekt
 
 ```csharp
-// ✅ RICHTIG: myIoTGrid.Hub.Domain/Entities/Hub.cs
-namespace myIoTGrid.Hub.Domain.Entities;
+// ✅ RICHTIG: myIoTGrid.Shared/myIoTGrid.Shared.Common/Entities/Hub.cs
+namespace myIoTGrid.Shared.Common.Entities;
 
-public class Hub
+public class Hub : ITenantEntity
 {
     public Guid Id { get; set; }
     public Guid TenantId { get; set; }
     public string HubId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
-    public Protocol Protocol { get; set; }
-    public Location? DefaultLocation { get; set; }
-    public DateTime? LastSeen { get; set; }
-    public bool IsOnline { get; set; }
-    public string? Metadata { get; set; }
-    public DateTime CreatedAt { get; set; }
-
-    // Navigation Properties
-    public Tenant? Tenant { get; set; }
-    public ICollection<SensorData> SensorData { get; set; } = new List<SensorData>();
+    // ...
 }
 
-// ❌ FALSCH: Entity im Service-Projekt definieren
-// myIoTGrid.Hub.Service/Entities/Hub.cs ← VERBOTEN!
+// ❌ FALSCH: Entity im Hub.Service oder Hub.Domain definieren
+// myIoTGrid.Hub/src/myIoTGrid.Hub.Service/Entities/Hub.cs ← VERBOTEN!
 ```
 
-### 2. DTOs gehören IMMER ins Shared-Projekt
+### 2. DTOs gehören IMMER ins Shared.Common-Projekt
 
 ```csharp
-// ✅ RICHTIG: myIoTGrid.Hub.Shared/DTOs/SensorDataDto.cs
-namespace myIoTGrid.Hub.Shared.DTOs;
+// ✅ RICHTIG: myIoTGrid.Shared/myIoTGrid.Shared.Common/DTOs/HubDto.cs
+namespace myIoTGrid.Shared.Common.DTOs;
 
-public record SensorDataDto(
+public record HubDto(
     Guid Id,
-    Guid TenantId,
-    Guid HubId,
-    Guid SensorTypeId,
-    string SensorTypeCode,
-    string SensorTypeName,
-    string Unit,
-    double Value,
-    DateTime Timestamp,
-    LocationDto? Location,
-    bool IsSyncedToCloud
-);
-
-public record CreateSensorDataDto(
     string HubId,
-    string SensorType,
-    double Value,
-    LocationDto? Location = null
+    string Name,
+    bool IsOnline,
+    DateTime? LastSeen
 );
 
-// ❌ FALSCH: DTO im Service-Projekt definieren
-// myIoTGrid.Hub.Service/DTOs/SensorDataDto.cs ← VERBOTEN!
+// ❌ FALSCH: DTO im Hub.Service definieren
+// myIoTGrid.Hub/src/myIoTGrid.Hub.Service/DTOs/HubDto.cs ← VERBOTEN!
 ```
 
-### 3. Services konsumieren DTOs aus Shared (NIEMALS selbst definieren)
+### 3. Service-Interfaces gehören IMMER ins Shared.Contracts-Projekt
 
 ```csharp
-// ✅ RICHTIG: myIoTGrid.Hub.Service/Services/SensorDataService.cs
-using myIoTGrid.Hub.Shared.DTOs;
-using myIoTGrid.Hub.Domain.Entities;
+// ✅ RICHTIG: myIoTGrid.Shared/myIoTGrid.Shared.Contracts/Services/IHubService.cs
+namespace myIoTGrid.Shared.Contracts.Services;
+
+public interface IHubService
+{
+    Task<HubDto?> GetCurrentHubAsync(CancellationToken ct = default);
+    Task<HubDto> UpdateCurrentHubAsync(UpdateHubDto dto, CancellationToken ct = default);
+}
+
+// ❌ FALSCH: Interface im Hub.Service definieren
+// myIoTGrid.Hub/src/myIoTGrid.Hub.Service/Interfaces/IHubService.cs ← VERBOTEN!
+```
+
+### 4. Service-Implementierungen gehören ins Hub.Service-Projekt
+
+```csharp
+// ✅ RICHTIG: myIoTGrid.Hub/src/myIoTGrid.Hub.Service/Services/HubService.cs
+using myIoTGrid.Shared.Common.DTOs;
+using myIoTGrid.Shared.Common.Entities;
+using myIoTGrid.Shared.Contracts.Services;
 
 namespace myIoTGrid.Hub.Service.Services;
 
-public class SensorDataService : ISensorDataService
+public class HubService : IHubService  // Implementiert Interface aus Shared.Contracts
 {
-    public async Task<SensorDataDto> CreateAsync(CreateSensorDataDto dto, CancellationToken ct = default)
+    public async Task<HubDto?> GetCurrentHubAsync(CancellationToken ct = default)
     {
-        // DTO aus Shared verwenden
+        // Hub-spezifische SQLite-Implementierung
     }
-}
-
-// ❌ FALSCH: DTO im Service definieren
-public class SensorDataService
-{
-    public class SensorDataDto { } // ← VERBOTEN!
 }
 ```
 
-### 4. Controllers und Hubs gehören ins Interface-Projekt
+### 5. Controllers und SignalR Hubs gehören ins Hub.Interface-Projekt
 
 ```csharp
-// ✅ RICHTIG: myIoTGrid.Hub.Interface/Controllers/SensorDataController.cs
-using myIoTGrid.Hub.Service.Interfaces;
-using myIoTGrid.Hub.Shared.DTOs;
+// ✅ RICHTIG: myIoTGrid.Hub/src/myIoTGrid.Hub.Interface/Controllers/HubController.cs
+using myIoTGrid.Shared.Common.DTOs;
+using myIoTGrid.Shared.Contracts.Services;
 
 namespace myIoTGrid.Hub.Interface.Controllers;
 
@@ -270,10 +337,10 @@ public class SensorDataController : ControllerBase
 }
 ```
 
-### 5. SignalR Hub für Echtzeit-Updates
+### 6. SignalR Hub für Echtzeit-Updates
 
 ```csharp
-// ✅ RICHTIG: myIoTGrid.Hub.Interface/Hubs/SensorHub.cs
+// ✅ RICHTIG: myIoTGrid.Hub/src/myIoTGrid.Hub.Interface/Hubs/SensorHub.cs
 using Microsoft.AspNetCore.SignalR;
 
 namespace myIoTGrid.Hub.Interface.Hubs;
@@ -297,7 +364,7 @@ public class SensorHub : Hub
 }
 ```
 
-### 6. Async/Await ist PFLICHT
+### 7. Async/Await ist PFLICHT
 
 ```csharp
 // ✅ RICHTIG: Alles asynchron mit CancellationToken
@@ -329,7 +396,7 @@ public SensorDataDto Create(CreateSensorDataDto dto)
 }
 ```
 
-### 7. VOR dem Erstellen IMMER prüfen: Existiert die Klasse bereits?
+### 8. VOR dem Erstellen IMMER prüfen: Existiert die Klasse bereits?
 
 ```bash
 # Suche in allen Projekten
@@ -1155,15 +1222,15 @@ void loop() {
 ### Backend (.NET 10)
 
 ```bash
-# Build
-cd myIoTGrid.Hub/myIoTGrid.Hub.Backend
+# Build (von Root aus)
+cd myIoTGrid.Hub
 dotnet build
 
 # Tests ausführen
 dotnet test
 
 # Migration erstellen
-dotnet ef migrations add InitialCreate \
+dotnet ef migrations add MigrationName \
     --project src/myIoTGrid.Hub.Infrastructure \
     --startup-project src/myIoTGrid.Hub.Api
 
@@ -1177,6 +1244,10 @@ dotnet run --project src/myIoTGrid.Hub.Api
 
 # Für Raspberry Pi (ARM64) publishen
 dotnet publish src/myIoTGrid.Hub.Api -c Release -r linux-arm64 --self-contained
+
+# Docker-Image bauen (von myIoTGrid Root aus!)
+cd ..  # Falls in myIoTGrid.Hub
+docker build -t myiotgrid-hub-api -f myIoTGrid.Hub/src/myIoTGrid.Hub.Api/Dockerfile .
 ```
 
 ### Frontend (Angular 21)
@@ -1369,18 +1440,20 @@ export interface SensorData {
 ## 🔍 VALIDATION CHECKLIST
 
 ### Vor jedem Commit (Backend):
-- [ ] Entities im Domain-Projekt?
-- [ ] DTOs im Shared-Projekt?
-- [ ] Constants im Shared-Projekt?
-- [ ] Controllers & Hubs im Interface-Projekt?
-- [ ] DbContext & Repositories im Infrastructure-Projekt?
-- [ ] Services im Service-Projekt?
-- [ ] Keine Duplikate erstellt?
+- [ ] Entities im **Shared.Common/Entities/**?
+- [ ] DTOs im **Shared.Common/DTOs/**?
+- [ ] Enums im **Shared.Common/Enums/**?
+- [ ] Service-Interfaces im **Shared.Contracts/Services/**?
+- [ ] Service-Implementierungen im **Hub.Service/Services/**?
+- [ ] Controllers & Hubs im **Hub.Interface/**?
+- [ ] DbContext & Repositories im **Hub.Infrastructure/**?
+- [ ] Keine Duplikate zwischen Shared und Hub?
 - [ ] Alle Operationen async mit CancellationToken?
 - [ ] TenantId in allen Entities gesetzt?
-- [ ] SignalR-Broadcast nach neuen SensorData?
+- [ ] SignalR-Broadcast nach neuen Readings?
 - [ ] Tests vorhanden?
-- [ ] Build erfolgreich?
+- [ ] Build erfolgreich (`dotnet build`)?
+- [ ] Tests erfolgreich (`dotnet test`)?
 
 ### Vor jedem Commit (Frontend):
 - [ ] Standalone Components verwendet?

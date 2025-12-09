@@ -1,0 +1,7 @@
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/bin/Debug/net9.0/CoverletSourceRootsMapping_myIoTGrid.Shared.Common.Tests
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.csproj.AssemblyReference.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.GeneratedMSBuildEditorConfig.editorconfig
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.AssemblyInfoInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.AssemblyInfo.cs
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.csproj.CoreCompileInputs.cache
+/Users/frankbersch/RiderProjects/myIoTGrid/Shared/Backend/Tests/myIoTGrid.Shared.Common.Tests/obj/Debug/net9.0/myIoTGrid.Shared.Common.Tests.sourcelink.json

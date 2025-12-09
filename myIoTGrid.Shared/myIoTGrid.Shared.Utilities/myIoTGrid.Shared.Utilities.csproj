@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+
+    <!-- Package Info -->
+    <PackageId>myIoTGrid.Shared.Utilities</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>myIoTGrid</Authors>
+    <Description>Extension methods and utilities shared between Hub and Cloud</Description>
+    <PackageTags>iot;shared;utilities;extensions</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\myIoTGrid.Shared.Common\myIoTGrid.Shared.Common.csproj" />
+  </ItemGroup>
+
+</Project>

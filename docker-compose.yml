@@ -14,8 +14,8 @@ services:
   # ---------------------------------------------------------------------------
   hub-api:
     build:
-      context: ./myIoTGrid.Hub/myIoTGrid.Hub.Backend
-      dockerfile: src/myIoTGrid.Hub.Api/Dockerfile
+      context: .
+      dockerfile: myIoTGrid.Hub/src/myIoTGrid.Hub.Api/Dockerfile
     image: ghcr.io/frankseins/myiotgrid/hub-api:latest
     container_name: myIoTGrid.Hub
     restart: unless-stopped
