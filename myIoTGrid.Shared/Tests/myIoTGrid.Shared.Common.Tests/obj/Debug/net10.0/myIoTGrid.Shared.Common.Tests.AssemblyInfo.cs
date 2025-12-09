@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("myIoTGrid.Shared.Common.Tests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6cdfb50d826f58667a7b84e8cf0c88fabf9f7c2")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+cfe4ccfef6952e0be5f5991cc3ce87e88f0263db")]
 [assembly: System.Reflection.AssemblyProductAttribute("myIoTGrid.Shared.Common.Tests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("myIoTGrid.Shared.Common.Tests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

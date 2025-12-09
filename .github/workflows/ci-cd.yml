@@ -73,7 +73,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: myIoTGrid.Hub/myIoTGrid.Hub.Frontend
+        working-directory: myIoTGrid.Apps
 
     steps:
       - name: Checkout code
@@ -84,7 +84,7 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: 'npm'
-          cache-dependency-path: myIoTGrid.Hub/myIoTGrid.Hub.Frontend/package-lock.json
+          cache-dependency-path: myIoTGrid.Apps/package-lock.json
 
       - name: Install dependencies
         run: npm ci
@@ -96,7 +96,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: myIoTGrid.Hub/myIoTGrid.Hub.Frontend/dist/
+          path: myIoTGrid.Apps/dist/myIoTGrid.Hub.Frontend/
 
   # =============================================================================
   # Docker Image: Hub API
@@ -195,8 +195,8 @@ jobs:
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./myIoTGrid.Hub/myIoTGrid.Hub.Frontend
-          file: ./myIoTGrid.Hub/myIoTGrid.Hub.Frontend/docker/Dockerfile
+          context: ./myIoTGrid.Apps
+          file: ./myIoTGrid.Apps/docker/Dockerfile
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}

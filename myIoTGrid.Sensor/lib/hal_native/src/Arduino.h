@@ -14,11 +14,13 @@
 #include <cstddef>
 #include <cstring>
 #include <cstdlib>
+#include <cstdarg>
 #include <string>
 #include <functional>
 #include <iostream>
 #include <chrono>
 #include <thread>
+#include <cctype>
 
 // Arduino type definitions
 typedef bool boolean;
@@ -30,6 +32,7 @@ typedef uint8_t byte;
 #define INPUT 0
 #define OUTPUT 1
 #define INPUT_PULLUP 2
+#define INPUT_PULLDOWN 3
 
 // Timing functions
 inline unsigned long millis() {
@@ -94,6 +97,14 @@ public:
     size_t length() const { return _str.length(); }
     bool isEmpty() const { return _str.empty(); }
 
+    void reserve(size_t size) { _str.reserve(size); }
+    void remove(size_t index, size_t count = 1) {
+        if (index < _str.length()) {
+            _str.erase(index, count);
+        }
+    }
+    void clear() { _str.clear(); _readPos = 0; }
+
     // Stream-like interface for ArduinoJson
     int read() const {
         if (_readPos >= _str.length()) return -1;
@@ -125,6 +136,10 @@ public:
     bool operator==(const char* str) const { return _str == (str ? str : ""); }
     bool operator!=(const String& other) const { return _str != other._str; }
     bool operator!=(const char* str) const { return _str != (str ? str : ""); }
+    bool operator<(const String& other) const { return _str < other._str; }
+    bool operator>(const String& other) const { return _str > other._str; }
+    bool operator<=(const String& other) const { return _str <= other._str; }
+    bool operator>=(const String& other) const { return _str >= other._str; }
 
     char operator[](size_t index) const { return _str[index]; }
     char& operator[](size_t index) { return _str[index]; }
@@ -160,6 +175,28 @@ public:
     int indexOf(const char* str, size_t fromIndex) const {
         if (!str || fromIndex >= _str.length()) return -1;
         size_t pos = _str.find(str, fromIndex);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int lastIndexOf(char c) const {
+        size_t pos = _str.rfind(c);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int lastIndexOf(char c, size_t fromIndex) const {
+        if (fromIndex >= _str.length()) fromIndex = _str.length() - 1;
+        size_t pos = _str.rfind(c, fromIndex);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int lastIndexOf(const String& str) const {
+        size_t pos = _str.rfind(str._str);
+        return pos == std::string::npos ? -1 : static_cast<int>(pos);
+    }
+
+    int lastIndexOf(const char* str) const {
+        if (!str) return -1;
+        size_t pos = _str.rfind(str);
         return pos == std::string::npos ? -1 : static_cast<int>(pos);
     }
 
@@ -212,6 +249,24 @@ public:
     bool endsWith(const String& suffix) const {
         if (suffix._str.length() > _str.length()) return false;
         return _str.compare(_str.length() - suffix._str.length(), suffix._str.length(), suffix._str) == 0;
+    }
+
+    bool equalsIgnoreCase(const String& other) const {
+        if (_str.length() != other._str.length()) return false;
+        for (size_t i = 0; i < _str.length(); i++) {
+            if (std::tolower(_str[i]) != std::tolower(other._str[i])) return false;
+        }
+        return true;
+    }
+
+    bool equalsIgnoreCase(const char* other) const {
+        if (!other) return _str.empty();
+        size_t otherLen = strlen(other);
+        if (_str.length() != otherLen) return false;
+        for (size_t i = 0; i < _str.length(); i++) {
+            if (std::tolower(_str[i]) != std::tolower(other[i])) return false;
+        }
+        return true;
     }
 
     void replace(const String& find, const String& replace) {
@@ -285,6 +340,19 @@ public:
     int available() { return 0; }
     int read() { return -1; }
     void flush() { std::cout.flush(); }
+
+    size_t write(uint8_t c) { std::cout << static_cast<char>(c); return 1; }
+    size_t write(const uint8_t* buffer, size_t size) {
+        for (size_t i = 0; i < size; i++) {
+            std::cout << static_cast<char>(buffer[i]);
+        }
+        return size;
+    }
+    size_t write(const char* str) {
+        if (!str) return 0;
+        std::cout << str;
+        return strlen(str);
+    }
 };
 
 extern SerialClass Serial;
@@ -351,5 +419,93 @@ inline long map(long x, long in_min, long in_max, long out_min, long out_max) {
 
 // yield function (no-op in native)
 inline void yield() {}
+
+// File stub class for native builds (SD card operations are no-ops)
+class File {
+public:
+    File() : _open(false), _size(0) {}
+
+    operator bool() const { return _open; }
+    bool isOpen() const { return _open; }
+    void close() { _open = false; }
+    size_t size() const { return _size; }
+    size_t position() const { return 0; }
+    bool seek(size_t pos) { (void)pos; return false; }
+    int read() { return -1; }
+    size_t read(uint8_t* buf, size_t size) { (void)buf; (void)size; return 0; }
+    size_t write(uint8_t c) { (void)c; return 0; }
+    size_t write(const uint8_t* buf, size_t size) { (void)buf; (void)size; return 0; }
+    size_t print(const char* str) { (void)str; return 0; }
+    size_t print(const String& str) { (void)str; return 0; }
+    size_t println(const char* str) { (void)str; return 0; }
+    size_t println(const String& str) { (void)str; return 0; }
+    size_t println() { return 0; }
+    void flush() {}
+    String name() const { return ""; }
+    bool isDirectory() const { return false; }
+    File openNextFile() { return File(); }
+
+private:
+    bool _open;
+    size_t _size;
+};
+
+// Print base class (for SerialCapture and other classes that need Print interface)
+class Print {
+public:
+    virtual ~Print() = default;
+    virtual size_t write(uint8_t c) = 0;
+    virtual size_t write(const uint8_t* buffer, size_t size) {
+        size_t count = 0;
+        for (size_t i = 0; i < size; i++) {
+            count += write(buffer[i]);
+        }
+        return count;
+    }
+
+    size_t write(const char* str) {
+        if (!str) return 0;
+        return write(reinterpret_cast<const uint8_t*>(str), strlen(str));
+    }
+
+    size_t print(const char* str) { return write(str); }
+    size_t print(char c) { return write(static_cast<uint8_t>(c)); }
+    size_t print(int value) {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%d", value);
+        return write(buf);
+    }
+    size_t print(unsigned int value) {
+        char buf[16];
+        snprintf(buf, sizeof(buf), "%u", value);
+        return write(buf);
+    }
+    size_t print(long value) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%ld", value);
+        return write(buf);
+    }
+    size_t print(unsigned long value) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%lu", value);
+        return write(buf);
+    }
+    size_t print(double value, int decimalPlaces = 2) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%.*f", decimalPlaces, value);
+        return write(buf);
+    }
+    size_t print(const String& str) { return write(str.c_str()); }
+
+    size_t println() { return write("\n"); }
+    size_t println(const char* str) { size_t n = print(str); n += println(); return n; }
+    size_t println(char c) { size_t n = print(c); n += println(); return n; }
+    size_t println(int value) { size_t n = print(value); n += println(); return n; }
+    size_t println(unsigned int value) { size_t n = print(value); n += println(); return n; }
+    size_t println(long value) { size_t n = print(value); n += println(); return n; }
+    size_t println(unsigned long value) { size_t n = print(value); n += println(); return n; }
+    size_t println(double value, int decimalPlaces = 2) { size_t n = print(value, decimalPlaces); n += println(); return n; }
+    size_t println(const String& str) { size_t n = print(str); n += println(); return n; }
+};
 
 #endif // ARDUINO_H

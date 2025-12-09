@@ -4,6 +4,9 @@
 
 #include "reading_storage.h"
 #include <ArduinoJson.h>
+#ifdef PLATFORM_NATIVE
+#include "ArduinoJsonString.h"
+#endif
 #include <time.h>
 
 ReadingStorage::ReadingStorage()

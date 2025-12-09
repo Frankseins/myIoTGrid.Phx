@@ -59,7 +59,7 @@ services:
   # ---------------------------------------------------------------------------
   hub-frontend:
     build:
-      context: ./myIoTGrid.Hub/myIoTGrid.Hub.Frontend
+      context: ./myIoTGrid.Apps
       dockerfile: docker/Dockerfile
     image: ghcr.io/frankseins/myiotgrid/hub-frontend:latest
     container_name: myIoTGrid.Frontend
