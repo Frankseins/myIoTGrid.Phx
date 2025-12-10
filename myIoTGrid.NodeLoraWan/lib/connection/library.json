@@ -1,0 +1,12 @@
+{
+    "name": "connection",
+    "version": "1.0.0",
+    "description": "Connection abstraction layer for LoRaWAN",
+    "keywords": ["connection", "lorawan", "interface"],
+    "authors": [
+        {
+            "name": "myIoTGrid Team"
+        }
+    ],
+    "license": "MIT"
+}

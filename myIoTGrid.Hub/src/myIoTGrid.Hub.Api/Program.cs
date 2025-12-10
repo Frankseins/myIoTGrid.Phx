@@ -18,6 +18,7 @@ using myIoTGrid.Hub.Interface.Services;
 using myIoTGrid.Shared.Contracts.Services;
 using myIoTGrid.Hub.Service.Services;
 using myIoTGrid.Hub.Service.Validators;
+using myIoTGrid.Hub.Service.Adapters;
 using myIoTGrid.Shared.Utilities.Converters;
 using myIoTGrid.Shared.Common.Options;
 using Serilog;
@@ -163,6 +164,10 @@ try
     builder.Services.AddHostedService<MatterBridgeService>();
     builder.Services.AddHostedService<DiscoveryService>();
     builder.Services.AddHostedService<DebugLogCleanupService>();
+
+    // LoRaWAN Gateway Integration
+    // Receives readings from myIoTGrid.Gateway.LoRaWAN.Bridge via MQTT
+    builder.Services.AddHostedService<MqttLoRaWanAdapter>();
 
     // Controllers (aus Interface-Projekt)
     builder.Services.AddControllers()

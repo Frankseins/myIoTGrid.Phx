@@ -1,0 +1,14 @@
+# myIoTGrid.Gateway.LoRaWAN Docker Stack - DEVELOPMENT
+# Mit lokalem Build des Bridge Service
+# Stand: 10.12.2025
+
+# Verwendung:
+# docker compose -f docker-compose.gateway-lorawan.dev.yml up -d --build
+
+services:
+  # Überschreibt nur den Bridge Service mit lokalem Build
+  bridge:
+    build:
+      context: ./src/myIoTGrid.Gateway.LoRaWAN.Bridge
+      dockerfile: Dockerfile
+    image: myiotgrid/gateway-lorawan-bridge:dev

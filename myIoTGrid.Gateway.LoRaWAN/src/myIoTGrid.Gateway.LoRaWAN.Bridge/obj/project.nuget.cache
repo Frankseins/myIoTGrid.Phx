@@ -1,0 +1,10 @@
+{
+  "version": 2,
+  "dgSpecHash": "jwgB6ShAORk=",
+  "success": true,
+  "projectFilePath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Gateway.LoRaWAN/src/myIoTGrid.Gateway.LoRaWAN.Bridge/myIoTGrid.Gateway.LoRaWAN.Bridge.csproj",
+  "expectedPackageFiles": [
+    "/Users/frankbersch/.nuget/packages/mqttnet/4.3.3.952/mqttnet.4.3.3.952.nupkg.sha512"
+  ],
+  "logs": []
+}

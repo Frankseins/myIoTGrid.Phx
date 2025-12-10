@@ -1,0 +1,58 @@
+version: '3.8'
+
+services:
+  # =============================================================================
+  # PostgreSQL Database
+  # =============================================================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: myiotgrid-cloud-postgres
+    environment:
+      POSTGRES_DB: myiotgrid_cloud
+      POSTGRES_USER: myiotgrid
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U myiotgrid -d myiotgrid_cloud"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - myiotgrid-cloud
+
+  # =============================================================================
+  # Cloud API
+  # =============================================================================
+  cloud-api:
+    build:
+      context: ../..
+      dockerfile: myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/Dockerfile
+    container_name: myiotgrid-cloud-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ConnectionStrings__CloudDb=Host=postgres;Database=myiotgrid_cloud;Username=myiotgrid;Password=${POSTGRES_PASSWORD:-changeme}
+    ports:
+      - "5002:5002"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - cloud_logs:/app/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    networks:
+      - myiotgrid-cloud
+
+volumes:
+  postgres_data:
+  cloud_logs:
+
+networks:
+  myiotgrid-cloud:
+    driver: bridge

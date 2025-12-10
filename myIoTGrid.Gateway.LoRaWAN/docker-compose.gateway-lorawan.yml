@@ -1,0 +1,181 @@
+# myIoTGrid.Gateway.LoRaWAN Docker Stack
+# ChirpStack LoRaWAN Network Server + Bridge Service
+# Stand: 10.12.2025
+
+networks:
+  myiotgrid-lorawan-internal:
+    driver: bridge
+    name: myiotgrid-lorawan-internal
+  myiotgrid-lorawan-external:
+    driver: bridge
+    name: myiotgrid-lorawan-external
+
+volumes:
+  myiotgrid-lorawan-postgres-data:
+    name: myiotgrid-lorawan-postgres-data
+  myiotgrid-lorawan-redis-data:
+    name: myiotgrid-lorawan-redis-data
+  myiotgrid-lorawan-mosquitto-data:
+    name: myiotgrid-lorawan-mosquitto-data
+
+services:
+  # ============================================
+  # ChirpStack Gateway Bridge
+  # Empfängt UDP Pakete vom LoRa Gateway und
+  # leitet sie an ChirpStack via MQTT weiter
+  # ============================================
+  gateway-bridge:
+    image: chirpstack/chirpstack-gateway-bridge:4
+    container_name: myiotgrid-gateway-lorawan-bridge
+    restart: unless-stopped
+    networks:
+      - myiotgrid-lorawan-internal
+    ports:
+      - "1700:1700/udp"  # Semtech UDP Packet Forwarder
+    volumes:
+      - ./config/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml:/etc/chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml:ro
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "ps aux | grep chirpstack-gateway-bridge | grep -v grep || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # ChirpStack Network Server
+  # LoRaWAN Network Server mit Web UI
+  # ============================================
+  chirpstack:
+    image: chirpstack/chirpstack:4
+    container_name: myiotgrid-gateway-lorawan-chirpstack
+    restart: unless-stopped
+    command: -c /etc/chirpstack
+    networks:
+      - myiotgrid-lorawan-internal
+    ports:
+      - "8080:8080"  # Web UI + REST API
+      - "8090:8090"  # gRPC API
+    volumes:
+      - ./config/chirpstack:/etc/chirpstack:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    environment:
+      - POSTGRESQL_HOST=postgres
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/ || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # PostgreSQL Database
+  # Persistenz für ChirpStack
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: myiotgrid-gateway-lorawan-postgres
+    restart: unless-stopped
+    networks:
+      - myiotgrid-lorawan-internal
+    environment:
+      POSTGRES_DB: chirpstack
+      POSTGRES_USER: chirpstack
+      POSTGRES_PASSWORD: chirpstack
+    volumes:
+      - myiotgrid-lorawan-postgres-data:/var/lib/postgresql/data
+      - ./config/postgres/init-extensions.sql:/docker-entrypoint-initdb.d/init-extensions.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chirpstack -d chirpstack"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ============================================
+  # Redis
+  # Cache und Session Storage für ChirpStack
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: myiotgrid-gateway-lorawan-redis
+    restart: unless-stopped
+    networks:
+      - myiotgrid-lorawan-internal
+    volumes:
+      - myiotgrid-lorawan-redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  # ============================================
+  # Mosquitto MQTT Broker
+  # Dual-Port: 1883 intern, 1884 extern
+  # ============================================
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: myiotgrid-gateway-lorawan-mosquitto
+    restart: unless-stopped
+    networks:
+      - myiotgrid-lorawan-internal
+      - myiotgrid-lorawan-external
+    ports:
+      - "1883:1883"  # Internal (ChirpStack <-> Bridge)
+      - "1884:1884"  # External (Bridge -> myIoTGrid.Hub)
+    volumes:
+      - ./config/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - myiotgrid-lorawan-mosquitto-data:/mosquitto/data
+    healthcheck:
+      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/broker/uptime", "-C", "1", "-i", "healthcheck", "-W", "3"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # myIoTGrid Gateway LoRaWAN Bridge Service
+  # Transformiert ChirpStack Events -> myIoTGrid Format
+  # ============================================
+  bridge:
+    # For local development: build from source
+    # build:
+    #   context: ./src/myIoTGrid.Gateway.LoRaWAN.Bridge
+    #   dockerfile: Dockerfile
+    # For production: use pre-built image from GitHub Container Registry
+    image: ghcr.io/frankseins/myiotgrid-gateway-lorawan:latest
+    container_name: myiotgrid-gateway-lorawan-bridge-service
+    restart: unless-stopped
+    networks:
+      - myiotgrid-lorawan-internal
+      - myiotgrid-lorawan-external
+    ports:
+      - "5100:5100"  # Health Check Endpoint
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Production
+      - ASPNETCORE_URLS=http://+:5100
+      - ChirpStack__MqttServer=tcp://mosquitto:1883
+      - MyIoTGrid__MqttServer=tcp://mosquitto:1884
+      - MyIoTGrid__HubUrl=http://myiotgrid-hub:5000
+    depends_on:
+      chirpstack:
+        condition: service_healthy
+      mosquitto:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:5100/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

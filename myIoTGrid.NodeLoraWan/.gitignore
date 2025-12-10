@@ -1,0 +1,44 @@
+# PlatformIO
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
+# Build artifacts
+*.o
+*.a
+*.so
+*.dylib
+*.exe
+
+# macOS
+.DS_Store
+._*
+
+# Secrets - NEVER commit these!
+include/secrets.h
+
+# Data files
+data/*.dat
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# Backup files
+*.bak
+*.backup
+
+# Coverage
+coverage/
+*.gcov
+*.gcda
+*.gcno

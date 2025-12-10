@@ -1,0 +1,12 @@
+{
+    "name": "data",
+    "version": "1.0.0",
+    "description": "Data structures and serialization",
+    "keywords": ["data", "types", "json"],
+    "authors": [
+        {
+            "name": "myIoTGrid Team"
+        }
+    ],
+    "license": "MIT"
+}

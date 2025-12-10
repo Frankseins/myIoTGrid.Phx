@@ -1,0 +1,12 @@
+{
+    "name": "controller",
+    "version": "1.0.0",
+    "description": "Node Controller for LoRaWAN sensor node",
+    "keywords": ["controller", "node"],
+    "authors": [
+        {
+            "name": "myIoTGrid Team"
+        }
+    ],
+    "license": "MIT"
+}

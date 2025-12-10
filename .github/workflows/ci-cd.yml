@@ -16,6 +16,14 @@ env:
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
 
+# =============================================================================
+# Images Built:
+# - myiotgrid-hub-api          (Hub Backend API)
+# - myiotgrid-hub-frontend     (Hub Frontend)
+# - myiotgrid-sensor-sim       (Sensor Simulator)
+# - myiotgrid-gateway-lorawan  (LoRaWAN Gateway Bridge Service)
+# =============================================================================
+
 defaults:
   run:
     shell: bash
@@ -62,6 +70,49 @@ jobs:
         if: always()
         with:
           name: backend-coverage-reports
+          path: '**/TestResults/**/coverage.cobertura.xml'
+
+  # =============================================================================
+  # Build & Test LoRaWAN Gateway Bridge
+  # =============================================================================
+  build-and-test-lorawan:
+    name: Build & Test LoRaWAN Gateway
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: myIoTGrid.Gateway.LoRaWAN
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Run tests
+        run: dotnet test --no-build --configuration Release --verbosity normal --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage"
+
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lorawan-test-results
+          path: '**/TestResults/**/*.trx'
+
+      - name: Upload coverage reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lorawan-coverage-reports
           path: '**/TestResults/**/coverage.cobertura.xml'
 
   # =============================================================================
@@ -205,6 +256,59 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =============================================================================
+  # Docker Image: LoRaWAN Gateway Bridge
+  # =============================================================================
+  docker-lorawan-gateway:
+    name: Build LoRaWAN Gateway Image
+    runs-on: ubuntu-latest
+    needs: build-and-test-lorawan
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-gateway-lorawan
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./myIoTGrid.Gateway.LoRaWAN/src/myIoTGrid.Gateway.LoRaWAN.Bridge
+          file: ./myIoTGrid.Gateway.LoRaWAN/src/myIoTGrid.Gateway.LoRaWAN.Bridge/Dockerfile
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =============================================================================
   # Docker Image: Sensor Simulator
   # =============================================================================
   docker-sensor-sim:
@@ -257,12 +361,84 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =============================================================================
+  # LoRaWAN Stack Release Package
+  # =============================================================================
+  lorawan-release-package:
+    name: Create LoRaWAN Release Package
+    runs-on: ubuntu-latest
+    needs: docker-lorawan-gateway
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create release package
+        run: |
+          mkdir -p release/myiotgrid-gateway-lorawan
+
+          # Copy docker-compose and configs
+          cp myIoTGrid.Gateway.LoRaWAN/docker-compose.gateway-lorawan.yml release/myiotgrid-gateway-lorawan/
+          cp -r myIoTGrid.Gateway.LoRaWAN/config release/myiotgrid-gateway-lorawan/
+
+          # Create README for deployment
+          cat > release/myiotgrid-gateway-lorawan/README.md << 'EOF'
+          # myIoTGrid Gateway LoRaWAN - Deployment Package
+
+          ## Quick Start
+
+          ```bash
+          # Start the stack
+          docker compose -f docker-compose.gateway-lorawan.yml up -d
+
+          # Check status
+          docker compose -f docker-compose.gateway-lorawan.yml ps
+
+          # View logs
+          docker compose -f docker-compose.gateway-lorawan.yml logs -f
+          ```
+
+          ## Services
+
+          | Service | Port | Description |
+          |---------|------|-------------|
+          | ChirpStack | 8080 | LoRaWAN Network Server Web UI |
+          | ChirpStack gRPC | 8090 | gRPC API |
+          | Gateway Bridge | 1700/UDP | Semtech UDP Packet Forwarder |
+          | MQTT Internal | 1883 | ChirpStack <-> Bridge |
+          | MQTT External | 1884 | Bridge <-> myIoTGrid Hub |
+          | Bridge Service | 5100 | Health Check Endpoint |
+
+          ## Default Credentials
+
+          - ChirpStack: admin / admin
+
+          ## Configuration
+
+          Config files are in the `config/` directory:
+          - `chirpstack/chirpstack.toml` - ChirpStack Network Server
+          - `chirpstack-gateway-bridge/chirpstack-gateway-bridge.toml` - Gateway Bridge
+          - `mosquitto/mosquitto.conf` - MQTT Broker
+          - `postgres/init-extensions.sql` - PostgreSQL Extensions
+          EOF
+
+          # Create tarball
+          cd release
+          tar -czvf myiotgrid-gateway-lorawan.tar.gz myiotgrid-gateway-lorawan/
+
+      - name: Upload release package
+        uses: actions/upload-artifact@v4
+        with:
+          name: myiotgrid-gateway-lorawan-release
+          path: release/myiotgrid-gateway-lorawan.tar.gz
+
+  # =============================================================================
   # Summary Job
   # =============================================================================
   summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [docker-hub-api, docker-hub-frontend, docker-sensor-sim]
+    needs: [docker-hub-api, docker-hub-frontend, docker-sensor-sim, docker-lorawan-gateway]
     if: always() && github.event_name == 'push'
 
     steps:
@@ -277,6 +453,7 @@ jobs:
           echo "| Hub API | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Hub Frontend | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| LoRaWAN Gateway | ${{ needs.docker-lorawan-gateway.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
@@ -288,4 +465,17 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-sensor-sim:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# LoRaWAN Gateway Bridge" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-gateway-lorawan:latest" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### LoRaWAN Stack Deployment:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Download the release package from Actions artifacts or use:" >> $GITHUB_STEP_SUMMARY
+          echo '```bash' >> $GITHUB_STEP_SUMMARY
+          echo "# Clone and start LoRaWAN stack" >> $GITHUB_STEP_SUMMARY
+          echo "git clone https://github.com/${{ github.repository }}.git" >> $GITHUB_STEP_SUMMARY
+          echo "cd myIoTGrid/myIoTGrid.Gateway.LoRaWAN" >> $GITHUB_STEP_SUMMARY
+          echo "docker compose -f docker-compose.gateway-lorawan.yml up -d" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY

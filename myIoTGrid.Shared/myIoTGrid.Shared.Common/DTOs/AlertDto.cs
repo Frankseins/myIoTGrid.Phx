@@ -71,6 +71,20 @@ public record AcknowledgeAlertDto(
 );
 
 /// <summary>
+/// DTO for updating an Alert
+/// </summary>
+/// <param name="Message">Updated message</param>
+/// <param name="Recommendation">Updated recommendation</param>
+/// <param name="IsActive">Updated active status</param>
+/// <param name="ExpiresAt">Updated expiration</param>
+public record UpdateAlertDto(
+    string? Message = null,
+    string? Recommendation = null,
+    bool? IsActive = null,
+    DateTime? ExpiresAt = null
+);
+
+/// <summary>
 /// DTO for filtering Alerts
 /// </summary>
 /// <param name="HubId">Filter by Hub (Guid)</param>

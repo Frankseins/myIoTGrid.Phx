@@ -4,8 +4,9 @@
 # Services:
 # - hub-api:      Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
 # - hub-frontend: Frontend (Angular/nginx) - Port 443 (HTTPS)
-# - mosquitto:    MQTT Broker - Port 1883, 9001
 # - sensor-sim:   Sensor Simulator (Native) - Test sensor with auto-discovery
+#
+# Note: MQTT Broker is provided by myIoTGrid.Gateway.LoRaWAN stack (Port 1883/1884)
 # =============================================================================
 
 services:
@@ -30,8 +31,9 @@ services:
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/fullchain.pem
       - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/privkey.pem
       - ConnectionStrings__HubDb=Data Source=/app/data/hub.db
-      - Mqtt__Host=mosquitto
+      - Mqtt__Host=host.docker.internal
       - Mqtt__Port=1883
+      - LoRaWAN__MqttServer=tcp://host.docker.internal:1884
       - Hub__DefaultTenantName=Default
       - Discovery__Enabled=true
       - Discovery__Port=5001
@@ -43,9 +45,6 @@ services:
       - hub-certs:/app/certs
     networks:
       - myiotgrid-network
-    depends_on:
-      mosquitto:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-fk", "https://localhost:5001/health"]
       interval: 30s
@@ -85,32 +84,6 @@ services:
     labels:
       - "com.myiotgrid.service=hub-frontend"
       - "com.myiotgrid.description=Frontend UI (HTTPS)"
-
-  # ---------------------------------------------------------------------------
-  # MQTT Broker (Mosquitto)
-  # ---------------------------------------------------------------------------
-  mosquitto:
-    image: eclipse-mosquitto:2
-    container_name: myIoTGrid.Mosquitto
-    restart: unless-stopped
-    ports:
-      - "1883:1883"
-      - "9001:9001"
-    volumes:
-      - ./docker/mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
-      - mosquitto-data:/mosquitto/data
-      - mosquitto-logs:/mosquitto/log
-    networks:
-      - myiotgrid-network
-    healthcheck:
-      test: ["CMD", "mosquitto_sub", "-t", "$$SYS/#", "-C", "1", "-i", "healthcheck", "-W", "3"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 5s
-    labels:
-      - "com.myiotgrid.service=mosquitto"
-      - "com.myiotgrid.description=MQTT Broker"
 
   # ---------------------------------------------------------------------------
   # Sensor Simulator (Native Build) - Auto-discovers Hub via UDP broadcast
@@ -168,9 +141,5 @@ volumes:
     name: myiotgrid-hub-logs
   hub-certs:
     name: myiotgrid-hub-certs
-  mosquitto-data:
-    name: myiotgrid-mosquitto-data
-  mosquitto-logs:
-    name: myiotgrid-mosquitto-logs
   sensor-data:
     name: myiotgrid-sensor-data

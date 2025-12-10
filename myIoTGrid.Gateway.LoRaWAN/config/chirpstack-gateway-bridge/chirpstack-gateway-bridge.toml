@@ -1,0 +1,80 @@
+# ChirpStack Gateway Bridge Configuration
+# myIoTGrid.Gateway.LoRaWAN
+# Stand: 10.12.2025
+
+# ============================================
+# Logging
+# ============================================
+[general]
+  log_level = 4  # 4 = info, 5 = debug
+
+# ============================================
+# Backend Configuration
+# Semtech UDP Packet Forwarder (Standard)
+# ============================================
+[backend]
+  type = "semtech_udp"
+
+  [backend.semtech_udp]
+    # Bind address and port for UDP listener
+    udp_bind = "0.0.0.0:1700"
+
+    # Skip CRC check (not recommended for production)
+    skip_crc_check = false
+
+    # Fake RX time (for gateways without GPS)
+    fake_rx_time = false
+
+# ============================================
+# Integration Configuration (MQTT)
+# ============================================
+[integration]
+  marshaler = "protobuf"
+
+  [integration.mqtt]
+    # Event topic template
+    event_topic_template = "eu868/gateway/{{ .GatewayID }}/event/{{ .EventType }}"
+
+    # State topic template
+    state_topic_template = "eu868/gateway/{{ .GatewayID }}/state/{{ .StateType }}"
+
+    # Command topic template
+    command_topic_template = "eu868/gateway/{{ .GatewayID }}/command/#"
+
+    [integration.mqtt.auth]
+      type = "generic"
+
+      [integration.mqtt.auth.generic]
+        # MQTT server address
+        server = "tcp://mosquitto:1883"
+
+        # Username (empty = no auth)
+        username = ""
+
+        # Password
+        password = ""
+
+        # QoS level
+        qos = 0
+
+        # Clean session
+        clean_session = true
+
+        # Client ID (leave empty for random)
+        client_id = "chirpstack-gateway-bridge"
+
+        # CA certificate (for TLS)
+        ca_cert = ""
+
+        # TLS certificate
+        tls_cert = ""
+
+        # TLS key
+        tls_key = ""
+
+# ============================================
+# Metrics Configuration (Prometheus)
+# ============================================
+[metrics]
+  # Prometheus endpoint
+  prometheus = { endpoint_enabled = false, bind = "" }

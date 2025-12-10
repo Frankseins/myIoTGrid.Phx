@@ -1,0 +1,30 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>myIoTGrid.Cloud.Infrastructure</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="10.0.0" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.0" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\myIoTGrid.Cloud.Domain\myIoTGrid.Cloud.Domain.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Cloud.Shared\myIoTGrid.Cloud.Shared.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Common\myIoTGrid.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Contracts\myIoTGrid.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Utilities\myIoTGrid.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>

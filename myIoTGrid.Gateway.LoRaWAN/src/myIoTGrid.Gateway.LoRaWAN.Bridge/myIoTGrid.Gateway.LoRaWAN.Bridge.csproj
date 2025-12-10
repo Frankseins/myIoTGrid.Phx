@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>dotnet-myIoTGrid.Gateway.LoRaWAN.Bridge-5d63ade2-32bb-4819-b359-b33fb989df59</UserSecretsId>
+    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+    <RootNamespace>myIoTGrid.Gateway.LoRaWAN.Bridge</RootNamespace>
+    <AssemblyName>myIoTGrid.Gateway.LoRaWAN.Bridge</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MQTTnet" Version="4.3.3.952" />
+  </ItemGroup>
+
+</Project>

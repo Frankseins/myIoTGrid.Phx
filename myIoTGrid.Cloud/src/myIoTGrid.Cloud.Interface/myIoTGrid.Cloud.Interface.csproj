@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>myIoTGrid.Cloud.Interface</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\myIoTGrid.Cloud.Service\myIoTGrid.Cloud.Service.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Cloud.Domain\myIoTGrid.Cloud.Domain.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Cloud.Shared\myIoTGrid.Cloud.Shared.csproj" />
+    <ProjectReference Include="..\myIoTGrid.Cloud.Infrastructure\myIoTGrid.Cloud.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Common\myIoTGrid.Shared.Common.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Contracts\myIoTGrid.Shared.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\myIoTGrid.Shared\myIoTGrid.Shared.Utilities\myIoTGrid.Shared.Utilities.csproj" />
+  </ItemGroup>
+
+</Project>
