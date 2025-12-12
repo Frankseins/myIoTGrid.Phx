@@ -155,7 +155,7 @@ public class HubService : IHubService
             return;
         }
 
-        // Create the default Hub
+        // Create the default Hub with Cloud API URL
         var defaultHub = new myIoTGrid.Shared.Common.Entities.Hub
         {
             Id = Guid.NewGuid(),
@@ -165,7 +165,9 @@ public class HubService : IHubService
             Description = "Auto-initialized Hub for this installation",
             IsOnline = true,
             LastSeen = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            ApiUrl = "https://api.myiotgrid.cloud",
+            ApiPort = 443
         };
 
         _context.Hubs.Add(defaultHub);

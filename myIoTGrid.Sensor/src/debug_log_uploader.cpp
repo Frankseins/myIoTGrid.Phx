@@ -15,6 +15,9 @@
 #include <WiFi.h>
 #include <WiFiClientSecure.h>
 #include <WiFiClient.h>
+
+// ISRG Root X1 - Let's Encrypt Root CA (valid until 2035)
+extern const char* rootCACertificate;  // Defined in api_client.cpp
 #endif
 
 // Singleton instance
@@ -101,7 +104,7 @@ bool DebugLogUploader::uploadSerialLines() {
     // Handle HTTPS vs HTTP connections
     if (isHttps) {
         WiFiClientSecure secureClient;
-        secureClient.setInsecure();
+        secureClient.setCACert(rootCACertificate);  // Use Root CA for validation
         http.begin(secureClient, url);
     } else {
         WiFiClient plainClient;

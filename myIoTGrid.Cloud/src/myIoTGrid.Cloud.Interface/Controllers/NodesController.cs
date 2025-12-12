@@ -260,10 +260,23 @@ public class NodesController : ControllerBase
             .Select(cap => new SensorConfigDto(Type: cap, Enabled: true, Pin: -1))
             .ToList() ?? [];
 
-        // Build connection configuration - use the request's base URL
-        var request = HttpContext.Request;
-        var endpoint = $"{request.Scheme}://{request.Host}";
-        var connection = new ConnectionConfigDto(Mode: "http", Endpoint: endpoint);
+        // Build connection configuration from Hub properties
+        // If Hub has ApiUrl configured, use it; otherwise fallback to request URL
+        string endpoint;
+        string mode;
+        if (!string.IsNullOrEmpty(defaultHub.ApiUrl))
+        {
+            endpoint = defaultHub.ApiUrl;
+            mode = endpoint.StartsWith("https") ? "https" : "http";
+        }
+        else
+        {
+            // Fallback: use request URL (Azure terminates TLS, check X-Forwarded-Proto)
+            var scheme = Request.Headers["X-Forwarded-Proto"].FirstOrDefault() ?? Request.Scheme;
+            endpoint = $"{scheme}://{Request.Host}";
+            mode = scheme;
+        }
+        var connection = new ConnectionConfigDto(Mode: mode, Endpoint: endpoint);
 
         var response = new NodeRegistrationResponseDto(
             NodeId: node.Id,
