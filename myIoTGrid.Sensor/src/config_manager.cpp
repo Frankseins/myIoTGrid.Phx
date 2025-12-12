@@ -42,10 +42,13 @@ bool ConfigManager::saveConfig(const StoredConfig& config) {
     preferences.putString(KEY_WIFI_SSID, config.wifiSsid);
     preferences.putString(KEY_WIFI_PASS, config.wifiPassword);
     preferences.putString(KEY_HUB_URL, config.hubApiUrl);
+    preferences.putString(KEY_TARGET_MODE, config.targetMode);
+    preferences.putString(KEY_TENANT_ID, config.tenantId);
     preferences.putBool(KEY_CONFIGURED, true);
 #endif
 
-    Serial.printf("[Config] Saved configuration: NodeID=%s\n", config.nodeId.c_str());
+    Serial.printf("[Config] Saved configuration: NodeID=%s, TargetMode=%s\n",
+                  config.nodeId.c_str(), config.targetMode.c_str());
     return true;
 }
 
@@ -66,15 +69,20 @@ StoredConfig ConfigManager::loadConfig() {
         config.wifiSsid = preferences.getString(KEY_WIFI_SSID, "");
         config.wifiPassword = preferences.getString(KEY_WIFI_PASS, "");
         config.hubApiUrl = preferences.getString(KEY_HUB_URL, "");
+        config.targetMode = preferences.getString(KEY_TARGET_MODE, "local");
+        config.tenantId = preferences.getString(KEY_TENANT_ID, "");
 
         // Validate loaded config
-        // WiFi SSID is required, Hub URL is optional (will be discovered via UDP)
+        // WiFi SSID is required, Hub URL is optional (will be discovered via UDP for local mode)
         // apiKey is also optional - assigned after registration
         config.isValid = config.wifiSsid.length() > 0;
 
         if (config.isValid) {
-            if (config.hubApiUrl.length() > 0) {
-                Serial.printf("[Config] Loaded: NodeID=%s, HubURL=%s\n",
+            if (config.isCloudMode()) {
+                Serial.printf("[Config] Loaded CLOUD mode: NodeID=%s, TenantID=%s\n",
+                              config.nodeId.c_str(), config.tenantId.c_str());
+            } else if (config.hubApiUrl.length() > 0) {
+                Serial.printf("[Config] Loaded LOCAL mode: NodeID=%s, HubURL=%s\n",
                               config.nodeId.c_str(), config.hubApiUrl.c_str());
             } else {
                 Serial.printf("[Config] Loaded WiFi-only: NodeID=%s, SSID=%s (Hub will be discovered)\n",

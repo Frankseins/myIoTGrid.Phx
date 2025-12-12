@@ -619,8 +619,18 @@ void onBLEConfigReceived(const BLEConfig& config) {
     Serial.println("[Main] ========================================");
     Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
     Serial.printf("[Main] WiFi SSID: %s\n", config.wifiSsid.c_str());
+    Serial.printf("[Main] Target Mode: %s\n", config.targetMode.c_str());
 
-    if (config.hubApiUrl.length() > 0) {
+    // Determine the effective Hub URL based on target mode
+    String effectiveHubUrl = config.hubApiUrl;
+
+    if (config.isCloudMode()) {
+        // Cloud mode - use fixed cloud endpoint, skip UDP discovery
+        effectiveHubUrl = String(config::CLOUD_API_URL);
+        Serial.println("[Main] Mode: CLOUD CONNECTION (fixed endpoint, no UDP discovery)");
+        Serial.printf("[Main] Cloud URL: %s\n", effectiveHubUrl.c_str());
+        Serial.printf("[Main] TenantID: %s\n", config.tenantId.c_str());
+    } else if (config.hubApiUrl.length() > 0) {
         Serial.println("[Main] Mode: DIRECT HUB CONNECTION (no UDP discovery needed)");
         Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
     } else {
@@ -633,7 +643,9 @@ void onBLEConfigReceived(const BLEConfig& config) {
     storedConfig.apiKey = config.apiKey;
     storedConfig.wifiSsid = config.wifiSsid;
     storedConfig.wifiPassword = config.wifiPassword;
-    storedConfig.hubApiUrl = config.hubApiUrl;  // May be empty - will discover later
+    storedConfig.hubApiUrl = effectiveHubUrl;  // Use effective URL (cloud URL for cloud mode)
+    storedConfig.targetMode = config.targetMode;
+    storedConfig.tenantId = config.tenantId;
     storedConfig.isValid = true;
 
     if (configManager.saveConfig(storedConfig)) {
@@ -642,11 +654,13 @@ void onBLEConfigReceived(const BLEConfig& config) {
         // Stop BLE service
         bleService.stop();
 
-        // Configure API client if Hub URL is provided (direct connection mode)
-        // Otherwise, handleConfiguredState will discover it via UDP
-        if (config.hubApiUrl.length() > 0) {
-            Serial.println("[Main] Configuring API client with Hub URL from BLE...");
-            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+        // Configure API client if Hub/Cloud URL is available
+        // For cloud mode: always have the cloud URL
+        // For local mode with hub_url: use provided URL
+        // For local mode without hub_url: handleConfiguredState will discover it via UDP
+        if (effectiveHubUrl.length() > 0) {
+            Serial.println("[Main] Configuring API client with target URL...");
+            apiClient.configure(ensureUrlHasPort(effectiveHubUrl), config.nodeId, config.apiKey);
         }
 
         // Transition to CONFIGURED state (will attempt WiFi connection)
@@ -666,6 +680,17 @@ void onReProvisioningConfigReceived(const BLEConfig& config) {
     Serial.println("[Main] ========================================");
     Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
     Serial.printf("[Main] WiFi SSID: %s\n", config.wifiSsid.c_str());
+    Serial.printf("[Main] Target Mode: %s\n", config.targetMode.c_str());
+
+    // Determine the effective Hub URL based on target mode
+    String effectiveHubUrl = config.hubApiUrl;
+
+    if (config.isCloudMode()) {
+        // Cloud mode - use fixed cloud endpoint
+        effectiveHubUrl = String(config::CLOUD_API_URL);
+        Serial.println("[Main] RE_PAIRING: Cloud mode - using fixed cloud endpoint");
+        Serial.printf("[Main] TenantID: %s\n", config.tenantId.c_str());
+    }
 
     // Save new configuration to NVS
     StoredConfig storedConfig;
@@ -673,7 +698,9 @@ void onReProvisioningConfigReceived(const BLEConfig& config) {
     storedConfig.apiKey = config.apiKey;
     storedConfig.wifiSsid = config.wifiSsid;
     storedConfig.wifiPassword = config.wifiPassword;
-    storedConfig.hubApiUrl = config.hubApiUrl;
+    storedConfig.hubApiUrl = effectiveHubUrl;
+    storedConfig.targetMode = config.targetMode;
+    storedConfig.tenantId = config.tenantId;
     storedConfig.isValid = true;
 
     if (configManager.saveConfig(storedConfig)) {
@@ -683,10 +710,10 @@ void onReProvisioningConfigReceived(const BLEConfig& config) {
         bleService.stop();
         rePairingActive = false;
 
-        // Configure API client if Hub URL is provided
-        if (config.hubApiUrl.length() > 0) {
-            Serial.println("[Main] Configuring API client with Hub URL from BLE...");
-            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+        // Configure API client if Hub/Cloud URL is available
+        if (effectiveHubUrl.length() > 0) {
+            Serial.println("[Main] Configuring API client with target URL...");
+            apiClient.configure(ensureUrlHasPort(effectiveHubUrl), config.nodeId, config.apiKey);
         }
 
         // Signal NEW_WIFI_RECEIVED event
@@ -1860,13 +1887,20 @@ void handleConfiguredState() {
         wifiConnecting = false;
         StoredConfig config = configManager.loadConfig();
 
-        // Check if we have a Hub URL from BLE config (direct connection mode)
+        // Check if we have a Hub/Cloud URL from BLE config (direct connection mode)
         if (config.hubApiUrl.length() > 0) {
-            // Hub URL was provided via BLE - SKIP UDP discovery
+            // Hub/Cloud URL is available - SKIP UDP discovery
             Serial.println("[Main] ========================================");
-            Serial.println("[Main] DIRECT HUB CONNECTION MODE");
-            Serial.println("[Main] Hub URL received from BLE config - skipping UDP discovery");
-            Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+            if (config.isCloudMode()) {
+                Serial.println("[Main] CLOUD CONNECTION MODE");
+                Serial.println("[Main] Using fixed cloud endpoint - no UDP discovery needed");
+                Serial.printf("[Main] Cloud URL: %s\n", config.hubApiUrl.c_str());
+                Serial.printf("[Main] TenantID: %s\n", config.tenantId.c_str());
+            } else {
+                Serial.println("[Main] DIRECT HUB CONNECTION MODE");
+                Serial.println("[Main] Hub URL received from BLE config - skipping UDP discovery");
+                Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+            }
             Serial.println("[Main] ========================================");
             apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
             apiConfigured = true;

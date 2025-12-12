@@ -28,9 +28,14 @@ struct BLEConfig {
     String wifiSsid;
     String wifiPassword;
     String hubApiUrl;
+    String targetMode;   // "local" or "cloud" - determines discovery behavior
+    String tenantId;     // GUID from Hub/Cloud for multi-tenant support
     bool isValid;
 
-    BLEConfig() : isValid(false) {}
+    BLEConfig() : targetMode("local"), isValid(false) {}
+
+    // Helper to check if cloud mode is enabled
+    bool isCloudMode() const { return targetMode == "cloud"; }
 };
 
 /**

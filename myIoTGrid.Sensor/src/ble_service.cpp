@@ -391,36 +391,68 @@ bool BLEProvisioningService::parseApiConfig(const String& json) {
         return false;
     }
 
-    if (!doc["node_id"].is<const char*>() ||
-        !doc["api_key"].is<const char*>() ||
-        !doc["hub_url"].is<const char*>()) {
-        Serial.println("[BLE] Invalid API config: missing required fields");
+    // node_id and api_key are required, hub_url is optional for cloud mode
+    if (!doc["node_id"].is<const char*>() || !doc["api_key"].is<const char*>()) {
+        Serial.println("[BLE] Invalid API config: missing node_id or api_key");
         return false;
     }
 
     _pendingConfig.nodeId = doc["node_id"].as<String>();
     _pendingConfig.apiKey = doc["api_key"].as<String>();
-    _pendingConfig.hubApiUrl = doc["hub_url"].as<String>();
 
-    Serial.printf("[BLE] API config received: NodeID=%s, HubURL=%s\n",
-                  _pendingConfig.nodeId.c_str(), _pendingConfig.hubApiUrl.c_str());
+    // Parse target_mode (default to "local" for backwards compatibility)
+    if (doc["target_mode"].is<const char*>()) {
+        _pendingConfig.targetMode = doc["target_mode"].as<String>();
+    } else {
+        _pendingConfig.targetMode = "local";
+    }
+
+    // Parse tenant_id (GUID from Hub/Cloud)
+    if (doc["tenant_id"].is<const char*>()) {
+        _pendingConfig.tenantId = doc["tenant_id"].as<String>();
+    }
+
+    // hub_url is required for local mode, optional for cloud mode
+    if (doc["hub_url"].is<const char*>()) {
+        _pendingConfig.hubApiUrl = doc["hub_url"].as<String>();
+    } else if (_pendingConfig.targetMode == "local") {
+        // Local mode without hub_url - will use discovery
+        _pendingConfig.hubApiUrl = "";
+    }
+
+    Serial.printf("[BLE] API config received: NodeID=%s, TargetMode=%s, TenantID=%s\n",
+                  _pendingConfig.nodeId.c_str(),
+                  _pendingConfig.targetMode.c_str(),
+                  _pendingConfig.tenantId.c_str());
+
+    if (_pendingConfig.hubApiUrl.length() > 0) {
+        Serial.printf("[BLE] HubURL: %s\n", _pendingConfig.hubApiUrl.c_str());
+    } else if (_pendingConfig.isCloudMode()) {
+        Serial.println("[BLE] Cloud mode - will use fixed cloud endpoint");
+    } else {
+        Serial.println("[BLE] Local mode - Hub will be discovered via UDP");
+    }
+
     return true;
 }
 
 void BLEProvisioningService::checkConfiguration() {
     Serial.println("[BLE] checkConfiguration() called");
-    Serial.printf("[BLE] SSID length: %d, Password length: %d, HubURL length: %d\n",
+    Serial.printf("[BLE] SSID length: %d, Password length: %d, HubURL length: %d, TargetMode: %s\n",
                   _pendingConfig.wifiSsid.length(),
                   _pendingConfig.wifiPassword.length(),
-                  _pendingConfig.hubApiUrl.length());
+                  _pendingConfig.hubApiUrl.length(),
+                  _pendingConfig.targetMode.c_str());
 
-    // NEW FLOW: Prefer full config (WiFi + Hub URL) over WiFi-only
-    // Frontend sends: 1) WiFi config, 2) API config (with Hub URL)
+    // Configuration flow:
+    // Frontend sends: 1) WiFi config, 2) API config (with target_mode, tenant_id, hub_url)
     //
     // Cases:
-    // 1. WiFi + API config received -> Trigger callback with full config (direct Hub connection)
-    // 2. WiFi only (API not yet received) -> Wait for API config
-    // 3. API config received but no WiFi -> Wait for WiFi config
+    // 1. WiFi + API config (cloud mode) -> Complete, no hub_url needed
+    // 2. WiFi + API config (local mode with hub_url) -> Complete
+    // 3. WiFi + API config (local mode without hub_url) -> Complete, will discover Hub
+    // 4. WiFi only (API not yet received) -> Wait for API config
+    // 5. API config received but no WiFi -> Wait for WiFi config
 
     // Check if we have WiFi credentials (minimum required)
     if (_pendingConfig.wifiSsid.length() > 0 &&
@@ -433,12 +465,31 @@ void BLEProvisioningService::checkConfiguration() {
             Serial.printf("[BLE] Generated NodeID from WiFi MAC: %s\n", _pendingConfig.nodeId.c_str());
         }
 
-        // Check if we have Hub URL (preferred - direct connection)
-        if (_pendingConfig.hubApiUrl.length() > 0) {
-            // Full configuration with Hub URL - trigger callback
-            Serial.println("[BLE] Full configuration complete with Hub URL!");
-            Serial.printf("[BLE] Hub URL: %s\n", _pendingConfig.hubApiUrl.c_str());
+        // Check if we have a complete configuration
+        // Cloud mode: hubApiUrl is not required (fixed endpoint used)
+        // Local mode: hubApiUrl is optional (will be discovered via UDP if missing)
+        bool configComplete = false;
 
+        if (_pendingConfig.isCloudMode()) {
+            // Cloud mode - config is complete as long as we have WiFi and API config received
+            // tenant_id should be present for cloud mode
+            configComplete = _pendingConfig.tenantId.length() > 0 || _pendingConfig.apiKey.length() > 0;
+            if (configComplete) {
+                Serial.println("[BLE] Cloud mode configuration complete!");
+                Serial.printf("[BLE] TenantID: %s\n", _pendingConfig.tenantId.c_str());
+            }
+        } else if (_pendingConfig.hubApiUrl.length() > 0) {
+            // Local mode with Hub URL - direct connection
+            configComplete = true;
+            Serial.println("[BLE] Local mode configuration complete with Hub URL!");
+            Serial.printf("[BLE] Hub URL: %s\n", _pendingConfig.hubApiUrl.c_str());
+        } else if (_pendingConfig.apiKey.length() > 0) {
+            // Local mode without Hub URL - will use discovery
+            configComplete = true;
+            Serial.println("[BLE] Local mode configuration complete (will discover Hub via UDP)");
+        }
+
+        if (configComplete) {
             _pendingConfig.isValid = true;
 
             if (_onPairingCompleted) {
@@ -463,13 +514,12 @@ void BLEProvisioningService::checkConfiguration() {
         } else {
             // WiFi-only received - wait for API config
             // Frontend Setup Wizard will send API config right after WiFi
-            Serial.println("[BLE] WiFi received, waiting for API config with Hub URL...");
-            Serial.println("[BLE] (If using WPS or manual WiFi, Hub will be discovered via UDP)");
+            Serial.println("[BLE] WiFi received, waiting for API config...");
             // Don't trigger callback yet - wait for API config
             // Mark that we're waiting with WiFi ready
             _pendingConfig.isValid = false;  // Not complete yet
         }
-    } else if (_pendingConfig.hubApiUrl.length() > 0) {
+    } else if (_pendingConfig.targetMode.length() > 0 && _pendingConfig.targetMode != "local") {
         // API config received but no WiFi yet
         Serial.println("[BLE] API config received, waiting for WiFi credentials...");
     } else {
