@@ -53,7 +53,7 @@ export class NodeDebugApiService extends BaseApiService {
     const params: Record<string, string> = {};
 
     if (filter) {
-      if (filter.minLevel) params['minLevel'] = filter.minLevel;
+      if (filter.minLevel !== undefined && filter.minLevel !== null) params['minLevel'] = String(filter.minLevel);
       if (filter.category) params['category'] = filter.category;
       if (filter.fromDate) params['fromDate'] = filter.fromDate;
       if (filter.toDate) params['toDate'] = filter.toDate;

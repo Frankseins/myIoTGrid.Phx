@@ -104,7 +104,7 @@
     } @else {
       <div class="log-container" #logContainer>
         @for (log of filteredLogs; track log.id) {
-          <div class="log-entry" [class]="'level-' + log.level.toLowerCase()">
+          <div class="log-entry" [class]="'level-' + getLevelLabel(log.level).toLowerCase()">
             <div class="log-header">
               <span class="log-time" [matTooltip]="formatDate(log.receivedAt)">
                 {{ formatTime(log.receivedAt) }}

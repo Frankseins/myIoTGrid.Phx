@@ -170,7 +170,7 @@ export class NodeDebugControlComponent implements OnInit, OnChanges {
   }
 
   getLevelLabel(level: DebugLevel): string {
-    return this.debugLevels.find(l => l.value === level)?.label || level;
+    return this.debugLevels.find(l => l.value === level)?.label || 'Unknown';
   }
 
   getLevelDescription(level: DebugLevel): string {

@@ -1,0 +1,11 @@
+properties:
+  configuration:
+    ingress:
+      external: true
+      targetPort: 8080
+      transport: auto
+      additionalPortMappings:
+        - targetPort: 5002
+          exposedPort: 5002
+          external: true
+          transport: http

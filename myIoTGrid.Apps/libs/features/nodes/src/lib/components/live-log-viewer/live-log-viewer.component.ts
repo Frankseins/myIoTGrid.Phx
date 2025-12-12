@@ -381,6 +381,10 @@ export class LiveLogViewerComponent implements OnInit, OnDestroy, OnChanges, Aft
     return this.debugLevels.find(l => l.value === level)?.color || '#666';
   }
 
+  getLevelLabel(level: DebugLevel): string {
+    return this.debugLevels.find(l => l.value === level)?.label || 'unknown';
+  }
+
   getCategoryIcon(category: LogCategory): string {
     return this.logCategories.find(c => c.value === category)?.icon || 'help';
   }

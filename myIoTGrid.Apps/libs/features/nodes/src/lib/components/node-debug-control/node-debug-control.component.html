@@ -53,7 +53,7 @@
       <div class="status-section">
         <div class="status-row">
           <span class="status-label">Aktueller Level:</span>
-          <span class="status-value" [class]="'level-' + config()!.debugLevel.toLowerCase()">
+          <span class="status-value" [class]="'level-' + getLevelLabel(config()!.debugLevel).toLowerCase()">
             <mat-icon>{{ getLevelIcon(config()!.debugLevel) }}</mat-icon>
             {{ getLevelLabel(config()!.debugLevel) }}
           </span>

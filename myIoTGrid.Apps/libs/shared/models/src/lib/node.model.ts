@@ -226,11 +226,12 @@ export interface GpsPosition {
 
 /**
  * Debug levels for node logging
+ * Values must match backend DebugLevel enum (numeric)
  */
 export enum DebugLevel {
-  Production = 'Production',
-  Normal = 'Normal',
-  Debug = 'Debug'
+  Production = 0,
+  Normal = 1,
+  Debug = 2
 }
 
 /**

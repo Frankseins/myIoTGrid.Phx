@@ -43,9 +43,9 @@ export class HubSelectionComponent implements OnInit {
   // Selection state
   readonly selectedMode = signal<SensorTargetMode | null>(null);
 
-  // Local mode overrides
-  readonly localAddress = signal('');
-  readonly localPort = signal(5001);
+  // Local mode overrides - default to HTTP port 5002
+  readonly localAddress = signal('http://localhost');
+  readonly localPort = signal(5002);
 
   // Computed values
   readonly tenantId = computed(() => this.hubProperties()?.tenantId ?? '');
@@ -55,8 +55,9 @@ export class HubSelectionComponent implements OnInit {
     return id ? `${id.substring(0, 8)}...` : '';
   });
 
-  readonly cloudAddress = computed(() => this.hubProperties()?.cloudAddress ?? 'https://api.myiotgrid.cloud');
-  readonly cloudPort = computed(() => this.hubProperties()?.cloudPort ?? 443);
+  // Cloud defaults: http://api.myiotgrid.cloud:5002
+  readonly cloudAddress = computed(() => this.hubProperties()?.cloudAddress ?? 'http://api.myiotgrid.cloud');
+  readonly cloudPort = computed(() => this.hubProperties()?.cloudPort ?? 5002);
 
   readonly canContinue = computed(() => {
     const mode = this.selectedMode();
@@ -84,13 +85,16 @@ export class HubSelectionComponent implements OnInit {
         useSsl
       };
     } else {
+      // Cloud mode: use cloudAddress/cloudPort with correct SSL detection
+      const cloudAddr = this.cloudAddress();
+      const useSsl = cloudAddr.startsWith('https://');
       return {
         mode: 'cloud',
-        address: props.cloudAddress,
-        port: props.cloudPort,
+        address: cloudAddr,
+        port: this.cloudPort(),
         tenantId: props.tenantId,
         tenantName: props.tenantName,
-        useSsl: true
+        useSsl
       };
     }
   });
@@ -106,9 +110,10 @@ export class HubSelectionComponent implements OnInit {
     this.hubApiService.getProperties().subscribe({
       next: (properties) => {
         this.hubProperties.set(properties);
-        // Pre-fill local address and port from hub properties
-        this.localAddress.set(properties.address);
-        this.localPort.set(properties.port);
+        // Pre-fill local address from hub properties, but always use HTTP and port 5002
+        const address = properties.address.replace(/^https:\/\//, 'http://');
+        this.localAddress.set(address.startsWith('http://') ? address : `http://${address}`);
+        this.localPort.set(5002); // Always use port 5002 for local API
         this.isLoading.set(false);
       },
       error: (err) => {

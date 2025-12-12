@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.10.3"  // Fix: Increased HTTP timeout for Azure, fixed BLE double -SETUP suffix
+#define FIRMWARE_VERSION "1.10.6"  // Cloud mode: always use firmware constant URL, not stored URL
 #endif
 
 // Hardware Type
@@ -27,9 +27,9 @@ constexpr int DEFAULT_HUB_PORT = 5001;           // HTTPS port
 constexpr const char* DEFAULT_HUB_PROTOCOL = "https";
 
 // Cloud API Configuration (Cloud Mode)
-constexpr const char* CLOUD_API_URL = "https://api.myiotgrid.cloud";
-constexpr int CLOUD_API_PORT = 443;
-constexpr const char* CLOUD_API_PROTOCOL = "https";
+constexpr const char* CLOUD_API_URL = "http://api.myiotgrid.cloud:5002";
+constexpr int CLOUD_API_PORT = 5002;
+constexpr const char* CLOUD_API_PROTOCOL = "http";
 
 // Target Modes
 constexpr const char* TARGET_MODE_LOCAL = "local";
@@ -42,7 +42,7 @@ constexpr const char* DEFAULT_WIFI_PASSWORD = "";
 // Timing Configuration
 constexpr uint32_t DEFAULT_INTERVAL_SECONDS = 60;
 constexpr uint32_t REGISTRATION_RETRY_DELAY_MS = 5000;
-constexpr uint32_t HTTP_TIMEOUT_MS = 30000;  // 30s for HTTPS/TLS to Azure
+constexpr uint32_t HTTP_TIMEOUT_MS = 60000;  // 60s for Azure cold starts
 constexpr int HTTP_RETRY_COUNT = 3;
 
 // Discovery Configuration

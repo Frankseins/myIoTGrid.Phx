@@ -98,6 +98,11 @@ static bool buttonWasPressed = false;
 static bool wpsTriggered = false;
 static bool factoryResetTriggered = false;
 
+// Non-blocking delay state variables
+static unsigned long nonBlockingDelayStart = 0;
+static unsigned long nonBlockingDelayDuration = 0;
+static bool nonBlockingDelayActive = false;
+
 // Hardware detection flags
 static bool dht22Detected = false;
 static bool bme280Detected = false;
@@ -621,6 +626,32 @@ void checkBootButton() {
         wpsTriggered = false;
         factoryResetTriggered = false;
     }
+}
+
+/**
+ * Non-blocking delay that continuously checks the Factory Reset button
+ * Returns true if Factory Reset was triggered during the wait
+ *
+ * This ensures the 10-second Factory Reset always works, even during wait periods!
+ */
+void delayWithButtonCheck(unsigned long delayMs) {
+    unsigned long startTime = millis();
+
+    while (millis() - startTime < delayMs) {
+        // Check for Factory Reset button
+        checkBootButtonForFactoryReset();
+
+        // Small delay to prevent busy-looping
+        delay(10);
+
+        // If Factory Reset was triggered, factoryReset() will restart the ESP
+        // So we won't actually return here in that case
+    }
+}
+#else
+// Native platform: simple delay without button check
+void delayWithButtonCheck(unsigned long delayMs) {
+    delay(delayMs);
 }
 #endif
 
@@ -1783,13 +1814,13 @@ void handleUnconfiguredState() {
     // No discovery and no fallback - wait and retry
     if (!tryDiscovery) {
         Serial.println("[Main] Discovery disabled and no HUB_HOST set - please configure");
-        delay(5000);
+        delayWithButtonCheck(5000);  // Non-blocking: allows Factory Reset during wait
         return;
     }
 
     // Discovery failed and no fallback - wait and retry discovery
     Serial.println("[Main] Waiting before next discovery attempt...");
-    delay(10000);
+    delayWithButtonCheck(10000);  // Non-blocking: allows Factory Reset during wait
     discoveryAttempted = false;  // Allow retry
 #endif
 }
@@ -1905,28 +1936,28 @@ void handleConfiguredState() {
         StoredConfig config = configManager.loadConfig();
 
         // Check if we have a Hub/Cloud URL from BLE config (direct connection mode)
-        if (config.hubApiUrl.length() > 0) {
-            // Hub/Cloud URL is available - SKIP UDP discovery
+        // For Cloud mode: ALWAYS use the current firmware constant (allows URL updates via firmware)
+        // For Local mode: Use the stored Hub URL from config
+        if (config.isCloudMode()) {
+            // Cloud mode - ALWAYS use current firmware constant, not stored URL
             Serial.println("[Main] ========================================");
-            if (config.isCloudMode()) {
-                Serial.println("[Main] CLOUD CONNECTION MODE");
-                Serial.println("[Main] Using fixed cloud endpoint - no UDP discovery needed");
-                Serial.printf("[Main] Cloud URL: %s\n", config.hubApiUrl.c_str());
-                Serial.printf("[Main] TenantID: %s\n", config.tenantId.c_str());
-            } else {
-                Serial.println("[Main] DIRECT HUB CONNECTION MODE");
-                Serial.println("[Main] Hub URL received from BLE config - skipping UDP discovery");
-                Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
-            }
+            Serial.println("[Main] CLOUD CONNECTION MODE");
+            Serial.println("[Main] Using fixed cloud endpoint - no UDP discovery needed");
+            Serial.printf("[Main] Cloud URL: %s\n", config::CLOUD_API_URL);
+            Serial.printf("[Main] TenantID: %s\n", config.tenantId.c_str());
             Serial.println("[Main] ========================================");
 
-            // Cloud mode: Use URL as-is (443 is standard HTTPS port)
-            // Local mode: Ensure port is present (default 5002 for Hub)
-            if (config.isCloudMode()) {
-                apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
-            } else {
-                apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
-            }
+            apiClient.configure(config::CLOUD_API_URL, config.nodeId, config.apiKey);
+            apiConfigured = true;
+        } else if (config.hubApiUrl.length() > 0) {
+            // Local mode with stored Hub URL - SKIP UDP discovery
+            Serial.println("[Main] ========================================");
+            Serial.println("[Main] DIRECT HUB CONNECTION MODE");
+            Serial.println("[Main] Hub URL received from BLE config - skipping UDP discovery");
+            Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+            Serial.println("[Main] ========================================");
+
+            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
             apiConfigured = true;
         } else if (!discoveryAttempted) {
             // No Hub URL - need to discover Hub via UDP broadcast (fallback mode)
@@ -2031,11 +2062,11 @@ void handleErrorState() {
     // Check if we have valid config
     if (configManager.hasConfig()) {
         Serial.printf("[Main] Config exists, waiting %d ms before retry...\n", retryDelay);
-        delay(retryDelay);
+        delayWithButtonCheck(retryDelay);  // Non-blocking: allows Factory Reset during wait
         stateMachine.processEvent(StateEvent::RETRY_TIMEOUT);
     } else {
         Serial.println("[Main] No config, need BLE pairing...");
-        delay(5000);
+        delayWithButtonCheck(5000);  // Non-blocking: allows Factory Reset during wait
         // Clear any partial config and restart pairing
         configManager.clearConfig();
         stateMachine.processEvent(StateEvent::RESET_REQUESTED);
