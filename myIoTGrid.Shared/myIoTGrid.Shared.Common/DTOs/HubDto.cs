@@ -94,3 +94,25 @@ public record BleProvisioningDataDto(
     string NodeName,
     string ApiKey
 );
+
+/// <summary>
+/// DTO for Hub properties (for sensor setup - Hub/Cloud selection)
+/// Contains the Hub's address, port, TenantID (GUID) and version information.
+/// This is used by the sensor setup wizard to configure where the sensor sends data.
+/// </summary>
+/// <param name="Address">Hub API address (e.g., "http://192.168.1.100")</param>
+/// <param name="Port">Hub API port (default 5000)</param>
+/// <param name="TenantId">Tenant GUID for multi-tenant isolation</param>
+/// <param name="TenantName">Display name of the tenant</param>
+/// <param name="Version">Hub software version</param>
+/// <param name="CloudAddress">Fixed cloud API address (https://api.myiotgrid.cloud)</param>
+/// <param name="CloudPort">Fixed cloud API port (443)</param>
+public record HubPropertiesDto(
+    string Address,
+    int Port,
+    Guid TenantId,
+    string TenantName,
+    string Version,
+    string CloudAddress = "https://api.myiotgrid.cloud",
+    int CloudPort = 443
+);

@@ -91,4 +91,20 @@ public class HubController : ControllerBase
         var settings = await _hubService.GetProvisioningSettingsAsync(ct);
         return Ok(settings);
     }
+
+    /// <summary>
+    /// Returns the Cloud properties for sensor setup (Hub/Cloud selection).
+    /// This endpoint is publicly accessible for the setup process.
+    /// Contains Address, Port, TenantID (GUID), TenantName and Version.
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Cloud properties including TenantID, Address, Port</returns>
+    /// <response code="200">Properties retrieved successfully</response>
+    [HttpGet("properties")]
+    [ProducesResponseType(typeof(HubPropertiesDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetProperties(CancellationToken ct)
+    {
+        var properties = await _hubService.GetPropertiesAsync(ct);
+        return Ok(properties);
+    }
 }

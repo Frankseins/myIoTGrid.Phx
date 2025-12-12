@@ -1,4 +1,6 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using myIoTGrid.Hub.Infrastructure.Data;
 using myIoTGrid.Hub.Service.Extensions;
@@ -15,6 +17,7 @@ public class HubService : IHubService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
     private readonly ISignalRNotificationService _signalRNotificationService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<HubService> _logger;
 
     private const string DefaultHubId = "my-iot-hub";
@@ -25,12 +28,14 @@ public class HubService : IHubService
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
         ISignalRNotificationService signalRNotificationService,
+        IConfiguration configuration,
         ILogger<HubService> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
         _signalRNotificationService = signalRNotificationService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -184,6 +189,36 @@ public class HubService : IHubService
         }
 
         return hub.ToProvisioningSettingsDto();
+    }
+
+    /// <inheritdoc />
+    public Task<HubPropertiesDto> GetPropertiesAsync(CancellationToken ct = default)
+    {
+        // Read configuration values
+        var tenantIdStr = _configuration["Hub:DefaultTenantId"] ?? "00000000-0000-0000-0000-000000000001";
+        var tenantId = Guid.TryParse(tenantIdStr, out var id) ? id : Guid.Parse("00000000-0000-0000-0000-000000000001");
+        var tenantName = _configuration["Hub:DefaultTenantName"] ?? "Default";
+
+        // Get address from Discovery config or Hub config
+        var protocol = _configuration["Discovery:Protocol"] ?? "https";
+        var address = _configuration["Hub:Address"] ?? $"{protocol}://localhost";
+        var port = _configuration.GetValue<int>("Discovery:ApiPort", 5001);
+
+        // Get version from assembly
+        var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
+
+        var properties = new HubPropertiesDto(
+            Address: address,
+            Port: port,
+            TenantId: tenantId,
+            TenantName: tenantName,
+            Version: version
+        );
+
+        _logger.LogDebug("Hub properties retrieved: Address={Address}, Port={Port}, TenantId={TenantId}",
+            properties.Address, properties.Port, properties.TenantId);
+
+        return Task.FromResult(properties);
     }
 
     // === Legacy API Implementation ===

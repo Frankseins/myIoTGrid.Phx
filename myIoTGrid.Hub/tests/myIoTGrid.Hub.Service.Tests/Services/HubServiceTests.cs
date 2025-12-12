@@ -37,7 +37,7 @@ public class HubServiceTests : IDisposable
         _tenantService = new TenantService(
             _context, unitOfWork, Mock.Of<ILogger<TenantService>>(), config);
 
-        _sut = new HubService(_context, unitOfWork, _tenantService, _signalRMock.Object, _loggerMock.Object);
+        _sut = new HubService(_context, unitOfWork, _tenantService, _signalRMock.Object, config, _loggerMock.Object);
     }
 
     public void Dispose()

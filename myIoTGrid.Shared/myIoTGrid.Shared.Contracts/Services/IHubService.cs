@@ -28,6 +28,13 @@ public interface IHubService
     /// <summary>Returns the provisioning settings for new nodes (WiFi, API URL)</summary>
     Task<HubProvisioningSettingsDto> GetProvisioningSettingsAsync(CancellationToken ct = default);
 
+    /// <summary>
+    /// Returns the Hub properties for sensor setup (Hub/Cloud selection).
+    /// Contains Address, Port, TenantID (GUID), TenantName and Version.
+    /// This endpoint is publicly accessible for the setup process.
+    /// </summary>
+    Task<HubPropertiesDto> GetPropertiesAsync(CancellationToken ct = default);
+
     // === Legacy API (for internal use) ===
 
     /// <summary>Returns a Hub by ID</summary>

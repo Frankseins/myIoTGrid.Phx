@@ -1,4 +1,6 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using myIoTGrid.Cloud.Infrastructure.Data;
 using myIoTGrid.Cloud.Service.Extensions;
@@ -15,6 +17,7 @@ public class HubService : IHubService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
     private readonly ISignalRNotificationService _signalRNotificationService;
+    private readonly IConfiguration _configuration;
     private readonly ILogger<HubService> _logger;
 
     private const string DefaultHubId = "my-iot-hub";
@@ -25,12 +28,14 @@ public class HubService : IHubService
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
         ISignalRNotificationService signalRNotificationService,
+        IConfiguration configuration,
         ILogger<HubService> logger)
     {
         _context = context;
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
         _signalRNotificationService = signalRNotificationService;
+        _configuration = configuration;
         _logger = logger;
     }
 
@@ -184,6 +189,38 @@ public class HubService : IHubService
         }
 
         return hub.ToProvisioningSettingsDto();
+    }
+
+    /// <inheritdoc />
+    public Task<HubPropertiesDto> GetPropertiesAsync(CancellationToken ct = default)
+    {
+        // For Cloud: Always return the fixed cloud address
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        // Get tenant name from database or configuration
+        var tenantName = _configuration["Cloud:TenantName"] ?? "Cloud Tenant";
+
+        // Cloud always uses fixed address
+        const string cloudAddress = "https://api.myiotgrid.cloud";
+        const int cloudPort = 443;
+
+        // Get version from assembly
+        var version = Assembly.GetEntryAssembly()?.GetName().Version?.ToString() ?? "1.0.0";
+
+        var properties = new HubPropertiesDto(
+            Address: cloudAddress,
+            Port: cloudPort,
+            TenantId: tenantId,
+            TenantName: tenantName,
+            Version: version,
+            CloudAddress: cloudAddress,
+            CloudPort: cloudPort
+        );
+
+        _logger.LogDebug("Cloud properties retrieved: Address={Address}, Port={Port}, TenantId={TenantId}",
+            properties.Address, properties.Port, properties.TenantId);
+
+        return Task.FromResult(properties);
     }
 
     // === Legacy API Implementation ===

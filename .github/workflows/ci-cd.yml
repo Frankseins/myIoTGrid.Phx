@@ -19,8 +19,9 @@ env:
 # =============================================================================
 # Images Built:
 # - myiotgrid-hub-api          (Hub Backend API)
-# - myiotgrid-hub-frontend     (Hub Frontend)
-# - myiotgrid-cloud-api        (Cloud Backend API)
+# - myiotgrid-hub-frontend     (Hub Frontend - local deployment)
+# - myiotgrid-cloud-api        (Cloud Backend API - https://api.myiotgrid.cloud)
+# - myiotgrid-cloud-frontend   (Cloud Frontend - https://app.myiotgrid.cloud)
 # - myiotgrid-sensor-sim       (Sensor Simulator)
 # - myiotgrid-gateway-lorawan  (LoRaWAN Gateway Bridge Service)
 # =============================================================================
@@ -161,7 +162,7 @@ jobs:
           path: '**/TestResults/**/coverage.cobertura.xml'
 
   # =============================================================================
-  # Build & Test Frontend
+  # Build & Test Frontend (Hub + Cloud)
   # =============================================================================
   build-and-test-frontend:
     name: Build & Test Frontend
@@ -185,14 +186,23 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
-        run: npm run build -- --configuration=production
+      - name: Build Hub Frontend
+        run: npx nx build hub --configuration=production
 
-      - name: Upload build artifacts
+      - name: Build Cloud Frontend
+        run: npx nx build cloud --configuration=production
+
+      - name: Upload Hub Frontend build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: frontend-build
-          path: myIoTGrid.Apps/dist/myIoTGrid.Hub.Frontend/
+          name: frontend-hub-build
+          path: myIoTGrid.Apps/dist/apps/hub/
+
+      - name: Upload Cloud Frontend build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-cloud-build
+          path: myIoTGrid.Apps/dist/apps/cloud/
 
   # =============================================================================
   # Docker Image: Hub API
@@ -345,7 +355,60 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: ./myIoTGrid.Apps
-          file: ./myIoTGrid.Apps/docker/Dockerfile
+          file: ./myIoTGrid.Apps/docker/Dockerfile.hub
+          push: true
+          platforms: linux/amd64,linux/arm64
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # =============================================================================
+  # Docker Image: Cloud Frontend
+  # =============================================================================
+  docker-cloud-frontend:
+    name: Build Cloud Frontend Image
+    runs-on: ubuntu-latest
+    needs: build-and-test-frontend
+    if: github.event_name == 'push'
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract metadata for Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-cloud-frontend
+          tags: |
+            type=ref,event=branch
+            type=sha,prefix=
+            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
+            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./myIoTGrid.Apps
+          file: ./myIoTGrid.Apps/docker/Dockerfile.cloud
           push: true
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
@@ -536,7 +599,7 @@ jobs:
   summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [docker-hub-api, docker-hub-frontend, docker-cloud-api, docker-sensor-sim, docker-lorawan-gateway]
+    needs: [docker-hub-api, docker-hub-frontend, docker-cloud-api, docker-cloud-frontend, docker-sensor-sim, docker-lorawan-gateway]
     if: always() && github.event_name == 'push'
 
     steps:
@@ -551,6 +614,7 @@ jobs:
           echo "| Hub API | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Hub Frontend | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Cloud API | ${{ needs.docker-cloud-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cloud Frontend | ${{ needs.docker-cloud-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| LoRaWAN Gateway | ${{ needs.docker-lorawan-gateway.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -564,6 +628,9 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Cloud API (https://api.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-cloud-api:latest" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "# Cloud Frontend (https://app.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-cloud-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-sensor-sim:latest" >> $GITHUB_STEP_SUMMARY
