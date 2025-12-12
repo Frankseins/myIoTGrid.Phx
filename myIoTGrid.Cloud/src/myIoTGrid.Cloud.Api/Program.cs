@@ -47,14 +47,6 @@ try
     // =============================================================================
     if (builder.Environment.IsProduction())
     {
-        builder.WebHost.ConfigureKestrel(options =>
-        {
-            // Nur HTTP auf Port 8080 - Azure übernimmt HTTPS
-            options.Listen(IPAddress.Any, 8080, listenOptions =>
-            {
-                listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-            });
-        });
 
         Log.Information("Production mode: Kestrel configured for HTTP on port 8080");
         Log.Information("Azure Ingress will handle HTTPS termination externally");
