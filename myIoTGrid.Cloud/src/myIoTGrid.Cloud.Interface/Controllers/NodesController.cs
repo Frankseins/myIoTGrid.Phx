@@ -417,15 +417,22 @@ public class NodesController : ControllerBase
             });
         }
 
-        // Get WiFi configuration from appsettings
-        var wifiSsid = _configuration["NodeProvisioning:WifiSsid"]
-            ?? throw new InvalidOperationException("NodeProvisioning:WifiSsid not configured");
-        var wifiPassword = _configuration["NodeProvisioning:WifiPassword"]
-            ?? throw new InvalidOperationException("NodeProvisioning:WifiPassword not configured");
+        // Cloud mode: WiFi credentials come from request body (user input in wizard)
+        // Hub mode fallback: Read from configuration (for backwards compatibility)
+        var wifiSsid = dto.WifiSsid ?? _configuration["NodeProvisioning:WifiSsid"];
+        var wifiPassword = dto.WifiPassword ?? _configuration["NodeProvisioning:WifiPassword"];
 
-        // Build Hub API URL from current request or configuration
-        var hubApiUrl = _configuration["NodeProvisioning:HubApiUrl"]
-            ?? $"{Request.Scheme}://{Request.Host}";
+        if (string.IsNullOrWhiteSpace(wifiSsid) || string.IsNullOrWhiteSpace(wifiPassword))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "WiFi credentials are required. Provide WifiSsid and WifiPassword in request body."
+            });
+        }
+
+        // Cloud API URL: Use current request host (e.g., https://api.myiotgrid.cloud)
+        var hubApiUrl = $"{Request.Scheme}://{Request.Host}";
 
         try
         {
@@ -534,19 +541,31 @@ public class NodesController : ControllerBase
     /// Used when re-provisioning an existing node.
     /// </summary>
     /// <param name="id">Node-ID</param>
+    /// <param name="dto">Optional WiFi credentials for Cloud mode</param>
     /// <param name="ct">Cancellation Token</param>
     /// <returns>New node configuration with new API key</returns>
     [HttpPost("{id:guid}/regenerate-key")]
     [ProducesResponseType(typeof(NodeConfigurationDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status404NotFound)]
-    public async Task<IActionResult> RegenerateApiKey(Guid id, CancellationToken ct)
+    public async Task<IActionResult> RegenerateApiKey(Guid id, [FromBody] RegenerateApiKeyDto? dto, CancellationToken ct)
     {
-        var wifiSsid = _configuration["NodeProvisioning:WifiSsid"]
-            ?? throw new InvalidOperationException("NodeProvisioning:WifiSsid not configured");
-        var wifiPassword = _configuration["NodeProvisioning:WifiPassword"]
-            ?? throw new InvalidOperationException("NodeProvisioning:WifiPassword not configured");
-        var hubApiUrl = _configuration["NodeProvisioning:HubApiUrl"]
-            ?? $"{Request.Scheme}://{Request.Host}";
+        // Cloud mode: WiFi credentials come from request body (user input in wizard)
+        // Hub mode fallback: Read from configuration
+        var wifiSsid = dto?.WifiSsid ?? _configuration["NodeProvisioning:WifiSsid"];
+        var wifiPassword = dto?.WifiPassword ?? _configuration["NodeProvisioning:WifiPassword"];
+
+        if (string.IsNullOrWhiteSpace(wifiSsid) || string.IsNullOrWhiteSpace(wifiPassword))
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Invalid Request",
+                Detail = "WiFi credentials are required. Provide WifiSsid and WifiPassword in request body."
+            });
+        }
+
+        // Cloud API URL: Use current request host
+        var hubApiUrl = $"{Request.Scheme}://{Request.Host}";
 
         var config = await _nodeService.RegenerateApiKeyAsync(id, wifiSsid, wifiPassword, hubApiUrl, ct);
 

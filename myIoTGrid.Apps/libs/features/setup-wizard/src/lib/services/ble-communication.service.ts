@@ -26,6 +26,7 @@ export interface ApiConfig {
   nodeId: string;
   apiKey: string;
   hubUrl: string;
+  targetMode: 'local' | 'cloud';  // Target mode: local (Hub) or cloud
 }
 
 /**
@@ -362,10 +363,15 @@ export class BleCommunicationService {
       const json = JSON.stringify({
         node_id: config.nodeId,
         api_key: config.apiKey,
-        hub_url: config.hubUrl
+        hub_url: config.hubUrl,
+        target_mode: config.targetMode  // 'local' or 'cloud'
       });
 
-      console.log('[BLE] Sending API config:', { node_id: config.nodeId, hub_url: config.hubUrl });
+      console.log('[BLE] Sending API config:', {
+        node_id: config.nodeId,
+        hub_url: config.hubUrl,
+        target_mode: config.targetMode
+      });
       const encoder = new TextEncoder();
       await this.apiCharacteristic.writeValue(encoder.encode(json));
       console.log('[BLE] API config sent successfully');

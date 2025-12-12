@@ -79,6 +79,32 @@ export interface UpdateNodeDto {
   storageMode?: StorageMode;
 }
 
+/**
+ * DTO for node provisioning request (BLE pairing).
+ * For Cloud mode: WiFi credentials come from user input in wizard.
+ * For Hub mode: WiFi can be omitted (read from Hub settings).
+ */
+export interface NodeProvisionDto {
+  macAddress: string;
+  firmwareVersion?: string;
+  name?: string;
+  // Cloud mode: WiFi from user input in wizard
+  wifiSsid?: string;
+  wifiPassword?: string;
+}
+
+/**
+ * Response from node provisioning.
+ * Contains WiFi credentials and API config for ESP32.
+ */
+export interface NodeConfigurationDto {
+  nodeId: string;
+  apiKey: string;
+  wifiSsid: string;
+  wifiPassword: string;
+  hubApiUrl: string;
+}
+
 export interface NodeStatusDto {
   nodeId: string;
   isOnline: boolean;

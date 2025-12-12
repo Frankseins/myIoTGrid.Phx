@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApiService } from './base-api.service';
-import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest, NodeGpsStatus } from '@myiotgrid/shared/models';
+import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest, NodeGpsStatus, NodeProvisionDto, NodeConfigurationDto } from '@myiotgrid/shared/models';
 import { queryParamsToObject } from './api-query.helper';
 
 @Injectable({ providedIn: 'root' })
@@ -103,5 +103,14 @@ export class NodeApiService extends BaseApiService {
    */
   getGpsStatus(nodeId: string): Observable<NodeGpsStatus> {
     return this.get<NodeGpsStatus>(`${this.endpoint}/${nodeId}/gps-status`);
+  }
+
+  /**
+   * Provision a new node via BLE pairing (Cloud mode).
+   * Creates node and returns WiFi + API configuration for ESP32.
+   * POST /api/nodes/provision
+   */
+  provision(dto: NodeProvisionDto): Observable<NodeConfigurationDto> {
+    return this.post<NodeConfigurationDto>(`${this.endpoint}/provision`, dto);
   }
 }

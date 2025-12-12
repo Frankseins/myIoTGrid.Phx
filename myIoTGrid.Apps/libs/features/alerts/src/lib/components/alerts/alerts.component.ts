@@ -6,7 +6,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
 import { AlertApiService, SignalRService } from '@myiotgrid/shared/data-access';
-import { Alert, AlertLevel } from '@myiotgrid/shared/models';
+import { Alert, AlertLevel, AlertSource } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, EmptyStateComponent } from '@myiotgrid/shared/ui';
 import { RelativeTimePipe, AlertLevelPipe } from '@myiotgrid/shared/utils';
 
@@ -31,6 +31,9 @@ import { RelativeTimePipe, AlertLevelPipe } from '@myiotgrid/shared/utils';
 export class AlertsComponent implements OnInit, OnDestroy {
   private readonly alertApiService = inject(AlertApiService);
   private readonly signalRService = inject(SignalRService);
+
+  // Expose enums to template
+  readonly AlertSource = AlertSource;
 
   readonly isLoading = signal(true);
   readonly alerts = signal<Alert[]>([]);

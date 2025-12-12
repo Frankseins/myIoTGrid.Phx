@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.10.0"  // Add Cloud mode support - skip discovery for cloud target
+#define FIRMWARE_VERSION "1.10.2"  // Fix: No HTTP fallback for cloud URLs, no port for HTTPS
 #endif
 
 // Hardware Type

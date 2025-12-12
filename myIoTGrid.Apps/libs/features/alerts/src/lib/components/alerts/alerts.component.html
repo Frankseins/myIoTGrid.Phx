@@ -52,7 +52,7 @@
                       }
                       <div class="alert-meta">
                         <span class="alert-time">{{ alert.createdAt | relativeTime }}</span>
-                        <span class="alert-source">{{ alert.source === 'Local' ? 'Lokal' : 'Cloud' }}</span>
+                        <span class="alert-source">{{ alert.source === AlertSource.Local ? 'Lokal' : 'Cloud' }}</span>
                       </div>
                     </div>
                     <button mat-icon-button (click)="acknowledgeAlert(alert.id)" matTooltip="Quittieren">

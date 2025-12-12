@@ -211,3 +211,4 @@
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.Swagger.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerGen.dll
 /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/bin/Debug/net10.0/Swashbuckle.AspNetCore.SwaggerUI.dll
+/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/bin/Debug/net10.0/runtimes/win/lib/net9.0/System.Diagnostics.EventLog.Messages.dll

@@ -96,7 +96,7 @@
                   <mat-select formControlName="protocol">
                     @for (proto of protocols; track proto.value) {
                       <mat-option [value]="proto.value">
-                        <mat-icon>{{ proto.value === 'WLAN' ? 'wifi' : 'cell_tower' }}</mat-icon>
+                        <mat-icon>{{ proto.value === Protocol.WLAN ? 'wifi' : 'cell_tower' }}</mat-icon>
                         {{ proto.label }}
                       </mat-option>
                     }

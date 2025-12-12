@@ -50,7 +50,7 @@ public class NodeConfiguration : IEntityTypeConfiguration<Node>
         // Provisioning
         builder.Property(n => n.MacAddress)
             .IsRequired()
-            .HasMaxLength(17);
+            .HasMaxLength(21); // Format: SIM-XX:XX:XX:XX:XX:XX or AA:BB:CC:DD:EE:FF
 
         builder.Property(n => n.ApiKeyHash)
             .IsRequired()

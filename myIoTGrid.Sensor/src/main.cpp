@@ -145,11 +145,27 @@ static unsigned long lastValidatedConfigTimestamp = 0;  // Track when we last va
 // ============================================================================
 
 /**
- * Ensure Hub URL has a port. Adds default port 5002 if missing.
+ * Ensure Hub URL has a port. Adds default port if missing.
+ * For HTTPS URLs: no port added (443 is standard for cloud)
+ * For HTTP URLs: adds port 5002 (local Hub development)
  * E.g., "http://192.168.1.100" -> "http://192.168.1.100:5002"
+ * E.g., "https://api.myiotgrid.cloud" -> "https://api.myiotgrid.cloud" (unchanged)
  */
 String ensureUrlHasPort(const String& url, int defaultPort = 5002) {
     if (url.length() == 0) return url;
+
+    // For HTTPS URLs, don't add port - use standard 443
+    if (url.startsWith("https://")) {
+        // Check if there's already an explicit port
+        int protocolEnd = 8; // length of "https://"
+        String afterProtocol = url.substring(protocolEnd);
+        int portIndex = afterProtocol.indexOf(':');
+        // If no explicit port, return as-is (443 is default)
+        if (portIndex < 0 || (afterProtocol.indexOf('/') >= 0 && portIndex > afterProtocol.indexOf('/'))) {
+            return url;
+        }
+        return url;
+    }
 
     // Find protocol end (after "://")
     int protocolEnd = url.indexOf("://");
@@ -165,7 +181,7 @@ String ensureUrlHasPort(const String& url, int defaultPort = 5002) {
         return url;
     }
 
-    // No port found - add default port
+    // No port found - add default port (only for HTTP)
     // Find where host ends (before path if any)
     int pathStart = afterProtocol.indexOf('/');
     if (pathStart < 0) {
@@ -1516,11 +1532,12 @@ bool registerWithHub() {
         emptyCapabilities
     );
 
-    // If HTTPS fails, try HTTP fallback on port 5000
+    // If HTTPS fails, try HTTP fallback on port 5002 (only for local development, not cloud)
     if (!response.success) {
         String currentUrl = apiClient.getBaseUrl();
-        if (currentUrl.startsWith("https://")) {
-            // Extract host from URL and try HTTP on port 5000
+        // Only try HTTP fallback for local URLs, NOT for cloud (api.myiotgrid.cloud)
+        if (currentUrl.startsWith("https://") && currentUrl.indexOf("myiotgrid.cloud") < 0) {
+            // Extract host from URL and try HTTP on port 5002 (local dev only)
             int hostStart = 8; // after "https://"
             int hostEnd = currentUrl.indexOf(':', hostStart);
             if (hostEnd < 0) hostEnd = currentUrl.indexOf('/', hostStart);
@@ -1902,7 +1919,14 @@ void handleConfiguredState() {
                 Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
             }
             Serial.println("[Main] ========================================");
-            apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+
+            // Cloud mode: Use URL as-is (443 is standard HTTPS port)
+            // Local mode: Ensure port is present (default 5002 for Hub)
+            if (config.isCloudMode()) {
+                apiClient.configure(config.hubApiUrl, config.nodeId, config.apiKey);
+            } else {
+                apiClient.configure(ensureUrlHasPort(config.hubApiUrl), config.nodeId, config.apiKey);
+            }
             apiConfigured = true;
         } else if (!discoveryAttempted) {
             // No Hub URL - need to discover Hub via UDP broadcast (fallback mode)

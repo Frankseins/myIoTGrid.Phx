@@ -171,6 +171,9 @@ export class NodeFormComponent implements OnInit, OnDestroy {
     { value: Protocol.LoRaWAN, label: 'LoRaWAN' }
   ];
 
+  // Expose Protocol enum to template for comparisons
+  readonly Protocol = Protocol;
+
   // Storage modes for offline storage (Sprint OS-01)
   readonly storageModes: { value: StorageMode; label: string; description: string }[] = [
     { value: StorageMode.RemoteOnly, label: 'Nur Remote', description: 'Messwerte werden nur an den Hub gesendet' },

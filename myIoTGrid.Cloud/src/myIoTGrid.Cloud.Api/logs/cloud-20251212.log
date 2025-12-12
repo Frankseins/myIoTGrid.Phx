@@ -142,3 +142,1313 @@
 2025-12-12 09:54:33.311 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
 2025-12-12 09:54:33.443 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
 2025-12-12 09:54:33.602 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 12:53:41.975 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 12:53:42.743 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 12:53:43.074 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 12:53:43.077 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 12:53:43.079 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 12:53:43.080 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 12:53:44.564 +01:00 [INF] Applying database migrations...
+2025-12-12 12:53:45.648 +01:00 [INF] Database connection established successfully
+2025-12-12 12:53:45.653 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 12:53:45.653 +01:00 [INF] Mode: Development
+2025-12-12 12:53:45.653 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 12:53:45.653 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 12:53:45.653 +01:00 [INF] Health Check: /health
+2025-12-12 12:53:45.664 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 12:53:45.664 +01:00 [INF] Applying database migrations...
+2025-12-12 12:53:46.568 +01:00 [INF] Database migrations applied successfully
+2025-12-12 12:53:46.572 +01:00 [INF] Starting seed data process...
+2025-12-12 12:53:46.906 +01:00 [INF] Default tenant ensured
+2025-12-12 12:53:47.301 +01:00 [INF] Default Hub ensured
+2025-12-12 12:53:47.435 +01:00 [INF] Default alert types seeded
+2025-12-12 12:53:47.869 +01:00 [INF] Default sensors seeded
+2025-12-12 12:53:47.869 +01:00 [INF] Seed data process completed
+2025-12-12 12:53:47.869 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 12:53:47.871 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 12:55:17.837 +01:00 [INF] OPTIONS /hubs/sensors/negotiate responded 204 in 14.7726 ms
+2025-12-12 12:55:18.198 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 338.7886 ms
+2025-12-12 12:55:18.235 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 12:55:18.394 +01:00 [INF] GET /api/alerts responded 200 in 189.9165 ms
+2025-12-12 12:55:18.398 +01:00 [INF] OPTIONS /hubs/sensors/negotiate responded 204 in 0.0732 ms
+2025-12-12 12:55:19.402 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 1197.5067 ms
+2025-12-12 12:55:20.166 +01:00 [INF] GET /api/hub responded 200 in 168.0897 ms
+2025-12-12 12:55:20.274 +01:00 [INF] GET /api/hub/status responded 200 in 276.3152 ms
+2025-12-12 12:55:21.242 +01:00 [INF] GET /api/hub/nodes responded 200 in 1240.7773 ms
+2025-12-12 12:57:35.377 +01:00 [INF] GET / responded 200 in 3.6140 ms
+2025-12-12 12:57:35.392 +01:00 [INF] GET /favicon.ico responded 404 in 0.3583 ms
+2025-12-12 12:58:01.984 +01:00 [INF] SeedDataHostedService stopping
+2025-12-12 13:00:08.482 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 13:00:09.209 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 13:00:09.549 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:00:09.550 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:00:09.552 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:00:09.552 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:00:11.038 +01:00 [INF] Applying database migrations...
+2025-12-12 13:00:12.087 +01:00 [INF] Database connection established successfully
+2025-12-12 13:00:12.090 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 13:00:12.091 +01:00 [INF] Mode: Development
+2025-12-12 13:00:12.091 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 13:00:12.091 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 13:00:12.091 +01:00 [INF] Health Check: /health
+2025-12-12 13:00:12.099 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 13:00:12.099 +01:00 [INF] Applying database migrations...
+2025-12-12 13:00:12.974 +01:00 [INF] Database migrations applied successfully
+2025-12-12 13:00:12.980 +01:00 [INF] Starting seed data process...
+2025-12-12 13:00:13.335 +01:00 [INF] Default tenant ensured
+2025-12-12 13:00:13.717 +01:00 [INF] Default Hub ensured
+2025-12-12 13:00:13.849 +01:00 [INF] Default alert types seeded
+2025-12-12 13:00:14.290 +01:00 [INF] Default sensors seeded
+2025-12-12 13:00:14.290 +01:00 [INF] Seed data process completed
+2025-12-12 13:00:14.290 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 13:00:14.292 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 13:00:21.450 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 32.1938 ms
+2025-12-12 13:00:21.538 +01:00 [INF] Client verbunden: DkzcleRIzbCLEhwGmt1zbg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:00:22.000 +01:00 [INF] GET /api/sensors/paged responded 200 in 433.2819 ms
+2025-12-12 13:00:22.310 +01:00 [INF] GET /api/sensors/paged responded 200 in 268.5230 ms
+2025-12-12 13:01:41.065 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 13:01:41.734 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 13:01:42.058 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:01:42.059 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:01:42.061 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:01:42.061 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:01:43.576 +01:00 [INF] Applying database migrations...
+2025-12-12 13:01:44.688 +01:00 [INF] Database connection established successfully
+2025-12-12 13:01:44.692 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 13:01:44.692 +01:00 [INF] Mode: Development
+2025-12-12 13:01:44.692 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 13:01:44.692 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 13:01:44.692 +01:00 [INF] Health Check: /health
+2025-12-12 13:01:44.702 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 13:01:44.703 +01:00 [INF] Applying database migrations...
+2025-12-12 13:01:45.630 +01:00 [INF] Database migrations applied successfully
+2025-12-12 13:01:45.634 +01:00 [INF] Starting seed data process...
+2025-12-12 13:01:45.983 +01:00 [INF] Default tenant ensured
+2025-12-12 13:01:46.392 +01:00 [INF] Default Hub ensured
+2025-12-12 13:01:46.530 +01:00 [INF] Default alert types seeded
+2025-12-12 13:01:46.986 +01:00 [INF] Default sensors seeded
+2025-12-12 13:01:46.986 +01:00 [INF] Seed data process completed
+2025-12-12 13:01:46.986 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 13:01:46.988 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 13:02:35.330 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 13:02:35.970 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 13:02:36.298 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:02:36.300 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:02:36.301 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:02:36.301 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:02:37.715 +01:00 [INF] Applying database migrations...
+2025-12-12 13:02:38.789 +01:00 [INF] Database connection established successfully
+2025-12-12 13:02:38.795 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 13:02:38.795 +01:00 [INF] Mode: Development
+2025-12-12 13:02:38.795 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 13:02:38.795 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 13:02:38.795 +01:00 [INF] Health Check: /health
+2025-12-12 13:02:38.806 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 13:02:38.806 +01:00 [INF] Applying database migrations...
+2025-12-12 13:02:39.697 +01:00 [INF] Database migrations applied successfully
+2025-12-12 13:02:39.705 +01:00 [INF] Starting seed data process...
+2025-12-12 13:02:40.044 +01:00 [INF] Default tenant ensured
+2025-12-12 13:02:40.425 +01:00 [INF] Default Hub ensured
+2025-12-12 13:02:40.558 +01:00 [INF] Default alert types seeded
+2025-12-12 13:02:41.009 +01:00 [INF] Default sensors seeded
+2025-12-12 13:02:41.009 +01:00 [INF] Seed data process completed
+2025-12-12 13:02:41.009 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 13:02:41.011 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 13:03:27.181 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 29.6844 ms
+2025-12-12 13:03:27.210 +01:00 [INF] Client verbunden: rWLCNRSkQpv-_2KjtGFb_w (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:03:27.544 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 316.8335 ms
+2025-12-12 13:03:27.589 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 13:03:27.743 +01:00 [INF] GET /api/alerts responded 200 in 181.1521 ms
+2025-12-12 13:03:28.772 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 1209.7635 ms
+2025-12-12 13:03:31.055 +01:00 [INF] GET /api/hub responded 200 in 157.2644 ms
+2025-12-12 13:03:31.223 +01:00 [INF] GET /api/hub/nodes responded 200 in 324.9363 ms
+2025-12-12 13:03:32.074 +01:00 [INF] GET /api/hub/status responded 200 in 1175.6896 ms
+2025-12-12 13:03:43.421 +01:00 [INF] GET /api/hub responded 200 in 124.7897 ms
+2025-12-12 13:03:43.439 +01:00 [INF] GET /api/nodes responded 200 in 145.3228 ms
+2025-12-12 13:03:50.891 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 1.1774 ms
+2025-12-12 13:03:50.913 +01:00 [INF] Client verbunden: jW46RsNSvc4NcDU_VItWOA (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:03:53.990 +01:00 [INF] GET /api/hub/properties responded 200 in 7.6842 ms
+2025-12-12 13:04:10.505 +01:00 [INF] POST /api/nodes responded 400 in 26.4822 ms
+2025-12-12 13:04:35.446 +01:00 [INF] POST /api/nodes responded 400 in 4.0315 ms
+2025-12-12 13:07:41.020 +01:00 [INF] Starting data retention cleanup. Removing data older than 2025-11-12 12:07:41Z
+2025-12-12 13:07:42.086 +01:00 [INF] Deleted 0 synced readings older than 30 days
+2025-12-12 13:07:42.213 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
+2025-12-12 13:07:42.344 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
+2025-12-12 13:07:42.518 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 13:09:30.716 +01:00 [INF] Client getrennt: jW46RsNSvc4NcDU_VItWOA
+2025-12-12 13:09:30.716 +01:00 [INF] Client getrennt: rWLCNRSkQpv-_2KjtGFb_w
+2025-12-12 13:09:30.718 +01:00 [INF] GET /hubs/sensors responded 101 in 339810.8725 ms
+2025-12-12 13:09:30.718 +01:00 [INF] GET /hubs/sensors responded 101 in 363531.3293 ms
+2025-12-12 13:09:30.749 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.4005 ms
+2025-12-12 13:09:30.755 +01:00 [INF] Client verbunden: FTaLe4O4T53gwqcwKe1KEQ (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:09:30.813 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.7675 ms
+2025-12-12 13:09:30.857 +01:00 [INF] Client verbunden: gf06vl_wTjL2jqoIC-2W3g (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:10:00.339 +01:00 [INF] Client getrennt: gf06vl_wTjL2jqoIC-2W3g
+2025-12-12 13:10:00.341 +01:00 [INF] GET /hubs/sensors responded 101 in 29510.3842 ms
+2025-12-12 13:10:00.444 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.7867 ms
+2025-12-12 13:10:00.465 +01:00 [INF] Client verbunden: k-EmpXloyNn0vf5WhfP02A (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:10:04.294 +01:00 [INF] GET /api/hub/properties responded 200 in 1.6844 ms
+2025-12-12 13:10:26.950 +01:00 [ERR] Failed executing DbCommand (129ms) [Parameters=[@p0='?' (DbType = Guid), @p1='?', @p2='?' (DbType = Int32), @p3='?' (DbType = DateTime), @p4='?' (DbType = Int32), @p5='?', @p6='?' (DbType = Object), @p7='?' (DbType = DateTime), @p8='?' (DbType = Guid), @p9='?' (DbType = Boolean), @p10='?' (DbType = DateTime), @p11='?' (DbType = DateTime), @p12='?' (DbType = DateTime), @p13='?', @p14='?', @p15='?', @p16='?', @p17='?' (DbType = Int32), @p18='?' (DbType = Int32), @p19='?' (DbType = Double), @p20='?' (DbType = Double), @p21='?'], CommandType='"Text"', CommandTimeout='30']
+INSERT INTO "Nodes" ("Id", "ApiKeyHash", "BatteryLevel", "CreatedAt", "DebugLevel", "FirmwareVersion", "HardwareStatusJson", "HardwareStatusReportedAt", "HubId", "IsOnline", "LastDebugChange", "LastSeen", "LastSyncAt", "LastSyncError", "MacAddress", "Name", "NodeId", "Protocol", "Status", "LocationLatitude", "LocationLongitude", "LocationName")
+VALUES (@p0, @p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9, @p10, @p11, @p12, @p13, @p14, @p15, @p16, @p17, @p18, @p19, @p20, @p21)
+RETURNING "EnableRemoteLogging", "IsSimulation", "PendingSyncCount", "StorageMode";
+2025-12-12 13:10:26.981 +01:00 [ERR] An exception occurred in the database while saving changes for context type 'myIoTGrid.Cloud.Infrastructure.Data.CloudDbContext'.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 22001: value too long for type character varying(17)
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 22001
+    MessageText: value too long for type character varying(17)
+    File: varchar.c
+    Line: 638
+    Routine: varchar
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 22001: value too long for type character varying(17)
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 22001
+    MessageText: value too long for type character varying(17)
+    File: varchar.c
+    Line: 638
+    Routine: varchar
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+2025-12-12 13:10:27.158 +01:00 [ERR] Unbehandelte Exception: An error occurred while saving the entity changes. See the inner exception for details.
+Microsoft.EntityFrameworkCore.DbUpdateException: An error occurred while saving the entity changes. See the inner exception for details.
+ ---> Npgsql.PostgresException (0x80004005): 22001: value too long for type character varying(17)
+   at Npgsql.Internal.NpgsqlConnector.ReadMessageLong(Boolean async, DataRowLoadingMode dataRowLoadingMode, Boolean readingNotifications, Boolean isReadingPrependedMessage)
+   at System.Runtime.CompilerServices.PoolingAsyncValueTaskMethodBuilder`1.StateMachineBox`1.System.Threading.Tasks.Sources.IValueTaskSource<TResult>.GetResult(Int16 token)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlDataReader.NextResult(Boolean async, Boolean isConsuming, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteReader(Boolean async, CommandBehavior behavior, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlCommand.ExecuteDbDataReaderAsync(CommandBehavior behavior, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+  Exception data:
+    Severity: ERROR
+    SqlState: 22001
+    MessageText: value too long for type character varying(17)
+    File: varchar.c
+    Line: 638
+    Routine: varchar
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Update.ReaderModificationCommandBatch.ExecuteAsync(IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Update.Internal.BatchExecutor.ExecuteAsync(IEnumerable`1 commandBatches, IRelationalConnection connection, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalDatabase.SaveChangesAsync(IList`1 entries, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(IList`1 entriesToSave, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.ChangeTracking.Internal.StateManager.SaveChangesAsync(StateManager stateManager, Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.DbContext.SaveChangesAsync(Boolean acceptAllChangesOnSuccess, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Infrastructure.Repositories.UnitOfWork.SaveChangesAsync(CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Infrastructure/Repositories/UnitOfWork.cs:line 23
+   at myIoTGrid.Cloud.Service.Services.NodeService.CreateAsync(CreateNodeDto dto, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Service/Services/NodeService.cs:line 195
+   at myIoTGrid.Cloud.Service.Services.NodeService.RegisterOrUpdateWithStatusAsync(CreateNodeDto dto, String firmwareVersion, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Service/Services/NodeService.cs:line 329
+   at myIoTGrid.Cloud.Interface.Controllers.NodesController.Create(CreateNodeDto dto, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Controllers/NodesController.cs:line 320
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at myIoTGrid.Cloud.Interface.Middleware.TenantMiddleware.InvokeAsync(HttpContext context, ITenantService tenantService) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/TenantMiddleware.cs:line 52
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at myIoTGrid.Cloud.Interface.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/ExceptionMiddleware.cs:line 40
+2025-12-12 13:10:27.177 +01:00 [ERR] POST /api/nodes responded 500 in 1031.3320 ms
+2025-12-12 13:17:30.514 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 13:17:30.753 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 13:17:30.981 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:17:30.983 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:17:30.984 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:17:30.984 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:17:32.201 +01:00 [INF] Applying database migrations...
+2025-12-12 13:17:33.128 +01:00 [INF] Database connection established successfully
+2025-12-12 13:17:33.130 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 13:17:33.130 +01:00 [INF] Mode: Development
+2025-12-12 13:17:33.130 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 13:17:33.130 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 13:17:33.130 +01:00 [INF] Health Check: /health
+2025-12-12 13:17:33.133 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 13:17:33.134 +01:00 [INF] Applying database migrations...
+2025-12-12 13:17:33.985 +01:00 [INF] Database migrations applied successfully
+2025-12-12 13:17:33.985 +01:00 [INF] Starting seed data process...
+2025-12-12 13:17:34.195 +01:00 [INF] Default tenant ensured
+2025-12-12 13:17:34.516 +01:00 [INF] Default Hub ensured
+2025-12-12 13:17:34.641 +01:00 [INF] Default alert types seeded
+2025-12-12 13:17:35.012 +01:00 [INF] Default sensors seeded
+2025-12-12 13:17:35.012 +01:00 [INF] Seed data process completed
+2025-12-12 13:17:35.012 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 13:17:35.013 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 13:17:56.883 +01:00 [INF] GET /swagger/v1/swagger.json res2025-12-12 13:17:56.997 +2025-12-12 13:17:57.645 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 32.9187 ms
+2025-12-12 13:18:21.325 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 10.9370 ms
+2025-12-12 13:18:21.366 +01:00 [INF] Client verbunden: -Jo248FI2X26Wh7Kp6W5cg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:18:24.609 +01:00 [INF] GET /api/hub/properties responded 200 in 25.1894 ms
+2025-12-12 13:18:35.938 +01:00 [INF] Node created: ESP32-0070078493A0 (-93A0)
+2025-12-12 13:18:35.956 +01:00 [INF] POST /api/nodes responded 201 in 788.5176 ms
+2025-12-12 13:18:36.095 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 128.1305 ms
+2025-12-12 13:19:43.836 +01:00 [INF] GET /api/sensors responded 200 in 191.3706 ms
+2025-12-12 13:19:58.056 +01:00 [INF] Assignment created: Sensor "3790ab2e-940e-4454-be2a-e4b2c3be1699" -> Node "d7e37f53-6930-4cd1-9a60-97bfc107a5f6" (Endpoint 1)
+2025-12-12 13:19:58.064 +01:00 [INF] POST /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 201 in 829.8285 ms
+2025-12-12 13:19:58.792 +01:00 [INF] Assignment created: Sensor "83a15eae-0ae6-432e-b57d-24ba9fe50c8c" -> Node "d7e37f53-6930-4cd1-9a60-97bfc107a5f6" (Endpoint 2)
+2025-12-12 13:19:58.792 +01:00 [INF] POST /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 201 in 716.3874 ms
+2025-12-12 13:19:59.511 +01:00 [INF] Assignment created: Sensor "395fd353-555f-4b3e-9a56-aa68158e790b" -> Node "d7e37f53-6930-4cd1-9a60-97bfc107a5f6" (Endpoint 3)
+2025-12-12 13:19:59.512 +01:00 [INF] POST /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 201 in 714.6504 ms
+2025-12-12 13:20:00.237 +01:00 [INF] Assignment created: Sensor "3cd05fd0-5285-42b4-bdcf-f6a178b9a3e3" -> Node "d7e37f53-6930-4cd1-9a60-97bfc107a5f6" (Endpoint 4)
+2025-12-12 13:20:00.239 +01:00 [INF] POST /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 201 in 714.4911 ms
+2025-12-12 13:20:02.423 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 13:20:02.551 +01:00 [INF] GET /api/sensors responded 200 in 141.5705 ms
+2025-12-12 13:20:03.451 +01:00 [INF] GET /api/hub responded 200 in 1042.6022 ms
+2025-12-12 13:20:03.513 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 200 in 1103.6898 ms
+2025-12-12 13:20:03.515 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 200 in 1105.9421 ms
+2025-12-12 13:20:03.543 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:20:03.544 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:20:03.548 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug/logs/recent responded 400 in 7.1535 ms
+2025-12-12 13:20:03.548 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/hardware-status responded 400 in 10.9454 ms
+2025-12-12 13:20:03.672 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug responded 200 in 132.5894 ms
+2025-12-12 13:20:03.872 +01:00 [INF] GET /api/readings/paged responded 200 in 321.8750 ms
+2025-12-12 13:20:04.563 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 2151.9992 ms
+2025-12-12 13:20:06.164 +01:00 [INF] GET /api/sensors/paged responded 200 in 309.4652 ms
+2025-12-12 13:20:06.451 +01:00 [INF] GET /api/sensors/paged responded 200 in 272.0691 ms
+2025-12-12 13:20:08.845 +01:00 [INF] GET /api/alerts responded 200 in 156.7672 ms
+2025-12-12 13:20:09.921 +01:00 [INF] GET /api/hub responded 200 in 122.6675 ms
+2025-12-12 13:20:09.954 +01:00 [INF] GET /api/nodes responded 200 in 155.2176 ms
+2025-12-12 13:20:11.101 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1138.4223 ms
+2025-12-12 13:20:12.124 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 200 in 118.0160 ms
+2025-12-12 13:20:12.133 +01:00 [INF] GET /api/hub responded 200 in 128.5400 ms
+2025-12-12 13:20:12.134 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 200 in 127.7562 ms
+2025-12-12 13:20:12.135 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:20:12.136 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/hardware-status responded 400 in 0.4030 ms
+2025-12-12 13:20:12.136 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:20:12.136 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug/logs/recent responded 400 in 0.2282 ms
+2025-12-12 13:20:12.155 +01:00 [INF] GET /api/sensors responded 200 in 148.9400 ms
+2025-12-12 13:20:12.252 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug responded 200 in 116.5005 ms
+2025-12-12 13:20:12.393 +01:00 [INF] GET /api/readings/paged responded 200 in 255.6878 ms
+2025-12-12 13:20:13.136 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1129.3146 ms
+2025-12-12 13:21:25.141 +01:00 [INF] GET /api/hub responded 200 in 121.3473 ms
+2025-12-12 13:21:25.147 +01:00 [INF] GET /api/nodes responded 200 in 127.2811 ms
+2025-12-12 13:21:26.290 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1135.9637 ms
+2025-12-12 13:21:30.433 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 279.3590 ms
+2025-12-12 13:21:30.452 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 13:21:30.568 +01:00 [INF] GET /api/alerts responded 200 in 125.0268 ms
+2025-12-12 13:21:30.761 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 318.5475 ms
+2025-12-12 13:21:32.542 +01:00 [INF] GET /api/nodes responded 200 in 126.4508 ms
+2025-12-12 13:21:32.543 +01:00 [INF] GET /api/hub responded 200 in 128.0585 ms
+2025-12-12 13:21:33.685 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1135.4097 ms
+2025-12-12 13:21:38.774 +01:00 [INF] GET /api/hub/properties responded 200 in 1.1215 ms
+2025-12-12 13:21:58.203 +01:00 [INF] Node already exists, returning existing: ESP32-0070078493A0
+2025-12-12 13:21:58.206 +01:00 [INF] POST /api/nodes responded 200 in 507.1953 ms
+2025-12-12 13:21:58.346 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 124.4041 ms
+2025-12-12 13:22:24.866 +01:00 [INF] GET /api/sensors responded 200 in 153.2190 ms
+2025-12-12 13:22:34.883 +01:00 [INF] GET /api/hub responded 200 in 117.0173 ms
+2025-12-12 13:22:34.887 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 200 in 119.7134 ms
+2025-12-12 13:22:34.895 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:22:34.895 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/hardware-status responded 400 in 0.4397 ms
+2025-12-12 13:22:34.898 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:22:34.898 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug/logs/recent responded 400 in 0.3514 ms
+2025-12-12 13:22:34.917 +01:00 [INF] GET /api/sensors responded 200 in 150.1756 ms
+2025-12-12 13:22:35.014 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug responded 200 in 117.2555 ms
+2025-12-12 13:22:35.014 +01:00 [INF] Starting data retention cleanup. Removing data older than 2025-11-12 12:22:35Z
+2025-12-12 13:22:35.138 +01:00 [INF] Deleted 0 synced readings older than 30 days
+2025-12-12 13:22:35.150 +01:00 [INF] GET /api/readings/paged responded 200 in 251.1403 ms
+2025-12-12 13:22:35.265 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
+2025-12-12 13:22:35.392 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
+2025-12-12 13:22:35.562 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 13:22:35.820 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 200 in 1053.7848 ms
+2025-12-12 13:22:35.883 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1116.1582 ms
+2025-12-12 13:34:24.467 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 73.8922 ms
+2025-12-12 13:34:27.023 +01:00 [INF] Client getrennt: -Jo248FI2X26Wh7Kp6W5cg
+2025-12-12 13:34:27.026 +01:00 [INF] GET /hubs/sensors responded 101 in 965651.1498 ms
+2025-12-12 13:34:27.095 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.5683 ms
+2025-12-12 13:34:27.105 +01:00 [INF] Client verbunden: C5LIvW3q4nbLccX1aQ5T_Q (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:34:28.121 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 200 in 974.5976 ms
+2025-12-12 13:34:28.171 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 200 in 1023.8488 ms
+2025-12-12 13:34:28.173 +01:00 [INF] GET /api/hub responded 200 in 1027.1570 ms
+2025-12-12 13:34:28.189 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:34:28.189 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/hardware-status responded 400 in 0.4980 ms
+2025-12-12 13:34:28.191 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:34:28.191 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug/logs/recent responded 400 in 0.2464 ms
+2025-12-12 13:34:28.197 +01:00 [INF] GET /api/sensors responded 200 in 1050.3658 ms
+2025-12-12 13:34:28.308 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug responded 200 in 117.2793 ms
+2025-12-12 13:34:28.453 +01:00 [INF] GET /api/readings/paged responded 200 in 253.3959 ms
+2025-12-12 13:34:29.222 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 2075.6527 ms
+2025-12-12 13:34:30.733 +01:00 [INF] GET /api/hub responded 200 in 123.7397 ms
+2025-12-12 13:34:30.735 +01:00 [INF] GET /api/nodes responded 200 in 126.0663 ms
+2025-12-12 13:34:31.878 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1137.9880 ms
+2025-12-12 13:34:32.071 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 200 in 125.1365 ms
+2025-12-12 13:34:32.074 +01:00 [INF] GET /api/hub responded 200 in 127.5037 ms
+2025-12-12 13:34:32.077 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:34:32.078 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/hardware-status responded 400 in 0.3411 ms
+2025-12-12 13:34:32.078 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/assignments responded 200 in 131.3848 ms
+2025-12-12 13:34:32.078 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:34:32.078 +01:00 [INF] GET /api/node-debug/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug/logs/recent responded 400 in 0.3650 ms
+2025-12-12 13:34:32.096 +01:00 [INF] GET /api/sensors responded 200 in 148.7244 ms
+2025-12-12 13:34:32.201 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/debug responded 200 in 123.3387 ms
+2025-12-12 13:34:32.336 +01:00 [INF] GET /api/readings/paged responded 200 in 256.3242 ms
+2025-12-12 13:34:33.076 +01:00 [INF] GET /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6/sensors/latest responded 200 in 1128.8563 ms
+2025-12-12 13:34:41.467 +01:00 [INF] Node deleted: ESP32-0070078493A0 (-93A0)
+2025-12-12 13:34:41.467 +01:00 [INF] DELETE /api/nodes/d7e37f53-6930-4cd1-9a60-97bfc107a5f6 responded 204 in 298.8005 ms
+2025-12-12 13:34:41.610 +01:00 [INF] GET /api/hub responded 200 in 121.8037 ms
+2025-12-12 13:34:41.614 +01:00 [INF] GET /api/nodes responded 200 in 125.0835 ms
+2025-12-12 13:34:46.339 +01:00 [INF] GET /api/hub/properties responded 200 in 0.6721 ms
+2025-12-12 13:35:00.164 +01:00 [INF] Node created: ESP32-0070078493A0 (-93A0)
+2025-12-12 13:35:00.165 +01:00 [INF] POST /api/nodes responded 201 in 630.5181 ms
+2025-12-12 13:35:00.306 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 124.5524 ms
+2025-12-12 13:35:37.778 +01:00 [INF] GET /api/sensors responded 200 in 157.0234 ms
+2025-12-12 13:35:44.669 +01:00 [INF] Assignment created: Sensor "3790ab2e-940e-4454-be2a-e4b2c3be1699" -> Node "1de81010-3dac-4651-9f01-b4683af0dd3e" (Endpoint 1)
+2025-12-12 13:35:44.670 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 201 in 763.2464 ms
+2025-12-12 13:35:45.424 +01:00 [INF] Assignment created: Sensor "83a15eae-0ae6-432e-b57d-24ba9fe50c8c" -> Node "1de81010-3dac-4651-9f01-b4683af0dd3e" (Endpoint 2)
+2025-12-12 13:35:45.428 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 201 in 749.6888 ms
+2025-12-12 13:35:46.193 +01:00 [INF] Assignment created: Sensor "3cd05fd0-5285-42b4-bdcf-f6a178b9a3e3" -> Node "1de81010-3dac-4651-9f01-b4683af0dd3e" (Endpoint 3)
+2025-12-12 13:35:46.194 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 201 in 755.0120 ms
+2025-12-12 13:35:47.884 +01:00 [INF] GET /api/hub responded 200 in 124.2686 ms
+2025-12-12 13:35:47.886 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 127.1716 ms
+2025-12-12 13:35:47.892 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 131.1289 ms
+2025-12-12 13:35:47.896 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:35:47.896 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.4392 ms
+2025-12-12 13:35:47.899 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:35:47.899 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.2603 ms
+2025-12-12 13:35:47.914 +01:00 [INF] GET /api/sensors responded 200 in 153.5104 ms
+2025-12-12 13:35:48.023 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 124.8517 ms
+2025-12-12 13:35:48.161 +01:00 [INF] GET /api/readings/paged responded 200 in 258.8004 ms
+2025-12-12 13:35:48.635 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 874.5303 ms
+2025-12-12 13:39:20.433 +01:00 [INF] Client getrennt: C5LIvW3q4nbLccX1aQ5T_Q
+2025-12-12 13:39:20.434 +01:00 [INF] GET /hubs/sensors responded 101 in 293330.1410 ms
+2025-12-12 13:39:20.490 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.1852 ms
+2025-12-12 13:39:20.516 +01:00 [INF] Client verbunden: tPq6Vtty17CVG5EtoB9cDA (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:39:20.680 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 124.4175 ms
+2025-12-12 13:39:20.683 +01:00 [INF] GET /api/hub responded 200 in 127.1418 ms
+2025-12-12 13:39:20.687 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 130.9645 ms
+2025-12-12 13:39:20.694 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:39:20.694 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.2533 ms
+2025-12-12 13:39:20.696 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:39:20.696 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.1628 ms
+2025-12-12 13:39:20.705 +01:00 [INF] GET /api/sensors responded 200 in 148.9338 ms
+2025-12-12 13:39:20.819 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 123.6318 ms
+2025-12-12 13:39:20.956 +01:00 [INF] GET /api/readings/paged responded 200 in 252.7852 ms
+2025-12-12 13:39:21.436 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 880.0838 ms
+2025-12-12 13:39:47.839 +01:00 [INF] Client getrennt: tPq6Vtty17CVG5EtoB9cDA
+2025-12-12 13:39:47.840 +01:00 [INF] GET /hubs/sensors responded 101 in 27325.2966 ms
+2025-12-12 13:39:47.917 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.1682 ms
+2025-12-12 13:39:47.921 +01:00 [INF] Client verbunden: UpPK3VkjyaQqKGitDUYp-w (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:39:48.988 +01:00 [INF] GET /api/hub responded 200 in 1021.3573 ms
+2025-12-12 13:39:49.049 +01:00 [INF] GET /api/sensors responded 200 in 1076.9874 ms
+2025-12-12 13:39:49.064 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 1092.6451 ms
+2025-12-12 13:39:49.064 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 1092.6098 ms
+2025-12-12 13:39:49.082 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:39:49.083 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.7348 ms
+2025-12-12 13:39:49.085 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:39:49.085 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.2831 ms
+2025-12-12 13:39:49.205 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 120.2953 ms
+2025-12-12 13:39:49.356 +01:00 [INF] GET /api/readings/paged responded 200 in 264.0370 ms
+2025-12-12 13:39:49.762 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 1789.3653 ms
+2025-12-12 13:40:01.297 +01:00 [INF] Client getrennt: UpPK3VkjyaQqKGitDUYp-w
+2025-12-12 13:40:01.297 +01:00 [INF] GET /hubs/sensors responded 101 in 13377.8832 ms
+2025-12-12 13:40:01.359 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.2088 ms
+2025-12-12 13:40:01.363 +01:00 [INF] Client verbunden: j2HJOUljAqhpOHM46sVoPw (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:40:01.530 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 130.8303 ms
+2025-12-12 13:40:01.531 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 131.3205 ms
+2025-12-12 13:40:01.531 +01:00 [INF] GET /api/hub responded 200 in 131.4589 ms
+2025-12-12 13:40:01.546 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:01.546 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.3572 ms
+2025-12-12 13:40:01.549 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:01.549 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.3285 ms
+2025-12-12 13:40:01.549 +01:00 [INF] GET /api/sensors responded 200 in 149.7073 ms
+2025-12-12 13:40:01.675 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 126.1522 ms
+2025-12-12 13:40:01.818 +01:00 [INF] GET /api/readings/paged responded 200 in 262.2006 ms
+2025-12-12 13:40:02.289 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 888.7216 ms
+2025-12-12 13:40:22.695 +01:00 [INF] Client getrennt: j2HJOUljAqhpOHM46sVoPw
+2025-12-12 13:40:22.695 +01:00 [INF] GET /hubs/sensors responded 101 in 21332.8367 ms
+2025-12-12 13:40:22.735 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.1909 ms
+2025-12-12 13:40:22.740 +01:00 [INF] Client verbunden: ND4nlHq3yEBq8xlJMccp1w (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:40:22.896 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 120.3539 ms
+2025-12-12 13:40:22.906 +01:00 [INF] GET /api/hub responded 200 in 130.7035 ms
+2025-12-12 13:40:22.912 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:22.913 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.4512 ms
+2025-12-12 13:40:22.913 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 136.7476 ms
+2025-12-12 13:40:22.916 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:22.916 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.3527 ms
+2025-12-12 13:40:22.927 +01:00 [INF] GET /api/sensors responded 200 in 150.8761 ms
+2025-12-12 13:40:23.035 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 119.5596 ms
+2025-12-12 13:40:23.183 +01:00 [INF] GET /api/readings/paged responded 200 in 262.3683 ms
+2025-12-12 13:40:23.669 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 892.5131 ms
+2025-12-12 13:40:36.824 +01:00 [INF] Client getrennt: ND4nlHq3yEBq8xlJMccp1w
+2025-12-12 13:40:36.824 +01:00 [INF] GET /hubs/sensors responded 101 in 14085.5794 ms
+2025-12-12 13:40:36.867 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.1976 ms
+2025-12-12 13:40:36.871 +01:00 [INF] Client verbunden: C67ebYsq7BCwNR_q9ybtXg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:40:37.038 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 120.6715 ms
+2025-12-12 13:40:37.042 +01:00 [INF] GET /api/hub responded 200 in 125.4436 ms
+2025-12-12 13:40:37.054 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:37.054 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.3292 ms
+2025-12-12 13:40:37.056 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:40:37.056 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.1998 ms
+2025-12-12 13:40:37.057 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 137.3443 ms
+2025-12-12 13:40:37.076 +01:00 [INF] GET /api/sensors responded 200 in 156.8125 ms
+2025-12-12 13:40:37.176 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 120.1438 ms
+2025-12-12 13:40:37.317 +01:00 [INF] GET /api/readings/paged responded 200 in 255.0589 ms
+2025-12-12 13:40:37.815 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 893.6874 ms
+2025-12-12 13:41:13.317 +01:00 [INF] Client getrennt: C67ebYsq7BCwNR_q9ybtXg
+2025-12-12 13:41:13.317 +01:00 [INF] GET /hubs/sensors responded 101 in 36446.7613 ms
+2025-12-12 13:41:13.352 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.2358 ms
+2025-12-12 13:41:13.356 +01:00 [INF] Client verbunden: ILK2EoxTo9hCTT6fAnhujA (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:41:13.507 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 119.5920 ms
+2025-12-12 13:41:13.516 +01:00 [INF] GET /api/hub responded 200 in 128.6285 ms
+2025-12-12 13:41:13.520 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:41:13.520 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 0.3262 ms
+2025-12-12 13:41:13.522 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 134.0282 ms
+2025-12-12 13:41:13.523 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:41:13.523 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 0.1884 ms
+2025-12-12 13:41:13.534 +01:00 [INF] GET /api/sensors responded 200 in 145.6054 ms
+2025-12-12 13:41:13.642 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 119.1442 ms
+2025-12-12 13:41:13.786 +01:00 [INF] GET /api/readings/paged responded 200 in 257.3540 ms
+2025-12-12 13:41:14.296 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 908.3057 ms
+2025-12-12 13:42:52.162 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 13:42:52.767 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 13:42:53.116 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:42:53.117 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 13:42:53.119 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:42:53.119 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 13:42:54.589 +01:00 [INF] Applying database migrations...
+2025-12-12 13:42:55.653 +01:00 [INF] Database connection established successfully
+2025-12-12 13:42:55.659 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 13:42:55.660 +01:00 [INF] Mode: Development
+2025-12-12 13:42:55.660 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 13:42:55.660 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 13:42:55.660 +01:00 [INF] Health Check: /health
+2025-12-12 13:42:55.671 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 13:42:55.671 +01:00 [INF] Applying database migrations...
+2025-12-12 13:42:56.563 +01:00 [INF] Database migrations applied successfully
+2025-12-12 13:42:56.570 +01:00 [INF] Starting seed data process...
+2025-12-12 13:42:56.901 +01:00 [INF] Default tenant ensured
+2025-12-12 13:42:57.283 +01:00 [INF] Default Hub ensured
+2025-12-12 13:42:57.414 +01:00 [INF] Default alert types seeded
+2025-12-12 13:42:57.854 +01:00 [INF] Default sensors seeded
+2025-12-12 13:42:57.854 +01:00 [INF] Seed data process completed
+2025-12-12 13:42:57.854 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 13:42:57.856 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 13:42:59.743 +01:00 [INF] GET /swagger/index.html responded 200 in 54.0700 ms
+2025-12-12 13:42:59.907 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 125.5615 ms
+2025-12-12 13:43:17.191 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 28.6092 ms
+2025-12-12 13:43:17.248 +01:00 [INF] Client verbunden: Zmb9foqiyFA6BI24jK7iiw (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:43:19.995 +01:00 [INF] GET /api/hub/properties responded 200 in 42.2961 ms
+2025-12-12 13:43:31.935 +01:00 [INF] Node already exists, returning existing: ESP32-0070078493A0
+2025-12-12 13:43:31.974 +01:00 [INF] POST /api/nodes responded 200 in 703.7730 ms
+2025-12-12 13:43:32.117 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 132.1949 ms
+2025-12-12 13:43:55.259 +01:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2025-12-12 13:43:55.550 +01:00 [INF] Node registered via BLE: node-0070078493a0 (myIoTGrid-93A0) MAC: 0070078493A0
+2025-12-12 13:43:55.558 +01:00 [INF] POST /api/nodes/provision responded 200 in 453.4313 ms
+2025-12-12 13:43:56.964 +01:00 [INF] GET /api/sensors responded 200 in 220.0104 ms
+2025-12-12 13:44:02.217 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 400 in 509.8713 ms
+2025-12-12 13:44:02.626 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 400 in 401.9110 ms
+2025-12-12 13:44:03.042 +01:00 [INF] POST /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 400 in 404.9255 ms
+2025-12-12 13:44:05.306 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 13:44:05.401 +01:00 [INF] GET /api/sensors responded 200 in 148.5028 ms
+2025-12-12 13:44:06.338 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 1131.2211 ms
+2025-12-12 13:44:06.345 +01:00 [INF] GET /api/hub responded 200 in 1147.6294 ms
+2025-12-12 13:44:06.357 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 1150.1811 ms
+2025-12-12 13:44:06.422 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:44:06.478 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:44:06.479 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 110.2573 ms
+2025-12-12 13:44:06.479 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 59.8698 ms
+2025-12-12 13:44:06.612 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 193.1460 ms
+2025-12-12 13:44:06.801 +01:00 [INF] GET /api/readings/paged responded 200 in 382.6880 ms
+2025-12-12 13:44:07.272 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 2015.7173 ms
+2025-12-12 13:47:57.862 +01:00 [INF] Starting data retention cleanup. Removing data older than 2025-11-12 12:47:57Z
+2025-12-12 13:47:58.894 +01:00 [INF] Deleted 0 synced readings older than 30 days
+2025-12-12 13:47:59.021 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
+2025-12-12 13:47:59.146 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
+2025-12-12 13:47:59.305 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 13:48:45.049 +01:00 [INF] Client getrennt: Zmb9foqiyFA6BI24jK7iiw
+2025-12-12 13:48:45.052 +01:00 [INF] GET /hubs/sensors responded 101 in 327824.3608 ms
+2025-12-12 13:48:45.149 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.3624 ms
+2025-12-12 13:48:45.179 +01:00 [INF] Client verbunden: RerjE4a7VKNq6yr4KAoW4g (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:48:45.429 +01:00 [INF] GET /api/hub responded 200 in 124.1140 ms
+2025-12-12 13:48:46.355 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 1049.0076 ms
+2025-12-12 13:48:46.459 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:48:46.460 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 68.8443 ms
+2025-12-12 13:48:46.551 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 1218.4872 ms
+2025-12-12 13:48:46.586 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:48:46.586 +01:00 [INF] GET /api/sensors responded 200 in 1232.7660 ms
+2025-12-12 13:48:46.586 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 124.9091 ms
+2025-12-12 13:48:46.707 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 248.0338 ms
+2025-12-12 13:48:46.841 +01:00 [INF] GET /api/readings/paged responded 200 in 316.6133 ms
+2025-12-12 13:48:47.328 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 1974.0252 ms
+2025-12-12 13:52:00.627 +01:00 [INF] Client getrennt: RerjE4a7VKNq6yr4KAoW4g
+2025-12-12 13:52:00.627 +01:00 [INF] GET /hubs/sensors responded 101 in 195469.2608 ms
+2025-12-12 13:52:00.743 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.8558 ms
+2025-12-12 13:52:00.768 +01:00 [INF] Client verbunden: y0Wn16Oierz06e9PLPol7g (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:52:01.130 +01:00 [INF] GET /api/hub responded 200 in 166.6249 ms
+2025-12-12 13:52:01.134 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 169.9188 ms
+2025-12-12 13:52:01.145 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 181.1317 ms
+2025-12-12 13:52:01.229 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:52:01.255 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 102.5870 ms
+2025-12-12 13:52:01.316 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:52:01.317 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 61.6204 ms
+2025-12-12 13:52:01.317 +01:00 [INF] GET /api/sensors responded 200 in 304.6887 ms
+2025-12-12 13:52:01.434 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 178.8736 ms
+2025-12-12 13:52:01.575 +01:00 [INF] GET /api/readings/paged responded 200 in 319.5459 ms
+2025-12-12 13:52:02.045 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 1029.9512 ms
+2025-12-12 13:59:34.507 +01:00 [INF] Client getrennt: y0Wn16Oierz06e9PLPol7g
+2025-12-12 13:59:34.507 +01:00 [INF] GET /hubs/sensors responded 101 in 453741.9428 ms
+2025-12-12 13:59:34.512 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.3741 ms
+2025-12-12 13:59:34.531 +01:00 [INF] Client verbunden: goRJZ-RqECtenndrUS2NFg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:59:34.569 +01:00 [INF] Client getrennt: goRJZ-RqECtenndrUS2NFg
+2025-12-12 13:59:34.569 +01:00 [INF] GET /hubs/sensors responded 101 in 40.4288 ms
+2025-12-12 13:59:34.990 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.3530 ms
+2025-12-12 13:59:35.015 +01:00 [INF] Client verbunden: 2381IfzFjWI4Gqhr6Q7exg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 13:59:37.005 +01:00 [INF] GET /api/hub responded 200 in 1620.7499 ms
+2025-12-12 13:59:37.016 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 1631.8219 ms
+2025-12-12 13:59:37.024 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 1639.6416 ms
+2025-12-12 13:59:37.121 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:59:37.121 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 78.9328 ms
+2025-12-12 13:59:37.258 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 13:59:37.258 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 137.1755 ms
+2025-12-12 13:59:37.258 +01:00 [INF] GET /api/sensors responded 200 in 1873.8264 ms
+2025-12-12 13:59:37.534 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 412.9868 ms
+2025-12-12 13:59:37.676 +01:00 [INF] GET /api/readings/paged responded 200 in 554.7246 ms
+2025-12-12 13:59:38.221 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 2810.9880 ms
+2025-12-12 14:06:26.399 +01:00 [INF] Client getrennt: 2381IfzFjWI4Gqhr6Q7exg
+2025-12-12 14:06:26.399 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.5680 ms
+2025-12-12 14:06:26.401 +01:00 [INF] GET /hubs/sensors responded 101 in 56090.7333 ms
+2025-12-12 14:06:26.407 +01:00 [INF] Client verbunden: 0Xbo3IaPwTC6REAEZuVVlQ (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 14:06:26.485 +01:00 [INF] Client getrennt: 0Xbo3IaPwTC6REAEZuVVlQ
+2025-12-12 14:06:26.485 +01:00 [INF] GET /hubs/sensors responded 101 in 80.6084 ms
+2025-12-12 14:06:26.517 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.3253 ms
+2025-12-12 14:06:26.533 +01:00 [INF] Client verbunden: KAYt7xdfD2UQJ34ZeIXzAQ (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 14:23:14.612 +01:00 [ERR] Failed executing DbCommand (33,388ms) [Parameters=[@id='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT n1."Id", n1."ApiKeyHash", n1."BatteryLevel", n1."CreatedAt", n1."DebugLevel", n1."EnableRemoteLogging", n1."FirmwareVersion", n1."HardwareStatusJson", n1."HardwareStatusReportedAt", n1."HubId", n1."IsOnline", n1."IsSimulation", n1."LastDebugChange", n1."LastSeen", n1."LastSyncAt", n1."LastSyncError", n1."MacAddress", n1."Name", n1."NodeId", n1."PendingSyncCount", n1."Protocol", n1."Status", n1."StorageMode", n1."LocationLatitude", n1."LocationLongitude", n1."LocationName", n0."Id", n0."Alias", n0."AnalogPinOverride", n0."AssignedAt", n0."BaudRateOverride", n0."DigitalPinOverride", n0."EchoPinOverride", n0."EndpointId", n0."I2CAddressOverride", n0."IntervalSecondsOverride", n0."IsActive", n0."LastSeenAt", n0."NodeId", n0."OneWirePinOverride", n0."SclPinOverride", n0."SdaPinOverride", n0."SensorId", n0."TriggerPinOverride"
+FROM (
+    SELECT n."Id", n."ApiKeyHash", n."BatteryLevel", n."CreatedAt", n."DebugLevel", n."EnableRemoteLogging", n."FirmwareVersion", n."HardwareStatusJson", n."HardwareStatusReportedAt", n."HubId", n."IsOnline", n."IsSimulation", n."LastDebugChange", n."LastSeen", n."LastSyncAt", n."LastSyncError", n."MacAddress", n."Name", n."NodeId", n."PendingSyncCount", n."Protocol", n."Status", n."StorageMode", n."LocationLatitude", n."LocationLongitude", n."LocationName"
+    FROM "Nodes" AS n
+    WHERE n."Id" = @id
+    LIMIT 1
+) AS n1
+LEFT JOIN "NodeSensorAssignments" AS n0 ON n1."Id" = n0."NodeId"
+ORDER BY n1."Id"
+2025-12-12 14:23:14.626 +01:00 [ERR] Failed executing DbCommand (33,413ms) [Parameters=[@nodeId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT n."Id", n."Alias", n."AnalogPinOverride", n."AssignedAt", n."BaudRateOverride", n."DigitalPinOverride", n."EchoPinOverride", n."EndpointId", n."I2CAddressOverride", n."IntervalSecondsOverride", n."IsActive", n."LastSeenAt", n."NodeId", n."OneWirePinOverride", n."SclPinOverride", n."SdaPinOverride", n."SensorId", n."TriggerPinOverride", n0."Id", n0."ApiKeyHash", n0."BatteryLevel", n0."CreatedAt", n0."DebugLevel", n0."EnableRemoteLogging", n0."FirmwareVersion", n0."HardwareStatusJson", n0."HardwareStatusReportedAt", n0."HubId", n0."IsOnline", n0."IsSimulation", n0."LastDebugChange", n0."LastSeen", n0."LastSyncAt", n0."LastSyncError", n0."MacAddress", n0."Name", n0."NodeId", n0."PendingSyncCount", n0."Protocol", n0."Status", n0."StorageMode", n0."LocationLatitude", n0."LocationLongitude", n0."LocationName", s."Id", s."AnalogPin", s."BaudRate", s."CalibrationDueAt", s."CalibrationNotes", s."Category", s."Code", s."Color", s."CreatedAt", s."DatasheetUrl", s."Description", s."DigitalPin", s."EchoPin", s."GainCorrection", s."I2CAddress", s."Icon", s."IntervalSeconds", s."IsActive", s."LastCalibratedAt", s."Manufacturer", s."MinIntervalSeconds", s."Model", s."Name", s."OffsetCorrection", s."OneWirePin", s."Protocol", s."SclPin", s."SdaPin", s."SerialNumber", s."TenantId", s."TriggerPin", s."UpdatedAt", s."WarmupTimeMs"
+FROM "NodeSensorAssignments" AS n
+INNER JOIN "Nodes" AS n0 ON n."NodeId" = n0."Id"
+INNER JOIN "Sensors" AS s ON n."SensorId" = s."Id"
+WHERE n."NodeId" = @nodeId
+ORDER BY n."EndpointId"
+2025-12-12 14:23:14.627 +01:00 [ERR] Failed executing DbCommand (33,414ms) [Parameters=[@tenantId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT h0."Id", h0."ApiPort", h0."ApiUrl", h0."CreatedAt", h0."DefaultWifiPassword", h0."DefaultWifiSsid", h0."Description", h0."HubId", h0."IsOnline", h0."LastSeen", h0."Name", h0."TenantId", n."Id", n."ApiKeyHash", n."BatteryLevel", n."CreatedAt", n."DebugLevel", n."EnableRemoteLogging", n."FirmwareVersion", n."HardwareStatusJson", n."HardwareStatusReportedAt", n."HubId", n."IsOnline", n."IsSimulation", n."LastDebugChange", n."LastSeen", n."LastSyncAt", n."LastSyncError", n."MacAddress", n."Name", n."NodeId", n."PendingSyncCount", n."Protocol", n."Status", n."StorageMode", n."LocationLatitude", n."LocationLongitude", n."LocationName"
+FROM (
+    SELECT h."Id", h."ApiPort", h."ApiUrl", h."CreatedAt", h."DefaultWifiPassword", h."DefaultWifiSsid", h."Description", h."HubId", h."IsOnline", h."LastSeen", h."Name", h."TenantId"
+    FROM "Hubs" AS h
+    WHERE h."TenantId" = @tenantId
+    LIMIT 1
+) AS h0
+LEFT JOIN "Nodes" AS n ON h0."Id" = n."HubId"
+ORDER BY h0."Id"
+2025-12-12 14:23:14.629 +01:00 [ERR] Failed executing DbCommand (33,415ms) [Parameters=[@nodeId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT n1."Id", n1."ApiKeyHash", n1."BatteryLevel", n1."CreatedAt", n1."DebugLevel", n1."EnableRemoteLogging", n1."FirmwareVersion", n1."HardwareStatusJson", n1."HardwareStatusReportedAt", n1."HubId", n1."IsOnline", n1."IsSimulation", n1."LastDebugChange", n1."LastSeen", n1."LastSyncAt", n1."LastSyncError", n1."MacAddress", n1."Name", n1."NodeId", n1."PendingSyncCount", n1."Protocol", n1."Status", n1."StorageMode", n1."LocationLatitude", n1."LocationLongitude", n1."LocationName", s1."Id", s1."Alias", s1."AnalogPinOverride", s1."AssignedAt", s1."BaudRateOverride", s1."DigitalPinOverride", s1."EchoPinOverride", s1."EndpointId", s1."I2CAddressOverride", s1."IntervalSecondsOverride", s1."IsActive", s1."LastSeenAt", s1."NodeId", s1."OneWirePinOverride", s1."SclPinOverride", s1."SdaPinOverride", s1."SensorId", s1."TriggerPinOverride", s1."Id0", s1."AnalogPin", s1."BaudRate", s1."CalibrationDueAt", s1."CalibrationNotes", s1."Category", s1."Code", s1."Color", s1."CreatedAt", s1."DatasheetUrl", s1."Description", s1."DigitalPin", s1."EchoPin", s1."GainCorrection", s1."I2CAddress", s1."Icon", s1."IntervalSeconds", s1."IsActive0", s1."LastCalibratedAt", s1."Manufacturer", s1."MinIntervalSeconds", s1."Model", s1."Name", s1."OffsetCorrection", s1."OneWirePin", s1."Protocol", s1."SclPin", s1."SdaPin", s1."SerialNumber", s1."TenantId", s1."TriggerPin", s1."UpdatedAt", s1."WarmupTimeMs", s1."Id1", s1."Accuracy", s1."DisplayName", s1."IsActive1", s1."MatterClusterId", s1."MatterClusterName", s1."MaxValue", s1."MeasurementType", s1."MinValue", s1."Resolution", s1."SensorId0", s1."SortOrder", s1."Unit"
+FROM (
+    SELECT n."Id", n."ApiKeyHash", n."BatteryLevel", n."CreatedAt", n."DebugLevel", n."EnableRemoteLogging", n."FirmwareVersion", n."HardwareStatusJson", n."HardwareStatusReportedAt", n."HubId", n."IsOnline", n."IsSimulation", n."LastDebugChange", n."LastSeen", n."LastSyncAt", n."LastSyncError", n."MacAddress", n."Name", n."NodeId", n."PendingSyncCount", n."Protocol", n."Status", n."StorageMode", n."LocationLatitude", n."LocationLongitude", n."LocationName"
+    FROM "Nodes" AS n
+    WHERE n."Id" = @nodeId
+    LIMIT 1
+) AS n1
+LEFT JOIN (
+    SELECT n0."Id", n0."Alias", n0."AnalogPinOverride", n0."AssignedAt", n0."BaudRateOverride", n0."DigitalPinOverride", n0."EchoPinOverride", n0."EndpointId", n0."I2CAddressOverride", n0."IntervalSecondsOverride", n0."IsActive", n0."LastSeenAt", n0."NodeId", n0."OneWirePinOverride", n0."SclPinOverride", n0."SdaPinOverride", n0."SensorId", n0."TriggerPinOverride", s."Id" AS "Id0", s."AnalogPin", s."BaudRate", s."CalibrationDueAt", s."CalibrationNotes", s."Category", s."Code", s."Color", s."CreatedAt", s."DatasheetUrl", s."Description", s."DigitalPin", s."EchoPin", s."GainCorrection", s."I2CAddress", s."Icon", s."IntervalSeconds", s."IsActive" AS "IsActive0", s."LastCalibratedAt", s."Manufacturer", s."MinIntervalSeconds", s."Model", s."Name", s."OffsetCorrection", s."OneWirePin", s."Protocol", s."SclPin", s."SdaPin", s."SerialNumber", s."TenantId", s."TriggerPin", s."UpdatedAt", s."WarmupTimeMs", s0."Id" AS "Id1", s0."Accuracy", s0."DisplayName", s0."IsActive" AS "IsActive1", s0."MatterClusterId", s0."MatterClusterName", s0."MaxValue", s0."MeasurementType", s0."MinValue", s0."Resolution", s0."SensorId" AS "SensorId0", s0."SortOrder", s0."Unit"
+    FROM "NodeSensorAssignments" AS n0
+    INNER JOIN "Sensors" AS s ON n0."SensorId" = s."Id"
+    LEFT JOIN "SensorCapabilities" AS s0 ON s."Id" = s0."SensorId"
+) AS s1 ON n1."Id" = s1."NodeId"
+ORDER BY n1."Id", s1."Id", s1."Id0"
+2025-12-12 14:23:14.629 +01:00 [ERR] Failed executing DbCommand (33,415ms) [Parameters=[@tenantId='?' (DbType = Guid)], CommandType='"Text"', CommandTimeout='30']
+SELECT s."Id", s."AnalogPin", s."BaudRate", s."CalibrationDueAt", s."CalibrationNotes", s."Category", s."Code", s."Color", s."CreatedAt", s."DatasheetUrl", s."Description", s."DigitalPin", s."EchoPin", s."GainCorrection", s."I2CAddress", s."Icon", s."IntervalSeconds", s."IsActive", s."LastCalibratedAt", s."Manufacturer", s."MinIntervalSeconds", s."Model", s."Name", s."OffsetCorrection", s."OneWirePin", s."Protocol", s."SclPin", s."SdaPin", s."SerialNumber", s."TenantId", s."TriggerPin", s."UpdatedAt", s."WarmupTimeMs", s0."Id", s0."Accuracy", s0."DisplayName", s0."IsActive", s0."MatterClusterId", s0."MatterClusterName", s0."MaxValue", s0."MeasurementType", s0."MinValue", s0."Resolution", s0."SensorId", s0."SortOrder", s0."Unit"
+FROM "Sensors" AS s
+LEFT JOIN "SensorCapabilities" AS s0 ON s."Id" = s0."SensorId"
+WHERE s."TenantId" = @tenantId
+ORDER BY s."Category", s."Name", s."Id"
+2025-12-12 14:23:16.023 +01:00 [INF] GET /api/hub responded 200 in 34811.9430 ms
+2025-12-12 14:23:16.025 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 34813.4192 ms
+2025-12-12 14:23:16.026 +01:00 [INF] GET /api/sensors responded 200 in 34814.8945 ms
+2025-12-12 14:23:16.033 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 34821.7239 ms
+2025-12-12 14:23:16.089 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 14:23:16.089 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 22.9299 ms
+2025-12-12 14:23:16.132 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 14:23:16.133 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 43.6212 ms
+2025-12-12 14:23:16.314 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 224.8560 ms
+2025-12-12 14:23:16.823 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 35611.9604 ms
+2025-12-12 14:23:17.355 +01:00 [INF] GET /api/readings/paged responded 200 in 1265.9565 ms
+2025-12-12 17:25:19.321 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:19.324 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:19.333 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:19.337 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:20.354 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:20.387 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:23.370 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:23.399 +01:00 [ERR] An exception occurred while iterating over the results of a query for context type 'myIoTGrid.Cloud.Infrastructure.Data.CloudDbContext'.
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2025-12-12 17:25:23.494 +01:00 [ERR] Unbehandelte Exception: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.ToListAsync[TSource](IQueryable`1 source, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Service.Services.NodeService.GetAllAsync(CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Service/Services/NodeService.cs:line 35
+   at myIoTGrid.Cloud.Interface.Controllers.NodesController.GetAll(Nullable`1 hubId, CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Controllers/NodesController.cs:line 66
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at myIoTGrid.Cloud.Interface.Middleware.TenantMiddleware.InvokeAsync(HttpContext context, ITenantService tenantService) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/TenantMiddleware.cs:line 52
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at myIoTGrid.Cloud.Interface.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/ExceptionMiddleware.cs:line 40
+2025-12-12 17:25:23.510 +01:00 [ERR] GET /api/nodes responded 500 in 4198.1128 ms
+2025-12-12 17:25:23.538 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:25:23.540 +01:00 [ERR] An exception occurred while iterating over the results of a query for context type 'myIoTGrid.Cloud.Infrastructure.Data.CloudDbContext'.
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+2025-12-12 17:25:23.606 +01:00 [ERR] Unbehandelte Exception: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+Microsoft.EntityFrameworkCore.Storage.RetryLimitExceededException: The maximum number of retries (3) was exceeded while executing database operations with 'NpgsqlRetryingExecutionStrategy'. See the inner exception for the most recent failure.
+ ---> Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.InitializeReaderAsync(AsyncEnumerator enumerator, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.<>c__DisplayClass30_0`2.<<ExecuteAsync>b__0>d.MoveNext()
+--- End of stack trace from previous location ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   --- End of inner exception stack trace ---
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteImplementationAsync[TState,TResult](Func`4 operation, Func`4 verifySucceeded, TState state, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.ExecutionStrategy.ExecuteAsync[TState,TResult](TState state, Func`4 operation, Func`4 verifySucceeded, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.Internal.SingleQueryingEnumerable`1.AsyncEnumerator.MoveNextAsync()
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Query.ShapedQueryCompilingExpressionVisitor.SingleOrDefaultAsync[TSource](IAsyncEnumerable`1 asyncEnumerable, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Service.Services.HubService.GetCurrentHubAsync(CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Service/Services/HubService.cs:line 49
+   at myIoTGrid.Cloud.Interface.Controllers.HubController.Get(CancellationToken ct) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Controllers/HubController.cs:line 34
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ActionMethodExecutor.TaskOfIActionResultExecutor.Execute(ActionContext actionContext, IActionResultTypeMapper mapper, ObjectMethodExecutor executor, Object controller, Object[] arguments)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeActionMethodAsync>g__Logged|12_1(ControllerActionInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeNextActionFilterAsync>g__Awaited|10_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Rethrow(ActionExecutedContextSealed context)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.Next(State& next, Scope& scope, Object& state, Boolean& isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ControllerActionInvoker.<InvokeInnerFilterAsync>g__Awaited|13_0(ControllerActionInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeFilterPipelineAsync>g__Awaited|20_0(ResourceInvoker invoker, Task lastTask, State next, Scope scope, Object state, Boolean isCompleted)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Mvc.Infrastructure.ResourceInvoker.<InvokeAsync>g__Logged|17_1(ResourceInvoker invoker)
+   at Microsoft.AspNetCore.Authorization.AuthorizationMiddleware.Invoke(HttpContext context)
+   at myIoTGrid.Cloud.Interface.Middleware.TenantMiddleware.InvokeAsync(HttpContext context, ITenantService tenantService) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/TenantMiddleware.cs:line 52
+   at Swashbuckle.AspNetCore.SwaggerUI.SwaggerUIMiddleware.Invoke(HttpContext httpContext)
+   at Swashbuckle.AspNetCore.Swagger.SwaggerMiddleware.Invoke(HttpContext httpContext, ISwaggerProvider swaggerProvider)
+   at myIoTGrid.Cloud.Interface.Middleware.ExceptionMiddleware.InvokeAsync(HttpContext context) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/Middleware/ExceptionMiddleware.cs:line 40
+2025-12-12 17:25:23.611 +01:00 [ERR] GET /api/hub responded 500 in 4298.9270 ms
+2025-12-12 17:33:28.252 +01:00 [INF] Client getrennt: KAYt7xdfD2UQJ34ZeIXzAQ
+2025-12-12 17:33:28.253 +01:00 [INF] GET /hubs/sensors responded 101 in 2130586.2837 ms
+2025-12-12 17:35:09.942 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 17:35:10.476 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 17:35:10.819 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:35:10.821 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:35:10.823 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:35:10.823 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:35:12.695 +01:00 [INF] Applying database migrations...
+2025-12-12 17:35:13.946 +01:00 [INF] Database connection established successfully
+2025-12-12 17:35:13.956 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 17:35:13.957 +01:00 [INF] Mode: Development
+2025-12-12 17:35:13.957 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 17:35:13.957 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 17:35:13.957 +01:00 [INF] Health Check: /health
+2025-12-12 17:35:13.966 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 17:35:13.966 +01:00 [INF] Applying database migrations...
+2025-12-12 17:35:15.007 +01:00 [INF] Database migrations applied successfully
+2025-12-12 17:35:15.011 +01:00 [INF] Starting seed data process...
+2025-12-12 17:35:15.373 +01:00 [INF] Default tenant ensured
+2025-12-12 17:35:15.824 +01:00 [INF] Default Hub ensured
+2025-12-12 17:35:15.972 +01:00 [INF] Default alert types seeded
+2025-12-12 17:35:16.476 +01:00 [INF] Default sensors seeded
+2025-12-12 17:35:16.476 +01:00 [INF] Seed data process completed
+2025-12-12 17:35:16.476 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 17:35:16.478 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 17:35:17.531 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 157.7029 ms
+2025-12-12 17:53:46.303 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 17:53:46.885 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 17:53:47.236 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:53:47.238 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:53:47.240 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:53:47.240 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:53:51.687 +01:00 [WRN] Database connection failed (attempt 1/5): Database connection test failed. Retrying in 5s...
+2025-12-12 17:53:56.689 +01:00 [INF] Testing database connection (attempt 2/5)...
+2025-12-12 17:54:01.015 +01:00 [WRN] Database connection failed (attempt 2/5): Database connection test failed. Retrying in 5s...
+2025-12-12 17:54:06.018 +01:00 [INF] Testing database connection (attempt 3/5)...
+2025-12-12 17:54:10.222 +01:00 [WRN] Database connection failed (attempt 3/5): Database connection test failed. Retrying in 5s...
+2025-12-12 17:54:15.223 +01:00 [INF] Testing database connection (attempt 4/5)...
+2025-12-12 17:54:19.439 +01:00 [WRN] Database connection failed (attempt 4/5): Database connection test failed. Retrying in 5s...
+2025-12-12 17:54:24.440 +01:00 [INF] Testing database connection (attempt 5/5)...
+2025-12-12 17:54:28.588 +01:00 [ERR] Database connection failed after 5 attempts. Application will continue without database.
+System.Exception: Database connection test failed
+   at Program.<Main>$(String[] args) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/Program.cs:line 254
+2025-12-12 17:54:28.612 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 17:54:28.613 +01:00 [INF] Mode: Development
+2025-12-12 17:54:28.613 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 17:54:28.613 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 17:54:28.613 +01:00 [INF] Health Check: /health
+2025-12-12 17:54:28.621 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 17:54:28.621 +01:00 [INF] Applying database migrations...
+2025-12-12 17:54:28.646 +01:00 [ERR] An error occurred using the connection to database 'myiotgrid_cloud' on server 'tcp://db.wedevlab.de:5432'.
+2025-12-12 17:54:28.664 +01:00 [ERR] Error during seed data initialization
+Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.HistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlHistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Interface.BackgroundServices.SeedDataHostedService.StartAsync(CancellationToken cancellationToken) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/BackgroundServices/SeedDataHostedService.cs:line 38
+2025-12-12 17:54:28.686 +01:00 [ERR] Hosting failed to start
+Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.HistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlHistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Interface.BackgroundServices.SeedDataHostedService.StartAsync(CancellationToken cancellationToken) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/BackgroundServices/SeedDataHostedService.cs:line 38
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+2025-12-12 17:54:28.708 +01:00 [FTL] Application terminated unexpectedly
+Npgsql.NpgsqlException (0x80004005): nodename nor servname provided, or not known
+ ---> System.Net.Sockets.SocketException (00000005, 0xFFFDFFFF): nodename nor servname provided, or not known
+   at System.Net.Dns.GetHostEntryOrAddressesCore(String hostName, Boolean justAddresses, AddressFamily addressFamily, Nullable`1 activityOrDefault)
+   at System.Net.Dns.<>c.<GetHostEntryOrAddressesCoreAsync>b__34_0(Object s, NameResolutionActivity activity)
+   at System.Net.Dns.<>c__DisplayClass40_0`1.<RunAsync>b__0(Task <p0>, Object <p1>)
+   at System.Threading.Tasks.ContinuationResultTaskFromTask`1.InnerInvoke()
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+--- End of stack trace from previous location ---
+   at System.Threading.ExecutionContext.RunFromThreadPoolDispatchLoop(Thread threadPoolThread, ExecutionContext executionContext, ContextCallback callback, Object state)
+   at System.Threading.Tasks.Task.ExecuteWithThreadLocal(Task& currentTaskSlot, Thread threadPoolThread)
+--- End of stack trace from previous location ---
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.ConnectAsync(NpgsqlTimeout timeout, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.RawOpen(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.<Open>g__OpenCore|209_0(NpgsqlConnector conn, String username, SslMode sslMode, GssEncryptionMode gssEncMode, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.Internal.NpgsqlConnector.Open(NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.OpenNewConnector(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.PoolingDataSource.<Get>g__RentAsync|33_0(NpgsqlConnection conn, NpgsqlTimeout timeout, Boolean async, CancellationToken cancellationToken)
+   at Npgsql.NpgsqlConnection.<Open>g__OpenAsync|42_0(Boolean async, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenInternalAsync(Boolean errorsExpected, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalConnection.OpenAsync(CancellationToken cancellationToken, Boolean errorsExpected)
+   at Microsoft.EntityFrameworkCore.Storage.RelationalCommand.ExecuteReaderAsync(RelationalCommandParameterObject parameterObject, CancellationToken cancellationToken)
+   at Microsoft.EntityFrameworkCore.Migrations.HistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlHistoryRepository.GetAppliedMigrationsAsync(CancellationToken cancellationToken)
+   at Npgsql.EntityFrameworkCore.PostgreSQL.Migrations.Internal.NpgsqlMigrator.MigrateAsync(String targetMigration, CancellationToken cancellationToken)
+   at myIoTGrid.Cloud.Interface.BackgroundServices.SeedDataHostedService.StartAsync(CancellationToken cancellationToken) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Interface/BackgroundServices/SeedDataHostedService.cs:line 38
+   at Microsoft.Extensions.Hosting.Internal.Host.<StartAsync>b__14_1(IHostedService service, CancellationToken token)
+   at Microsoft.Extensions.Hosting.Internal.Host.ForeachService[T](IEnumerable`1 services, CancellationToken token, Boolean concurrent, Boolean abortOnFirstException, List`1 exceptions, Func`3 operation)
+   at Microsoft.Extensions.Hosting.Internal.Host.StartAsync(CancellationToken cancellationToken)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.RunAsync(IHost host, CancellationToken token)
+   at Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions.Run(IHost host)
+   at Program.<Main>$(String[] args) in /Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Cloud/src/myIoTGrid.Cloud.Api/Program.cs:line 306
+2025-12-12 17:54:44.743 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 17:54:45.363 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 17:54:45.704 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:54:45.706 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 17:54:45.708 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:54:45.708 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 17:54:47.655 +01:00 [INF] Applying database migrations...
+2025-12-12 17:54:48.900 +01:00 [INF] Database connection established successfully
+2025-12-12 17:54:48.903 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 17:54:48.903 +01:00 [INF] Mode: Development
+2025-12-12 17:54:48.903 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 17:54:48.903 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 17:54:48.903 +01:00 [INF] Health Check: /health
+2025-12-12 17:54:48.912 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 17:54:48.912 +01:00 [INF] Applying database migrations...
+2025-12-12 17:54:50.002 +01:00 [INF] Database migrations applied successfully
+2025-12-12 17:54:50.009 +01:00 [INF] Starting seed data process...
+2025-12-12 17:54:50.376 +01:00 [INF] Default tenant ensured
+2025-12-12 17:54:50.842 +01:00 [INF] Default Hub ensured
+2025-12-12 17:54:51.017 +01:00 [INF] Default alert types seeded
+2025-12-12 17:54:51.531 +01:00 [INF] Default sensors seeded
+2025-12-12 17:54:51.531 +01:00 [INF] Seed data process completed
+2025-12-12 17:54:51.531 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 17:54:51.533 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 17:54:52.241 +01:00 [INF] GET /swagger/index.html responded 200 in 58.3840 ms
+2025-12-12 17:54:52.415 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 137.7820 ms
+2025-12-12 17:54:54.706 +01:00 [INF] GET /swagger/index.html responded 200 in 0.9387 ms
+2025-12-12 17:54:54.782 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 36.3805 ms
+2025-12-12 17:54:57.756 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 14.3332 ms
+2025-12-12 17:54:57.782 +01:00 [INF] Client verbunden: cBOWz-4ORDKJfI_Vn5zAig (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 17:54:58.189 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 401.1011 ms
+2025-12-12 17:54:58.222 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 17:54:58.404 +01:00 [INF] GET /api/alerts responded 200 in 210.6348 ms
+2025-12-12 17:54:59.649 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 1455.6123 ms
+2025-12-12 17:55:01.903 +01:00 [INF] GET /api/sensors/paged responded 200 in 456.0124 ms
+2025-12-12 17:55:02.280 +01:00 [INF] GET /api/sensors/paged responded 200 in 351.4320 ms
+2025-12-12 17:55:03.153 +01:00 [INF] GET /api/hub responded 200 in 230.3438 ms
+2025-12-12 17:55:03.161 +01:00 [INF] GET /api/nodes responded 200 in 238.5270 ms
+2025-12-12 17:55:03.182 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 17:55:03.378 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62/sensors/latest responded 200 in 212.6761 ms
+2025-12-12 17:55:04.368 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 1203.2144 ms
+2025-12-12 17:55:04.731 +01:00 [INF] GET /api/hub responded 200 in 151.8729 ms
+2025-12-12 17:55:05.808 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 200 in 1224.7959 ms
+2025-12-12 17:55:05.821 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/sensors/latest responded 200 in 1235.5793 ms
+2025-12-12 17:55:05.967 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 17:55:05.967 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 17:55:05.974 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/hardware-status responded 400 in 150.4294 ms
+2025-12-12 17:55:05.974 +01:00 [INF] GET /api/node-debug/1de81010-3dac-4651-9f01-b4683af0dd3e/debug/logs/recent responded 400 in 148.7365 ms
+2025-12-12 17:55:06.078 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/assignments responded 200 in 1494.3106 ms
+2025-12-12 17:55:06.087 +01:00 [INF] GET /api/sensors responded 200 in 1505.0613 ms
+2025-12-12 17:55:06.130 +01:00 [INF] GET /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e/debug responded 200 in 304.8910 ms
+2025-12-12 17:55:06.321 +01:00 [INF] GET /api/readings/paged responded 200 in 355.3530 ms
+2025-12-12 17:55:14.560 +01:00 [INF] Node deleted: ESP32-0070078493A0 (-93A0)
+2025-12-12 17:55:14.561 +01:00 [INF] DELETE /api/nodes/1de81010-3dac-4651-9f01-b4683af0dd3e responded 204 in 621.5115 ms
+2025-12-12 17:55:14.739 +01:00 [INF] GET /api/hub responded 200 in 162.9619 ms
+2025-12-12 17:55:14.739 +01:00 [INF] GET /api/nodes responded 200 in 162.9443 ms
+2025-12-12 17:55:14.922 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62/sensors/latest responded 200 in 172.2367 ms
+2025-12-12 17:55:16.102 +01:00 [INF] GET /api/hub responded 200 in 164.2380 ms
+2025-12-12 17:55:16.118 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62 responded 200 in 177.8108 ms
+2025-12-12 17:55:16.164 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62/assignments responded 200 in 224.5349 ms
+2025-12-12 17:55:16.188 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 17:55:16.214 +01:00 [INF] GET /api/node-debug/133fa66a-2b15-4c48-88d6-0feb343c3f62/hardware-status responded 400 in 89.5354 ms
+2025-12-12 17:55:16.242 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62/sensors/latest responded 200 in 302.0333 ms
+2025-12-12 17:55:16.277 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 17:55:16.278 +01:00 [INF] GET /api/node-debug/133fa66a-2b15-4c48-88d6-0feb343c3f62/debug/logs/recent responded 400 in 153.3083 ms
+2025-12-12 17:55:16.278 +01:00 [INF] GET /api/sensors responded 200 in 338.6238 ms
+2025-12-12 17:55:16.395 +01:00 [INF] GET /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62/debug responded 200 in 270.0500 ms
+2025-12-12 17:55:16.593 +01:00 [INF] GET /api/readings/paged responded 200 in 315.4442 ms
+2025-12-12 17:55:24.062 +01:00 [INF] Node deleted: node-0070078493a0 (myIoTGrid-93A0)
+2025-12-12 17:55:24.063 +01:00 [INF] DELETE /api/nodes/133fa66a-2b15-4c48-88d6-0feb343c3f62 responded 204 in 394.0219 ms
+2025-12-12 17:55:24.228 +01:00 [INF] GET /api/nodes responded 200 in 151.9477 ms
+2025-12-12 17:55:24.239 +01:00 [INF] GET /api/hub responded 200 in 162.3375 ms
+2025-12-12 17:55:43.161 +01:00 [INF] GET /api/hub/properties responded 200 in 8.3550 ms
+2025-12-12 17:55:59.191 +01:00 [INF] Node created: ESP32-0070078492CC (-92CC)
+2025-12-12 17:55:59.204 +01:00 [INF] POST /api/nodes responded 201 in 902.5822 ms
+2025-12-12 17:55:59.372 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 162.4090 ms
+2025-12-12 17:56:51.914 +01:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2025-12-12 17:56:52.271 +01:00 [INF] Node registered via BLE: node-0070078492cc (myIoTGrid-92CC) MAC: 0070078492CC
+2025-12-12 17:56:52.279 +01:00 [INF] POST /api/nodes/provision responded 200 in 12681.5206 ms
+2025-12-12 17:56:53.713 +01:00 [INF] GET /api/sensors responded 200 in 210.5941 ms
+2025-12-12 17:59:51.590 +01:00 [INF] Starting data retention cleanup. Removing data older than 2025-11-12 16:59:51Z
+2025-12-12 17:59:52.842 +01:00 [INF] Deleted 0 synced readings older than 30 days
+2025-12-12 17:59:53.000 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
+2025-12-12 17:59:53.153 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
+2025-12-12 17:59:53.336 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 18:03:33.704 +01:00 [INF] Client getrennt: cBOWz-4ORDKJfI_Vn5zAig
+2025-12-12 18:03:33.706 +01:00 [INF] GET /hubs/sensors responded 101 in 515895.1035 ms
+2025-12-12 19:41:37.728 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 19:41:38.370 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 19:41:38.721 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 19:41:38.723 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 19:41:38.725 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 19:41:38.725 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 19:41:40.333 +01:00 [INF] Applying database migrations...
+2025-12-12 19:41:41.487 +01:00 [INF] Database connection established successfully
+2025-12-12 19:41:41.491 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 19:41:41.492 +01:00 [INF] Mode: Development
+2025-12-12 19:41:41.492 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 19:41:41.492 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 19:41:41.492 +01:00 [INF] Health Check: /health
+2025-12-12 19:41:41.499 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 19:41:41.500 +01:00 [INF] Applying database migrations...
+2025-12-12 19:41:42.527 +01:00 [INF] Database migrations applied successfully
+2025-12-12 19:41:42.535 +01:00 [INF] Starting seed data process...
+2025-12-12 19:41:42.923 +01:00 [INF] Default tenant ensured
+2025-12-12 19:41:43.374 +01:00 [INF] Default Hub ensured
+2025-12-12 19:41:43.522 +01:00 [INF] Default alert types seeded
+2025-12-12 19:41:44.022 +01:00 [INF] Default sensors seeded
+2025-12-12 19:41:44.022 +01:00 [INF] Seed data process completed
+2025-12-12 19:41:44.022 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 19:41:44.024 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 19:41:44.771 +01:00 [INF] GET /swagger/index.html responded 200 in 50.0738 ms
+2025-12-12 19:41:44.946 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 137.5055 ms
+2025-12-12 19:41:51.835 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 15.2000 ms
+2025-12-12 19:41:51.854 +01:00 [INF] Client verbunden: 4j4zzfuPMXFoj04SoVHMZA (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 19:41:52.336 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 338.0198 ms
+2025-12-12 19:41:52.368 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 19:41:52.533 +01:00 [INF] GET /api/alerts responded 200 in 192.9463 ms
+2025-12-12 19:41:53.658 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 1317.4205 ms
+2025-12-12 19:41:56.215 +01:00 [INF] GET /api/sensors/paged responded 200 in 431.6063 ms
+2025-12-12 19:41:56.556 +01:00 [INF] GET /api/sensors/paged responded 200 in 315.7451 ms
+2025-12-12 19:41:57.464 +01:00 [INF] GET /api/hub responded 200 in 195.4103 ms
+2025-12-12 19:41:57.470 +01:00 [INF] GET /api/nodes responded 200 in 201.0897 ms
+2025-12-12 19:41:57.491 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 19:41:57.678 +01:00 [INF] GET /api/nodes/ccfc8f5e-2c03-40e2-8d68-d68de8806ad0/sensors/latest responded 200 in 202.1445 ms
+2025-12-12 19:41:57.678 +01:00 [INF] GET /api/nodes/9d138ef4-bd56-4443-b49b-c68e20aac654/sensors/latest responded 200 in 202.1641 ms
+2025-12-12 19:41:58.950 +01:00 [INF] GET /api/hub responded 200 in 187.2308 ms
+2025-12-12 19:41:58.956 +01:00 [INF] GET /api/nodes/9d138ef4-bd56-4443-b49b-c68e20aac654/sensors/latest responded 200 in 191.5398 ms
+2025-12-12 19:41:59.946 +01:00 [INF] GET /api/nodes/9d138ef4-bd56-4443-b49b-c68e20aac654/assignments responded 200 in 1181.9554 ms
+2025-12-12 19:41:59.958 +01:00 [INF] GET /api/nodes/9d138ef4-bd56-4443-b49b-c68e20aac654 responded 200 in 1194.8820 ms
+2025-12-12 19:41:59.968 +01:00 [INF] GET /api/sensors responded 200 in 1204.8617 ms
+2025-12-12 19:42:00.078 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:42:00.142 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:42:00.150 +01:00 [INF] GET /api/node-debug/9d138ef4-bd56-4443-b49b-c68e20aac654/debug/logs/recent responded 400 in 173.8172 ms
+2025-12-12 19:42:00.150 +01:00 [INF] GET /api/node-debug/9d138ef4-bd56-4443-b49b-c68e20aac654/hardware-status responded 400 in 175.9327 ms
+2025-12-12 19:42:00.327 +01:00 [INF] GET /api/nodes/9d138ef4-bd56-4443-b49b-c68e20aac654/debug responded 200 in 351.1016 ms
+2025-12-12 19:42:00.513 +01:00 [INF] GET /api/readings/paged responded 200 in 435.7525 ms
+2025-12-12 19:44:43.631 +01:00 [INF] Starting myIoTGrid Cloud API...
+2025-12-12 19:44:44.234 +01:00 [INF] Testing database connection (attempt 1/5)...
+2025-12-12 19:44:44.581 +01:00 [WRN] The entity type 'Node.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 19:44:44.583 +01:00 [WRN] The entity type 'SyncedNode.Location#Location' is an optional dependent using table sharing without any required non shared column that could be used to identify whether the entity exists. If all nullable properties contain a 'null' value in database then an object instance won't be created in the query. Add a required property to create instances with 'null' values for other properties or mark the incoming navigation as required to always create an instance.
+2025-12-12 19:44:44.585 +01:00 [WRN] The 'DebugLevel' property 'DebugLevel' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Production', since this is the CLR default for the 'DebugLevel' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 19:44:44.585 +01:00 [WRN] The 'Protocol' property 'Protocol' on entity type 'Node' is configured with a database-generated default, but has no configured sentinel value. The database-generated default will always be used for inserts when the property has the value 'Unknown', since this is the CLR default for the 'Protocol' type. Consider using a nullable type, using a nullable backing field, or setting the sentinel value for the property to ensure the database default is used when, and only when, appropriate. See https://aka.ms/efcore-docs-default-values for more information.
+2025-12-12 19:44:46.250 +01:00 [INF] Applying database migrations...
+2025-12-12 19:44:47.776 +01:00 [INF] Database connection established successfully
+2025-12-12 19:44:47.779 +01:00 [INF] myIoTGrid Cloud API started successfully
+2025-12-12 19:44:47.779 +01:00 [INF] Mode: Development
+2025-12-12 19:44:47.779 +01:00 [INF] Swagger UI: /swagger
+2025-12-12 19:44:47.779 +01:00 [INF] SignalR Hub: /hubs/sensors
+2025-12-12 19:44:47.779 +01:00 [INF] Health Check: /health
+2025-12-12 19:44:47.789 +01:00 [INF] SeedDataHostedService starting...
+2025-12-12 19:44:47.789 +01:00 [INF] Applying database migrations...
+2025-12-12 19:44:48.754 +01:00 [INF] Database migrations applied successfully
+2025-12-12 19:44:48.756 +01:00 [INF] Starting seed data process...
+2025-12-12 19:44:49.120 +01:00 [INF] Default tenant ensured
+2025-12-12 19:44:49.537 +01:00 [INF] Default Hub ensured
+2025-12-12 19:44:49.675 +01:00 [INF] Default alert types seeded
+2025-12-12 19:44:50.179 +01:00 [INF] Default sensors seeded
+2025-12-12 19:44:50.179 +01:00 [INF] Seed data process completed
+2025-12-12 19:44:50.179 +01:00 [INF] SeedDataHostedService completed successfully
+2025-12-12 19:44:50.181 +01:00 [INF] DataRetentionService started. Interval: 24h, Retention: 30 days
+2025-12-12 19:44:50.879 +01:00 [INF] GET /swagger/index.html responded 200 in 54.4446 ms
+2025-12-12 19:44:51.058 +01:00 [INF] GET /swagger/v1/swagger.json responded 200 in 139.9677 ms
+2025-12-12 19:44:56.161 +01:00 [INF] GET /api/sensors/paged responded 200 in 463.5963 ms
+2025-12-12 19:44:56.490 +01:00 [INF] GET /api/sensors/paged responded 200 in 320.7591 ms
+2025-12-12 19:44:57.264 +01:00 [INF] GET /api/hub responded 200 in 182.0700 ms
+2025-12-12 19:44:58.285 +01:00 [INF] GET /api/nodes responded 200 in 1202.4290 ms
+2025-12-12 19:44:58.296 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 3.0938 ms
+2025-12-12 19:44:58.313 +01:00 [INF] Client verbunden: GhtO89VrkuHwCW5yezcoKg (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 19:44:59.365 +01:00 [INF] POST /hubs/sensors/negotiate responded 200 in 0.9637 ms
+2025-12-12 19:44:59.373 +01:00 [INF] Client verbunden: g4h7VsSOrIqBv2GkeWbmww (Tenant: "00000000-0000-0000-0000-000000000001")
+2025-12-12 19:45:05.419 +01:00 [INF] GET /api/hub/properties responded 200 in 9.1389 ms
+2025-12-12 19:45:23.607 +01:00 [INF] Node created: ESP32-0070078492CC (-92CC)
+2025-12-12 19:45:23.630 +01:00 [INF] POST /api/nodes responded 201 in 891.4096 ms
+2025-12-12 19:45:23.798 +01:00 [INF] GET /api/hub/provisioning-settings responded 200 in 155.7182 ms
+2025-12-12 19:45:43.404 +01:00 [WRN] The query uses the 'First'/'FirstOrDefault' operator without 'OrderBy' and filter operators. This may lead to unpredictable results.
+2025-12-12 19:45:43.864 +01:00 [INF] Node registered via BLE: node-0070078492cc (myIoTGrid-92CC) MAC: 0070078492CC
+2025-12-12 19:45:43.874 +01:00 [INF] POST /api/nodes/provision responded 200 in 937.9212 ms
+2025-12-12 19:45:45.296 +01:00 [INF] GET /api/sensors responded 200 in 243.1241 ms
+2025-12-12 19:45:52.494 +01:00 [INF] Assignment created: Sensor "f0d44394-cb7e-4801-9aa8-8fe4936cb373" -> Node "5b036ce9-918a-4d09-a5aa-ea351f502d8a" (Endpoint 1)
+2025-12-12 19:45:52.507 +01:00 [INF] POST /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/assignments responded 201 in 971.8199 ms
+2025-12-12 19:45:53.378 +01:00 [INF] Assignment created: Sensor "a1990c6c-60db-4caf-b25d-5f74564231b6" -> Node "5b036ce9-918a-4d09-a5aa-ea351f502d8a" (Endpoint 2)
+2025-12-12 19:45:53.379 +01:00 [INF] POST /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/assignments responded 201 in 867.0598 ms
+2025-12-12 19:45:54.889 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 19:45:55.043 +01:00 [INF] GET /api/hub responded 200 in 254.0141 ms
+2025-12-12 19:45:55.078 +01:00 [INF] GET /api/sensors responded 200 in 210.9448 ms
+2025-12-12 19:45:56.285 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/assignments responded 200 in 1495.9539 ms
+2025-12-12 19:45:56.297 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a responded 200 in 1508.0295 ms
+2025-12-12 19:45:56.459 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:45:56.459 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:45:56.464 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/hardware-status responded 400 in 152.4645 ms
+2025-12-12 19:45:56.464 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug/logs/recent responded 400 in 151.2714 ms
+2025-12-12 19:45:56.604 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug responded 200 in 292.3963 ms
+2025-12-12 19:45:56.809 +01:00 [INF] GET /api/readings/paged responded 200 in 374.4879 ms
+2025-12-12 19:45:57.105 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/sensors/latest responded 200 in 2234.2801 ms
+2025-12-12 19:45:59.564 +01:00 [INF] GET /api/dashboard/filter-options responded 200 in 321.5487 ms
+2025-12-12 19:45:59.589 +01:00 [WRN] Compiling a query which loads related collections for more than one collection navigation, either via 'Include' or through projection, but no 'QuerySplittingBehavior' has been configured. By default, Entity Framework will use 'QuerySplittingBehavior.SingleQuery', which can potentially result in slow query performance. See https://go.microsoft.com/fwlink/?linkid=2134277 for more information. To identify the query that's triggering this warning call 'ConfigureWarnings(w => w.Throw(RelationalEventId.MultipleCollectionIncludeWarning))'.
+2025-12-12 19:45:59.756 +01:00 [INF] GET /api/alerts responded 200 in 186.3040 ms
+2025-12-12 19:45:59.934 +01:00 [INF] GET /api/dashboard/widgets responded 200 in 363.7202 ms
+2025-12-12 19:46:01.369 +01:00 [INF] GET /api/hub responded 200 in 166.4465 ms
+2025-12-12 19:46:01.372 +01:00 [INF] GET /api/nodes responded 200 in 170.0185 ms
+2025-12-12 19:46:01.545 +01:00 [INF] GET /api/nodes/d33decff-ab0a-463c-8528-93035b7e8f69/sensors/latest responded 200 in 165.0152 ms
+2025-12-12 19:46:02.157 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/sensors/latest responded 200 in 777.5945 ms
+2025-12-12 19:46:05.360 +01:00 [INF] GET /api/hub responded 200 in 164.7670 ms
+2025-12-12 19:46:05.370 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a responded 200 in 175.3206 ms
+2025-12-12 19:46:05.374 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/assignments responded 200 in 178.6953 ms
+2025-12-12 19:46:05.394 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:46:05.395 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/hardware-status responded 400 in 16.8020 ms
+2025-12-12 19:46:05.420 +01:00 [INF] GET /api/sensors responded 200 in 225.1025 ms
+2025-12-12 19:46:05.461 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 19:46:05.461 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug/logs/recent responded 400 in 66.4155 ms
+2025-12-12 19:46:05.612 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug responded 200 in 218.5428 ms
+2025-12-12 19:46:05.776 +01:00 [INF] GET /api/readings/paged responded 200 in 381.3179 ms
+2025-12-12 19:46:06.015 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/sensors/latest responded 200 in 817.2174 ms
+2025-12-12 19:49:50.190 +01:00 [INF] Starting data retention cleanup. Removing data older than 2025-11-12 18:49:50Z
+2025-12-12 19:49:51.778 +01:00 [INF] Deleted 0 synced readings older than 30 days
+2025-12-12 19:49:51.915 +01:00 [INF] Deleted 0 acknowledged alerts older than 30 days
+2025-12-12 19:49:52.079 +01:00 [INF] Deleted 0 inactive alerts older than 30 days
+2025-12-12 19:49:52.265 +01:00 [INF] Data retention cleanup completed. Total deleted: Readings=0, Alerts=0
+2025-12-12 20:05:49.571 +01:00 [INF] GET /api/hub responded 200 in 1291.7998 ms
+2025-12-12 20:05:49.571 +01:00 [INF] GET /api/nodes responded 200 in 1291.8568 ms
+2025-12-12 20:05:49.775 +01:00 [INF] GET /api/nodes/d33decff-ab0a-463c-8528-93035b7e8f69/sensors/latest responded 200 in 196.9448 ms
+2025-12-12 20:05:50.388 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/sensors/latest responded 200 in 810.3226 ms
+2025-12-12 20:05:52.342 +01:00 [INF] GET /api/hub responded 200 in 166.3257 ms
+2025-12-12 20:05:52.349 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a responded 200 in 173.4161 ms
+2025-12-12 20:05:52.426 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 20:05:52.485 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/hardware-status responded 400 in 125.8519 ms
+2025-12-12 20:05:52.538 +01:00 [WRN] Request fehlgeschlagen: "BadRequest" - Unable to resolve service for type 'myIoTGrid.Shared.Contracts.Services.INodeHardwareStatusService' while attempting to activate 'myIoTGrid.Cloud.Interface.Controllers.NodeDebugController'.
+2025-12-12 20:05:52.538 +01:00 [INF] GET /api/node-debug/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug/logs/recent responded 400 in 178.0538 ms
+2025-12-12 20:05:52.746 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/debug responded 200 in 386.7503 ms
+2025-12-12 20:05:52.913 +01:00 [INF] GET /api/readings/paged responded 200 in 375.5713 ms
+2025-12-12 20:05:53.438 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/assignments responded 200 in 1258.2130 ms
+2025-12-12 20:05:53.501 +01:00 [INF] GET /api/sensors responded 200 in 1321.2667 ms
+2025-12-12 20:05:54.166 +01:00 [INF] GET /api/nodes/5b036ce9-918a-4d09-a5aa-ea351f502d8a/sensors/latest responded 200 in 1986.8515 ms

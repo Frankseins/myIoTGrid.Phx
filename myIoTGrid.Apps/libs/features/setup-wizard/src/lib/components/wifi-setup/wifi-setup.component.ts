@@ -11,8 +11,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { MatSelectModule } from '@angular/material/select';
 import { SetupWizardService, WifiCredentials } from '../../services/setup-wizard.service';
 import { BleCommunicationService } from '../../services/ble-communication.service';
-import { HubApiService } from '@myiotgrid/shared/data-access';
-import { HubProvisioningSettings } from '@myiotgrid/shared/models';
+import { HubApiService, NodeApiService } from '@myiotgrid/shared/data-access';
+import { HubProvisioningSettings, NodeConfigurationDto } from '@myiotgrid/shared/models';
+import { firstValueFrom } from 'rxjs';
 
 type ConfigState = 'idle' | 'scanning' | 'configuring' | 'success' | 'error';
 
@@ -38,6 +39,7 @@ export class WifiSetupComponent implements OnInit {
   private readonly wizardService = inject(SetupWizardService);
   private readonly bleService = inject(BleCommunicationService);
   private readonly hubApiService = inject(HubApiService);
+  private readonly nodeApiService = inject(NodeApiService);
   private readonly fb = inject(FormBuilder);
 
   readonly configState = signal<ConfigState>('idle');
@@ -49,6 +51,7 @@ export class WifiSetupComponent implements OnInit {
   form!: FormGroup;
 
   readonly bleDevice = this.wizardService.bleDevice;
+  readonly targetConfig = this.wizardService.targetConfig;
 
   ngOnInit(): void {
     this.initForm();
@@ -130,33 +133,18 @@ export class WifiSetupComponent implements OnInit {
           return;
         }
 
-        // Step 2: Send API configuration via BLE (no more mDNS discovery!)
-        const settings = this.provisioningSettings();
-        const createdNode = this.wizardService.createdNode();
+        // Step 2: Send API configuration via BLE
+        const targetConfig = this.targetConfig();
+        const isCloudMode = targetConfig?.mode === 'cloud';
 
-        if (settings?.apiUrl && createdNode) {
-          // Build the full Hub URL with port
-          // Check if URL already includes a port (after removing protocol like http://)
-          const urlWithoutProtocol = settings.apiUrl.replace(/^https?:\/\//, '');
-          const hasPort = urlWithoutProtocol.includes(':');
-          const hubUrl = hasPort
-            ? settings.apiUrl  // Already has port
-            : `${settings.apiUrl}:${settings.apiPort}`;
-
-          console.log('[WiFiSetup] Sending API config via BLE...', { hubUrl });
-          const apiSuccess = await this.bleService.sendApiConfig({
-            nodeId: createdNode.id,
-            apiKey: '', // API key will be assigned by Hub on first registration
-            hubUrl: hubUrl
-          });
-
-          if (!apiSuccess) {
-            console.warn('[WiFiSetup] API config send failed, ESP32 may use fallback discovery');
-          } else {
-            console.log('[WiFiSetup] API config sent successfully. ESP32 will connect directly to Hub.');
-          }
+        if (isCloudMode) {
+          // Cloud mode: Call provision endpoint with WiFi credentials
+          console.log('[WiFiSetup] Cloud mode: Calling provision endpoint...');
+          await this.configureCloudMode(credentials);
         } else {
-          console.log('[WiFiSetup] No API URL configured or no node created, ESP32 will use mDNS discovery.');
+          // Hub mode: Use existing provisioning settings
+          console.log('[WiFiSetup] Hub mode: Using local provisioning settings...');
+          await this.configureHubMode();
         }
 
         this.wizardService.setWifiCredentials(credentials);
@@ -182,6 +170,86 @@ export class WifiSetupComponent implements OnInit {
       console.error('[WiFiSetup] Configuration error:', error);
       this.configState.set('error');
       this.errorMessage.set('Konfiguration fehlgeschlagen. Bitte versuchen Sie es erneut.');
+    }
+  }
+
+  /**
+   * Configure for Cloud mode:
+   * 1. Call /api/nodes/provision with MAC address + WiFi credentials
+   * 2. Send API config (nodeId, apiKey, hubApiUrl, targetMode='cloud') to ESP32 via BLE
+   */
+  private async configureCloudMode(credentials: WifiCredentials): Promise<void> {
+    const bleDevice = this.bleDevice();
+    if (!bleDevice) {
+      throw new Error('No BLE device connected');
+    }
+
+    // Call Cloud provision endpoint with MAC address + WiFi credentials
+    const provisionDto = {
+      macAddress: bleDevice.macAddress,
+      name: bleDevice.name,
+      wifiSsid: credentials.ssid,
+      wifiPassword: credentials.password
+    };
+
+    console.log('[WiFiSetup] Provisioning node in Cloud...', { macAddress: provisionDto.macAddress });
+    const config: NodeConfigurationDto = await firstValueFrom(
+      this.nodeApiService.provision(provisionDto)
+    );
+
+    console.log('[WiFiSetup] Cloud provision response:', {
+      nodeId: config.nodeId,
+      hubApiUrl: config.hubApiUrl
+    });
+
+    // Send API config to ESP32 via BLE with target_mode='cloud'
+    console.log('[WiFiSetup] Sending API config via BLE (CLOUD mode)...', { hubUrl: config.hubApiUrl });
+    const apiSuccess = await this.bleService.sendApiConfig({
+      nodeId: config.nodeId,
+      apiKey: config.apiKey,
+      hubUrl: config.hubApiUrl,
+      targetMode: 'cloud'  // Tell firmware to use Cloud mode
+    });
+
+    if (!apiSuccess) {
+      console.warn('[WiFiSetup] API config send failed');
+      throw new Error('Konnte API-Konfiguration nicht an Sensor senden');
+    }
+
+    console.log('[WiFiSetup] Cloud mode configuration complete. ESP32 will connect to:', config.hubApiUrl);
+  }
+
+  /**
+   * Configure for Hub mode:
+   * Use local provisioning settings from Hub
+   */
+  private async configureHubMode(): Promise<void> {
+    const settings = this.provisioningSettings();
+    const createdNode = this.wizardService.createdNode();
+
+    if (settings?.apiUrl && createdNode) {
+      // Build the full Hub URL with port
+      const urlWithoutProtocol = settings.apiUrl.replace(/^https?:\/\//, '');
+      const hasPort = urlWithoutProtocol.includes(':');
+      const hubUrl = hasPort
+        ? settings.apiUrl
+        : `${settings.apiUrl}:${settings.apiPort}`;
+
+      console.log('[WiFiSetup] Sending API config via BLE (LOCAL mode)...', { hubUrl });
+      const apiSuccess = await this.bleService.sendApiConfig({
+        nodeId: createdNode.id,
+        apiKey: '', // API key will be assigned by Hub on first registration
+        hubUrl: hubUrl,
+        targetMode: 'local'  // Tell firmware to use Local/Hub mode
+      });
+
+      if (!apiSuccess) {
+        console.warn('[WiFiSetup] API config send failed, ESP32 may use fallback discovery');
+      } else {
+        console.log('[WiFiSetup] Hub mode configuration complete. ESP32 will connect to:', hubUrl);
+      }
+    } else {
+      console.log('[WiFiSetup] No API URL configured or no node created, ESP32 will use mDNS discovery.');
     }
   }
 

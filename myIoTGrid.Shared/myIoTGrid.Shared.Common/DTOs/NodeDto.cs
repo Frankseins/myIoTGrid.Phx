@@ -117,11 +117,16 @@ public record ConnectionConfigDto(
 /// <summary>
 /// DTO for node registration request (from ESP32 via BLE).
 /// Sent when node first connects to Hub.
+/// For Cloud mode: WiFi credentials come from frontend (user input in wizard).
+/// For Hub mode: WiFi credentials can be omitted (read from Hub settings).
 /// </summary>
 public record NodeRegistrationDto(
     string MacAddress,
     string? FirmwareVersion = null,
-    string? Name = null
+    string? Name = null,
+    // Cloud mode: WiFi from user input in wizard
+    string? WifiSsid = null,
+    string? WifiPassword = null
 );
 
 /// <summary>
@@ -134,6 +139,15 @@ public record NodeConfigurationDto(
     string WifiSsid,
     string WifiPassword,
     string HubApiUrl
+);
+
+/// <summary>
+/// DTO for regenerating API key (re-provisioning existing node).
+/// For Cloud mode: WiFi credentials from user input.
+/// </summary>
+public record RegenerateApiKeyDto(
+    string? WifiSsid = null,
+    string? WifiPassword = null
 );
 
 /// <summary>
