@@ -1,0 +1,73 @@
+{
+  "runtimeTarget": {
+    "name": ".NETCoreApp,Version=v10.0",
+    "signature": ""
+  },
+  "compilationOptions": {},
+  "targets": {
+    ".NETCoreApp,Version=v10.0": {
+      "myIoTGrid.Cloud.Shared/1.0.0": {
+        "dependencies": {
+          "myIoTGrid.Shared.Common": "1.0.0",
+          "myIoTGrid.Shared.Contracts": "1.0.0",
+          "myIoTGrid.Shared.Utilities": "1.0.0"
+        },
+        "runtime": {
+          "myIoTGrid.Cloud.Shared.dll": {}
+        }
+      },
+      "myIoTGrid.Shared.Common/1.0.0": {
+        "runtime": {
+          "myIoTGrid.Shared.Common.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "myIoTGrid.Shared.Contracts/1.0.0": {
+        "dependencies": {
+          "myIoTGrid.Shared.Common": "1.0.0"
+        },
+        "runtime": {
+          "myIoTGrid.Shared.Contracts.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      },
+      "myIoTGrid.Shared.Utilities/1.0.0": {
+        "dependencies": {
+          "myIoTGrid.Shared.Common": "1.0.0"
+        },
+        "runtime": {
+          "myIoTGrid.Shared.Utilities.dll": {
+            "assemblyVersion": "1.0.0.0",
+            "fileVersion": "1.0.0.0"
+          }
+        }
+      }
+    }
+  },
+  "libraries": {
+    "myIoTGrid.Cloud.Shared/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "myIoTGrid.Shared.Common/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "myIoTGrid.Shared.Contracts/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "myIoTGrid.Shared.Utilities/1.0.0": {
+      "type": "project",
+      "serviceable": false,
+      "sha512": ""
+    }
+  }
+}

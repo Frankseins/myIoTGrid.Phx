@@ -2,9 +2,10 @@
 # myIoTGrid Cloud Frontend - Multi-Stage Dockerfile
 # =============================================================================
 # Optimized for:
-# - Multi-Architecture builds (amd64 + arm64)
-# - HTTPS with SSL/TLS (Wildcard cert *.myiotgrid.cloud)
+# - Azure Container Apps deployment
+# - HTTP on Port 80 (Azure Ingress handles HTTPS externally)
 # - NX Monorepo build
+# - Multi-Architecture builds (amd64 + arm64)
 # - Layer caching
 # - Deployment: https://app.myiotgrid.cloud
 # - API Backend: https://api.myiotgrid.cloud
@@ -30,21 +31,18 @@ COPY . .
 RUN npx nx build cloud --configuration=production
 
 # -----------------------------------------------------------------------------
-# Stage 2: Serve with nginx (HTTPS)
+# Stage 2: Serve with nginx (HTTP only - Azure handles HTTPS)
 # -----------------------------------------------------------------------------
 FROM nginx:alpine
 
-# Copy nginx configuration (HTTPS enabled, proxies to api.myiotgrid.cloud)
+# Copy nginx configuration (HTTP on port 80)
 COPY docker/nginx.cloud.conf /etc/nginx/nginx.conf
 
 # Copy built application from build stage
 COPY --from=build /app/dist/apps/cloud/browser /usr/share/nginx/html
 
-# Create certs directory for wildcard certificate
-RUN mkdir -p /etc/nginx/certs
-
-# Expose ports (HTTP for redirect, HTTPS for traffic)
-EXPOSE 80 443
+# Expose HTTP port 80 (Azure Ingress handles HTTPS externally)
+EXPOSE 80
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \

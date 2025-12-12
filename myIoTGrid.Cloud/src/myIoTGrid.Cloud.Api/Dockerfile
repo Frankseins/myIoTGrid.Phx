@@ -2,11 +2,12 @@
 # myIoTGrid Cloud API - Multi-Stage Dockerfile
 # =============================================================================
 # Optimized for:
+# - Azure Container Apps deployment
+# - HTTP on Port 8080 (Azure Ingress handles HTTPS externally)
 # - Multi-Architecture builds (amd64 + arm64)
 # - Layer caching (dependencies first)
 # - Security (non-root user)
 # - Small image size (aspnet runtime only)
-# - Production HTTPS on Port 443 (with Wildcard Certificate *.myiotgrid.cloud)
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -56,9 +57,9 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Create logs and certs directories
+# Create logs directory
 # Note: .NET images already have an 'app' user (UID 1654)
-RUN mkdir -p /app/logs /app/certs && \
+RUN mkdir -p /app/logs && \
     chown -R app:app /app
 
 # Copy published files
@@ -70,20 +71,18 @@ RUN chown -R app:app /app
 # Switch to non-root user (built-in .NET user)
 USER app
 
-# Expose HTTPS port 443
-EXPOSE 443
+# Expose HTTP port 8080 (Azure Ingress handles HTTPS externally)
+EXPOSE 8080
 
-# Environment variables
-# Certificate paths for Wildcard cert (*.myiotgrid.cloud) mounted from host
-ENV ASPNETCORE_URLS=https://+:443
+# Environment variables for Azure Container Apps
+# No certificates needed - Azure handles HTTPS termination
+ENV ASPNETCORE_URLS=http://+:8080
 ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/fullchain.pem
-ENV ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/privkey.pem
 ENV DOTNET_RUNNING_IN_CONTAINER=true
 
-# Health check
+# Health check (HTTP on port 8080)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD curl -fk https://localhost:443/health || exit 1
+    CMD curl -f http://localhost:8080/health || exit 1
 
 # Entry point
 ENTRYPOINT ["dotnet", "myIoTGrid.Cloud.Api.dll"]

@@ -1,8 +1,10 @@
 using FluentValidation;
 using FluentValidation.AspNetCore;
 using HealthChecks.NpgSql;
+using Microsoft.AspNetCore.Server.Kestrel.Core;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
+using System.Net;
 using myIoTGrid.Cloud.Infrastructure.Data;
 using myIoTGrid.Cloud.Infrastructure.Matter;
 using myIoTGrid.Cloud.Infrastructure.Repositories;
@@ -38,6 +40,25 @@ try
 
     // Use Serilog
     builder.Host.UseSerilog();
+
+    // =============================================================================
+    // AZURE CONTAINER APPS: HTTP-only auf Port 8080
+    // Azure Ingress übernimmt HTTPS-Terminierung extern
+    // =============================================================================
+    if (builder.Environment.IsProduction())
+    {
+        builder.WebHost.ConfigureKestrel(options =>
+        {
+            // Nur HTTP auf Port 8080 - Azure übernimmt HTTPS
+            options.Listen(IPAddress.Any, 8080, listenOptions =>
+            {
+                listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+            });
+        });
+
+        Log.Information("Production mode: Kestrel configured for HTTP on port 8080");
+        Log.Information("Azure Ingress will handle HTTPS termination externally");
+    }
 
     // =============================================================================
     // DATABASE (PostgreSQL)
@@ -108,13 +129,22 @@ try
     });
 
     // =============================================================================
-    // CORS
+    // CORS - Konfiguriert für Azure Container Apps
     // =============================================================================
     var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
         ?? ["http://localhost:4200", "https://localhost:4200"];
 
     builder.Services.AddCors(options =>
     {
+        options.AddPolicy("AllowFrontend", policy =>
+        {
+            policy.WithOrigins(allowedOrigins)
+                  .AllowAnyMethod()
+                  .AllowAnyHeader()
+                  .AllowCredentials(); // Wichtig für SignalR!
+        });
+
+        // Default Policy für Fallback
         options.AddDefaultPolicy(policy =>
         {
             policy.WithOrigins(allowedOrigins)
@@ -177,8 +207,8 @@ try
         });
     }
 
-    // CORS
-    app.UseCors();
+    // CORS - WICHTIG: VOR Routing aktivieren!
+    app.UseCors("AllowFrontend");
 
     // Tenant Middleware
     app.UseMiddleware<TenantMiddleware>();
@@ -261,9 +291,25 @@ try
         }
     }
 
+    // =============================================================================
+    // STARTUP LOGGING
+    // =============================================================================
     Log.Information("myIoTGrid Cloud API started successfully");
-    Log.Information("Swagger UI available at: /swagger");
-    Log.Information("SignalR Hub available at: /hubs/sensors");
+
+    if (app.Environment.IsProduction())
+    {
+        Log.Information("Mode: Production (Azure Container Apps)");
+        Log.Information("Listening on: http://*:8080 (internal)");
+        Log.Information("Public URL: https://api.myiotgrid.cloud");
+    }
+    else
+    {
+        Log.Information("Mode: Development");
+    }
+
+    Log.Information("Swagger UI: /swagger");
+    Log.Information("SignalR Hub: /hubs/sensors");
+    Log.Information("Health Check: /health");
 
     app.Run();
 }

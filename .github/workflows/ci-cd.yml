@@ -618,6 +618,15 @@ jobs:
           echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| LoRaWAN Gateway | ${{ needs.docker-lorawan-gateway.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Azure Container Apps Deployment:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Internal Port | Public URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Cloud API | HTTP 8080 | https://api.myiotgrid.cloud |" >> $GITHUB_STEP_SUMMARY
+          echo "| Cloud Frontend | HTTP 80 | https://app.myiotgrid.cloud |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "*Azure Ingress handles HTTPS termination externally*" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "# Hub API" >> $GITHUB_STEP_SUMMARY
@@ -626,10 +635,10 @@ jobs:
           echo "# Hub Frontend" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Cloud API (https://api.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
+          echo "# Cloud API (Internal: HTTP 8080, External: https://api.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-cloud-api:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Cloud Frontend (https://app.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
+          echo "# Cloud Frontend (Internal: HTTP 80, External: https://app.myiotgrid.cloud)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-cloud-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
