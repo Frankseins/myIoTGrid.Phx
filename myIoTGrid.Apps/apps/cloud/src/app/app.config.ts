@@ -12,20 +12,31 @@ import { API_CONFIG, ApiConfig } from '@myiotgrid/shared/data-access';
 /**
  * API Configuration for Cloud Frontend
  *
- * Cloud API runs on port 5002 (Hub API runs on 5001)
- *
- * For PRODUCTION:
- * - Use window.location.origin (API and frontend on same host)
+ * Development: https://localhost:5002
+ * Production:  https://api.myiotgrid.cloud
  */
+const getApiBaseUrl = (): string => {
+  if (typeof window === 'undefined') {
+    return 'https://localhost:5002';
+  }
+
+  const hostname = window.location.hostname;
+
+  // Local development
+  if (hostname === 'localhost' || hostname === '127.0.0.1') {
+    return 'https://localhost:5002';
+  }
+
+  // Production: Frontend on app.myiotgrid.cloud, API on api.myiotgrid.cloud
+  return 'https://api.myiotgrid.cloud';
+};
+
+const apiBaseUrl = getApiBaseUrl();
+
 const apiConfig: ApiConfig = {
-  baseUrl: '/api',
-  signalRUrl: '/hubs/sensors',
-  // Cloud API on port 5002
-  sensorApiUrl: typeof window !== 'undefined'
-    ? (window.location.hostname === 'localhost'
-        ? 'https://localhost:5002'
-        : window.location.origin)
-    : 'https://localhost:5002'
+  baseUrl: `${apiBaseUrl}/api`,
+  signalRUrl: `${apiBaseUrl}/hubs/sensors`,
+  sensorApiUrl: apiBaseUrl
 };
 
 export const appConfig: ApplicationConfig = {
