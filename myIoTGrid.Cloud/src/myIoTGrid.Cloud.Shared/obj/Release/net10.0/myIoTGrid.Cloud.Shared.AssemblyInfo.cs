@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("myIoTGrid.Cloud.Shared")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+ea0d5121c67982843e997062588fcdea464a6770")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7188becc2c7703752be044ab4bc849b621eb884b")]
 [assembly: System.Reflection.AssemblyProductAttribute("myIoTGrid.Cloud.Shared")]
 [assembly: System.Reflection.AssemblyTitleAttribute("myIoTGrid.Cloud.Shared")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
