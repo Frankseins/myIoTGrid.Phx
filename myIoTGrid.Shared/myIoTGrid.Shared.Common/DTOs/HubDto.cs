@@ -113,6 +113,6 @@ public record HubPropertiesDto(
     Guid TenantId,
     string TenantName,
     string Version,
-    string CloudAddress = "https://api.myiotgrid.cloud",
-    int CloudPort = 443
+    string CloudAddress = "http://api.myiotgrid.cloud",
+    int CloudPort = 80
 );

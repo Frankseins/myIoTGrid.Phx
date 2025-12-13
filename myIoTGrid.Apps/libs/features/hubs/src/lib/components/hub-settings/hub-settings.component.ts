@@ -76,7 +76,7 @@ export class HubSettingsComponent implements OnInit {
       defaultWifiSsid: ['', [Validators.maxLength(32)]],
       defaultWifiPassword: ['', [Validators.maxLength(64)]],
       apiUrl: ['', [Validators.maxLength(200)]],
-      apiPort: [5002, [Validators.min(1), Validators.max(65535)]]
+      apiPort: [80, [Validators.min(1), Validators.max(65535)]]
     });
   }
 
@@ -112,7 +112,7 @@ export class HubSettingsComponent implements OnInit {
       defaultWifiSsid: hub.defaultWifiSsid || '',
       defaultWifiPassword: hub.defaultWifiPassword || '',
       apiUrl: hub.apiUrl || '',
-      apiPort: hub.apiPort || 5002
+      apiPort: hub.apiPort || 80
     });
   }
 

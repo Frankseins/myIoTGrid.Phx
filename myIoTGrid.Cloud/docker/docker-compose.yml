@@ -50,13 +50,13 @@ services:
     container_name: myiotgrid-cloud-api
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
-      - ASPNETCORE_URLS=https://+:443;http://+:5002
+      - ASPNETCORE_URLS=https://+:443;http://+:80
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/fullchain.pem
       - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/privkey.pem
       - ConnectionStrings__CloudDb=Host=${CLOUD_DB_HOST:-postgres};Database=${CLOUD_DB_NAME:-myiotgrid_cloud};Username=${CLOUD_DB_USER:-myiotgrid};Password=${POSTGRES_PASSWORD:-changeme}
     ports:
       - "443:443"
-      - "5002:5002"
+      - "80:80"
     depends_on:
       postgres:
         condition: service_healthy

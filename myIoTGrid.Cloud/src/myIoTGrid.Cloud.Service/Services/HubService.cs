@@ -166,8 +166,8 @@ public class HubService : IHubService
             IsOnline = true,
             LastSeen = DateTime.UtcNow,
             CreatedAt = DateTime.UtcNow,
-            ApiUrl = "https://api.myiotgrid.cloud",
-            ApiPort = 443
+            ApiUrl = "http://api.myiotgrid.cloud",
+            ApiPort = 80
         };
 
         _context.Hubs.Add(defaultHub);

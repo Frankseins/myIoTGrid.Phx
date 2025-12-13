@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.10.10"  // DigiCert Root CA for SSL validation
+#define FIRMWARE_VERSION "1.10.13"  // Cloud HTTP port 80
 #endif
 
 // Hardware Type
@@ -27,9 +27,9 @@ constexpr int DEFAULT_HUB_PORT = 5001;           // HTTPS port
 constexpr const char* DEFAULT_HUB_PROTOCOL = "https";
 
 // Cloud API Configuration (Cloud Mode)
-constexpr const char* CLOUD_API_URL = "https://api.myiotgrid.cloud";
-constexpr int CLOUD_API_PORT = 443;
-constexpr const char* CLOUD_API_PROTOCOL = "https";
+constexpr const char* CLOUD_API_URL = "http://api.myiotgrid.cloud";
+constexpr int CLOUD_API_PORT = 80;
+constexpr const char* CLOUD_API_PROTOCOL = "http";
 
 // Target Modes
 constexpr const char* TARGET_MODE_LOCAL = "local";

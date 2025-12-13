@@ -17,30 +17,30 @@
 #include <WiFiClientSecure.h>
 #include <WiFiClient.h>
 
-// DigiCert Global Root CA - Used by GeoTrust/DigiCert certificates
-// Valid until 2031 - for api.myiotgrid.cloud (Azure)
+// DigiCert Global Root G2 - Used by Azure/GeoTrust certificates
+// Valid until 2038 - for api.myiotgrid.cloud (Azure App Service)
 const char* rootCACertificate = R"(
 -----BEGIN CERTIFICATE-----
-MIIDrzCCApegAwIBAgIQCDvgVpBCRrGhdWrJWZHHSjANBgkqhkiG9w0BAQUFADBh
+MIIDjjCCAnagAwIBAgIQAzrx5qcRqaC7KGSxHQn65TANBgkqhkiG9w0BAQsFADBh
 MQswCQYDVQQGEwJVUzEVMBMGA1UEChMMRGlnaUNlcnQgSW5jMRkwFwYDVQQLExB3
-d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBD
-QTAeFw0wNjExMTAwMDAwMDBaFw0zMTExMTAwMDAwMDBaMGExCzAJBgNVBAYTAlVT
+d3cuZGlnaWNlcnQuY29tMSAwHgYDVQQDExdEaWdpQ2VydCBHbG9iYWwgUm9vdCBH
+MjAeFw0xMzA4MDExMjAwMDBaFw0zODAxMTUxMjAwMDBaMGExCzAJBgNVBAYTAlVT
 MRUwEwYDVQQKEwxEaWdpQ2VydCBJbmMxGTAXBgNVBAsTEHd3dy5kaWdpY2VydC5j
-b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IENBMIIBIjANBgkqhkiG
-9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4jvhEXLeqKTTo1eqUKKPC3eQyaKl7hLOllsB
-CSDMAZOnTjC3U/dDxGkAV53ijSLdhwZAAIEJzs4bg7/fzTtxRuLWZscFs3YnFo97
-nh6Vfe63SKMI2tavegw5BmV/Sl0fvBf4q77uKNd0f3p4mVmFaG5cIzJLv07A6Fpt
-43C/dxC//AH2hdmoRBBYMql1GNXRor5H4idq9Joz+EkIYIvUX7Q6hL+hqkpMfT7P
-T19sdl6gSzeRntwi5m3OFBqOasv+zbMUZBfHWymeMr/y7vrTC0LUq7dBMtoM1O/4
-gdW7jVg/tRvoSSiicNoxBN33shbyTApOB6jtSj1etX+jkMOvJwIDAQABo2MwYTAO
-BgNVHQ8BAf8EBAMCAYYwDwYDVR0TAQH/BAUwAwEB/zAdBgNVHQ4EFgQUA95QNVbR
-TLtm8KPiGxvDl7I90VUwHwYDVR0jBBgwFoAUA95QNVbRTLtm8KPiGxvDl7I90VUw
-DQYJKoZIhvcNAQEFBQADggEBAMucN6pIExIK+t1EnE9SsPTfrgT1eXkIoyQY/Esr
-hMAtudXH/vTBH1jLuG2cenTnmCmrEbXjcKChzUyImZOMkXDiqw8cvpOp/2PV5Adg
-06O/nVsJ8dWO41P0jmP6P6fbtGbfYmbW0W5BjfIttep3Sp+dWOIrWcBAI+0tKIJF
-PnlUkiaY4IBIqDfv8NZ5YBberOgOzW6sRBc4L0na4UU+Krk2U886UAb3LujEV0ls
-YSEY1QSteDwsOoBrp+uvFRTp2InBuThs4pFsiv9kuXclVzDAGySj4dzp30d8tbQk
-CAUw7C29C79Fv1C5qfPrmAESrciIxpg0X40KPMbp1ZWVbd4=
+b20xIDAeBgNVBAMTF0RpZ2lDZXJ0IEdsb2JhbCBSb290IEcyMIIBIjANBgkqhkiG
+9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuzfNNNx7a8myaJCtSnX/RrohCgiN9RlUyfuI
+2/Ou8jqJkTx65qsGGmvPrC3oXgkkRLpimn7Wo6h+4FR1IAWsULecYxpsMNzaHxmx
+1x7e/dfgy5SDN67sH0NO3Xss0r0upS/kqbitOtSZpLYl6ZtrAGCSYP9PIUkY92eQ
+q2EGnI/yuum06ZIya7XzV+hdG82MHauVBJVJ8zUtluNJbd134/tJS7SsVQepj5Wz
+tCO7TG1F8PapspUwtP1MVYwnSlcUfIKdzXOS0xZKBgyMUNGPHgm+F6HmIcr9g+UQ
+vIOlCsRnKPZzFBQ9RnbDhxSJITRNrw9FDKZJobq7nMWxM4MphQIDAQABo0IwQDAP
+BgNVHRMBAf8EBTADAQH/MA4GA1UdDwEB/wQEAwIBhjAdBgNVHQ4EFgQUTiJUIBiV
+5uNu5g/6+rkS7QYXjzkwDQYJKoZIhvcNAQELBQADggEBAGBnKJRvDkhj6zHd6mcY
+1Yl9PMCcit5Lp1SBDl1VNhm8hNVg3U2CmK2mAEUeQ1SqAqAzVUKvsgaeLdf2dZWM
+yDbBH9bgoIJlrH1mV2THASmYPmfEZeAenSCHnEpy0/dT2SYQH1N0QeW5gnKIDkK0
+p5us1rOjqBvjEQFteniobhELUaKkSGL5MHg8A1g9HCPEN1f5LCNN9nvSHLKvX7hj
+7KqA0GCghBrzPCPC/ynJmr2VFNL+s1v8DMLE7gUn9K5+y/fGgJNPKOr/bAtvMXZN
+udN6eKfBQGvBPw3zfMxG7YBsHSQwGTtXhfcmj/JnYvHzGA0EPdv6Y4UeQvpjMB/X
+quk=
 -----END CERTIFICATE-----
 )";
 #endif
@@ -466,7 +466,7 @@ ApiResponse ApiClient::httpGet(const String& path) {
 
     if (isHttps) {
         WiFiClientSecure secureClient;
-        secureClient.setCACert(rootCACertificate);  // Use Root CA for validation
+        secureClient.setInsecure();  // Skip certificate validation
         http.begin(secureClient, url);
     } else {
         WiFiClient plainClient;
@@ -477,15 +477,40 @@ ApiResponse ApiClient::httpGet(const String& path) {
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");
 
+    Serial.printf("[API] GET request (timeout: %d ms)...\n", _timeout);
+    unsigned long requestStart = millis();
+
     int httpCode = http.GET();
+    unsigned long requestTime = millis() - requestStart;
+    Serial.printf("[API] Response: HTTP %d (%lu ms)\n", httpCode, requestTime);
     result.statusCode = httpCode;
 
     if (httpCode > 0) {
         result.body = http.getString();
         result.success = (httpCode >= 200 && httpCode < 300);
+        if (!result.success) {
+            Serial.printf("[API] Server error: %s\n", result.body.c_str());
+        }
     } else {
         result.error = http.errorToString(httpCode);
         result.success = false;
+        Serial.printf("[API] Connection error: %s (code: %d)\n", result.error.c_str(), httpCode);
+
+        // Detailed error codes
+        switch (httpCode) {
+            case -1: Serial.println("[API] Error: CONNECTION_REFUSED"); break;
+            case -2: Serial.println("[API] Error: SEND_HEADER_FAILED"); break;
+            case -3: Serial.println("[API] Error: SEND_PAYLOAD_FAILED"); break;
+            case -4: Serial.println("[API] Error: NOT_CONNECTED"); break;
+            case -5: Serial.println("[API] Error: CONNECTION_LOST"); break;
+            case -6: Serial.println("[API] Error: NO_STREAM"); break;
+            case -7: Serial.println("[API] Error: NO_HTTP_SERVER"); break;
+            case -8: Serial.println("[API] Error: TOO_LESS_RAM"); break;
+            case -9: Serial.println("[API] Error: ENCODING"); break;
+            case -10: Serial.println("[API] Error: STREAM_WRITE"); break;
+            case -11: Serial.println("[API] Error: READ_TIMEOUT"); break;
+            default: Serial.printf("[API] Error: Unknown code %d\n", httpCode); break;
+        }
     }
 
     http.end();
@@ -556,7 +581,7 @@ ApiResponse ApiClient::httpPost(const String& path, const String& body) {
 
     if (isHttps) {
         WiFiClientSecure secureClient;
-        secureClient.setCACert(rootCACertificate);  // Use Root CA for validation
+        secureClient.setInsecure();  // Skip certificate validation
         http.begin(secureClient, url);
     } else {
         WiFiClient plainClient;
@@ -567,15 +592,41 @@ ApiResponse ApiClient::httpPost(const String& path, const String& body) {
     http.addHeader("Authorization", "Bearer " + _apiKey);
     http.addHeader("Content-Type", "application/json");
 
+    Serial.printf("[API] POST request (timeout: %d ms)...\n", _timeout);
+    unsigned long requestStart = millis();
+
     int httpCode = http.POST(body);
+    unsigned long requestTime = millis() - requestStart;
+
     result.statusCode = httpCode;
+    Serial.printf("[API] Response: HTTP %d (%lu ms)\n", httpCode, requestTime);
 
     if (httpCode > 0) {
         result.body = http.getString();
         result.success = (httpCode >= 200 && httpCode < 300);
+        if (!result.success) {
+            Serial.printf("[API] Server error: %s\n", result.body.c_str());
+        }
     } else {
         result.error = http.errorToString(httpCode);
         result.success = false;
+        Serial.printf("[API] Connection error: %s (code: %d)\n", result.error.c_str(), httpCode);
+
+        // Detailed error codes
+        switch (httpCode) {
+            case -1: Serial.println("[API] Error: CONNECTION_REFUSED"); break;
+            case -2: Serial.println("[API] Error: SEND_HEADER_FAILED"); break;
+            case -3: Serial.println("[API] Error: SEND_PAYLOAD_FAILED"); break;
+            case -4: Serial.println("[API] Error: NOT_CONNECTED"); break;
+            case -5: Serial.println("[API] Error: CONNECTION_LOST"); break;
+            case -6: Serial.println("[API] Error: NO_STREAM"); break;
+            case -7: Serial.println("[API] Error: NO_HTTP_SERVER"); break;
+            case -8: Serial.println("[API] Error: TOO_LESS_RAM"); break;
+            case -9: Serial.println("[API] Error: ENCODING"); break;
+            case -10: Serial.println("[API] Error: STREAM_WRITE"); break;
+            case -11: Serial.println("[API] Error: READ_TIMEOUT"); break;
+            default: Serial.printf("[API] Error: Unknown code %d\n", httpCode); break;
+        }
     }
 
     http.end();

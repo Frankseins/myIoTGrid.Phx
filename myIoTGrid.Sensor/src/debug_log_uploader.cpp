@@ -104,7 +104,7 @@ bool DebugLogUploader::uploadSerialLines() {
     // Handle HTTPS vs HTTP connections
     if (isHttps) {
         WiFiClientSecure secureClient;
-        secureClient.setCACert(rootCACertificate);  // Use Root CA for validation
+        secureClient.setInsecure();  // Skip certificate validation
         http.begin(secureClient, url);
     } else {
         WiFiClient plainClient;
