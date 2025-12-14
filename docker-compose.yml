@@ -123,6 +123,31 @@ services:
       - "com.myiotgrid.service=sensor-sim"
       - "com.myiotgrid.description=Test Sensor Simulator"
 
+  # ---------------------------------------------------------------------------
+  # Web Map (Vue 3 + Vite build served by nginx)
+  # ---------------------------------------------------------------------------
+  webmap-vue:
+    build:
+      context: ./myIoTGrid.WebMapVue
+      dockerfile: Dockerfile
+    image: ghcr.io/frankseins/myiotgrid/webmap-vue:latest
+    container_name: myIoTGrid.WebMapVue
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    networks:
+      - myiotgrid-network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    labels:
+      - "com.myiotgrid.service=webmap-vue"
+      - "com.myiotgrid.description=Vue Web Map (static nginx)"
+
+
 # =============================================================================
 # Networks
 # =============================================================================
