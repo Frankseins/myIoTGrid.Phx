@@ -10,7 +10,7 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
-  padding-left: 25px;
+  padding: 0 16px;
 
   .header-content {
     .page-title {
@@ -116,6 +116,15 @@
   display: inline-flex;
   align-items: center;
   gap: .5rem;
+
+  // Desktop: Volltexte anzeigen, Kurztexte ausblenden
+  .btn-text-full {
+    display: inline;
+  }
+
+  .btn-text-short {
+    display: none;
+  }
 }
 
 .spacer {
@@ -728,5 +737,312 @@
 
   .full-width {
     width: 100%;
+  }
+}
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .node-list-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  // Header ausblenden - sichtbar im Bottom Nav
+  .page-header {
+    display: none;
+  }
+
+  // Toolbar: eine Zeile, alle Icons sichtbar
+  .toolbar.outlook-toolbar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    padding: 8px 5px !important;
+    gap: 6px !important;
+    margin: 0 0 8px 0;
+    min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
+
+    // Override 768px breakpoint - left-actions NOT full width
+    .left-actions {
+      display: flex !important;
+      width: auto !important;
+      flex-shrink: 0;
+      gap: 6px;
+      margin-bottom: 0 !important;
+
+      // Plus-Button: rund, nur Icon
+      .btn-new-node {
+        min-width: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50%;
+
+        mat-icon {
+          margin: 0 !important;
+        }
+
+        .btn-text {
+          display: none !important;
+        }
+      }
+
+      // Assistent-Button: nur Icon auf Mobile
+      .btn-wizard {
+        min-width: 36px !important;
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        border-radius: 50%;
+        border: 1px solid #e0e0e0 !important;
+        background: #fff !important;
+        color: #666 !important;
+
+        mat-icon {
+          margin: 0 !important;
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+
+        .btn-text-full,
+        .btn-text-short {
+          display: none !important;
+        }
+      }
+    }
+
+    .spacer {
+      flex: 1 1 auto;
+      min-width: 4px;
+    }
+
+    .results-count {
+      display: none !important;
+    }
+
+    // Alle Toolbar-Icons sichtbar und gleich groß
+    .tbar-icon {
+      display: inline-flex !important;
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      flex-shrink: 0;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 50%;
+
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  // Suche auf Mobile - größeres Feld wenn geöffnet
+  .o365-search {
+    flex-shrink: 0;
+
+    .o365-search__btn {
+      display: inline-flex !important;
+    }
+
+    &.open {
+      flex: 1;
+
+      .o365-search__field {
+        width: 100%;
+        max-width: 100%;
+        min-width: 120px;
+      }
+    }
+  }
+
+  // Refresh-Button auf Mobile ausblenden
+  .btn-refresh {
+    display: none !important;
+  }
+
+  // ===== Search Active: Alle anderen Buttons ausblenden =====
+  .toolbar.outlook-toolbar.search-active {
+    // Alle Buttons außer Suche ausblenden
+    .left-actions,
+    .spacer,
+    .results-count,
+    .tbar-icon:not(.o365-search__btn):not(.o365-search__clear) {
+      display: none !important;
+    }
+
+    // Suche auf volle Breite
+    .o365-search {
+      flex: 1;
+      width: 100%;
+
+      .o365-search__btn {
+        flex-shrink: 0;
+      }
+
+      .o365-search__field {
+        flex: 1;
+        width: 100% !important;
+        max-width: none !important;
+      }
+    }
+  }
+
+  // Nodes Grid: minimales Padding (5px Seitenrand)
+  .nodes-grid {
+    gap: 10px;
+    padding: 0 5px 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  // Node Card: kompakter mit korrektem Padding
+  .node-card {
+    border-radius: 8px;
+    margin: 0;
+
+    .card-header {
+      padding: 10px 12px;
+
+      .status-indicator {
+        width: 36px;
+        height: 36px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .node-info {
+        .node-name {
+          font-size: 14px;
+        }
+
+        .node-location {
+          font-size: 11px;
+        }
+
+        .node-id {
+          font-size: 10px;
+        }
+      }
+    }
+
+    .sensors-content {
+      padding: 6px 12px 10px;
+    }
+
+    .sensors-latest-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .card-footer {
+      padding: 8px 12px;
+      flex-wrap: wrap;
+      gap: 6px;
+
+      .status-badge {
+        order: 1;
+        font-size: 10px;
+        padding: 3px 8px;
+      }
+
+      .spacer {
+        display: none;
+      }
+
+      .last-updated {
+        order: 2;
+        margin-left: auto;
+        font-size: 10px;
+      }
+
+      .battery, .last-seen, .simulation-badge {
+        display: none;
+      }
+    }
+
+    // Unconfigured Banner kompakter
+    .unconfigured-banner {
+      flex-wrap: wrap;
+      padding: 6px 10px;
+      gap: 6px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      span {
+        flex: 1;
+        font-size: 11px;
+      }
+
+      button {
+        font-size: 11px;
+        padding: 2px 8px;
+        min-height: 24px;
+      }
+    }
+  }
+
+  // Empty State: kompakter
+  .empty-state-container {
+    min-height: 50vh;
+    padding: 16px;
+  }
+
+  .empty-state-content {
+    .empty-state-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+    }
+
+    .empty-state-title {
+      font-size: 1.1rem;
+    }
+
+    .empty-state-message {
+      font-size: 0.9rem;
+    }
+
+    .empty-state-actions {
+      gap: 8px;
+
+      button {
+        min-width: auto;
+        width: 100%;
+        font-size: 13px;
+      }
+    }
+  }
+
+  // Drawer: Vollbild
+  ::ng-deep .gt-drawer-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .drawer-buttons {
+    flex-direction: column;
+    padding: 12px;
+    gap: 8px;
+
+    button {
+      width: 100%;
+    }
   }
 }

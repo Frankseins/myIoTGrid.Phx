@@ -1,0 +1,49 @@
+<!-- Overlay backdrop -->
+@if (isOpen()) {
+  <div
+    class="sidebar-overlay"
+    (click)="onOverlayClick()"
+    [@fadeInOut]>
+  </div>
+}
+
+<!-- Sidebar panel -->
+<aside
+  class="sidebar-panel"
+  [class.open]="isOpen()"
+  role="dialog"
+  aria-label="Navigation">
+
+  <!-- Header -->
+  <header class="sidebar-header">
+    <span class="sidebar-title">Menü</span>
+    <button
+      class="close-button"
+      (click)="close()"
+      aria-label="Menü schließen"
+      matRipple
+      [matRippleCentered]="true">
+      <mat-icon>close</mat-icon>
+    </button>
+  </header>
+
+  <!-- Menu items -->
+  <nav class="sidebar-nav">
+    @for (item of menuItems; track item.route) {
+      <button
+        class="sidebar-item"
+        [class.active]="isActive(item.route)"
+        (click)="navigateTo(item.route)"
+        matRipple>
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span class="item-label">{{ item.label }}</span>
+        <mat-icon class="chevron">chevron_right</mat-icon>
+      </button>
+    }
+  </nav>
+
+  <!-- Footer -->
+  <footer class="sidebar-footer">
+    <span class="version">myIoTGrid Hub v1.0</span>
+  </footer>
+</aside>

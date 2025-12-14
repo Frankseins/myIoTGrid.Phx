@@ -2,10 +2,16 @@
 .node-card {
   cursor: pointer;
   transition: all 0.2s ease;
-  border-radius: 12px;
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
 
   &:hover {
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
@@ -366,6 +372,106 @@
 
     .last-updated {
       color: #1976d2;
+    }
+  }
+}
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .node-card {
+    border-radius: 12px;
+    width: 100%;
+    max-width: calc(100vw - 10px); // 5px + 5px Seitenrand
+    margin: 0;
+
+    .card-header {
+      padding: 12px;
+      gap: 10px;
+
+      .status-indicator {
+        width: 40px;
+        height: 40px;
+        border-radius: 12px;
+
+        mat-icon {
+          font-size: 20px;
+          width: 20px;
+          height: 20px;
+        }
+      }
+
+      .node-info {
+        .node-name {
+          font-size: 15px;
+        }
+
+        .node-location {
+          font-size: 11px;
+        }
+
+        .node-id {
+          font-size: 10px;
+        }
+      }
+    }
+
+    .sensors-content {
+      padding: 8px 12px 10px;
+    }
+
+    .sensors-latest-grid {
+      grid-template-columns: 1fr;
+      gap: 8px;
+    }
+
+    .card-footer {
+      padding: 10px 12px;
+      gap: 8px;
+      flex-wrap: nowrap;
+
+      .status-badge {
+        font-size: 10px;
+        padding: 3px 8px;
+        flex-shrink: 0;
+      }
+
+      .spacer {
+        flex: 1 1 auto;
+        min-width: 4px;
+      }
+
+      .battery,
+      .last-seen,
+      .simulation-badge {
+        display: none;
+      }
+
+      .last-updated {
+        font-size: 11px;
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+    }
+
+    .unconfigured-banner {
+      padding: 8px 12px;
+      gap: 6px;
+
+      mat-icon {
+        font-size: 16px;
+        width: 16px;
+        height: 16px;
+      }
+
+      span {
+        font-size: 11px;
+      }
+
+      button {
+        font-size: 11px;
+        padding: 2px 8px;
+        min-height: 24px;
+      }
     }
   }
 }

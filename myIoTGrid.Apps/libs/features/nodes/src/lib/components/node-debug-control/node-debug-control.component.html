@@ -35,7 +35,7 @@
         <mat-hint>{{ getLevelDescription(selectedLevel) }}</mat-hint>
       </mat-form-field>
 
-      <!-- Remote Logging Toggle -->
+      <!-- TEMPORARILY DISABLED: Remote Logging Toggle
       <div class="toggle-section">
         <mat-slide-toggle
           [(ngModel)]="remoteLoggingEnabled"
@@ -48,6 +48,7 @@
           Wenn aktiviert, werden Debug-Logs automatisch an den Hub gesendet
         </p>
       </div>
+      -->
 
       <!-- Current Status Info Card -->
       <div class="status-section">
@@ -58,6 +59,7 @@
             {{ getLevelLabel(config()!.debugLevel) }}
           </span>
         </div>
+        <!-- TEMPORARILY DISABLED: Remote-Logging status
         <div class="status-row">
           <span class="status-label">Remote-Logging:</span>
           <span class="status-value" [class.enabled]="config()!.enableRemoteLogging">
@@ -65,6 +67,7 @@
             {{ config()!.enableRemoteLogging ? 'Aktiviert' : 'Deaktiviert' }}
           </span>
         </div>
+        -->
         @if (config()!.lastDebugChange) {
           <div class="status-row">
             <span class="status-label">Letzte Änderung:</span>

@@ -1144,3 +1144,296 @@ mat-divider {
     }
   }
 }
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .node-form-container {
+    padding: 0 5px;  // Gleiches 5px Seitenabstand wie nodes-list
+    margin: 0;
+    max-width: 100%;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .card.outlook {
+    border-radius: 8px;
+    margin: 0;  // Kein Margin auf Card, Container hat padding
+    min-height: auto;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  // Toolbar auf Mobile kompakter (wie nodes-list)
+  .toolbar.outlook-toolbar {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 6px;
+    padding: 8px 12px;
+
+    .toolbar-title {
+      font-size: 16px;
+      flex: 1;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .header-info {
+      display: none; // ID und Firmware auf Mobile ausblenden
+    }
+
+    .spacer {
+      display: none;
+    }
+
+    .tbar-icon {
+      width: 36px !important;
+      height: 36px !important;
+      min-width: 36px !important;
+      flex-shrink: 0;
+      background: #fff;
+      border: 1px solid #e6e6e6;
+      border-radius: 50%;
+
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+  }
+
+  .content {
+    padding: 10px 12px;
+  }
+
+  // Form Rows: immer vertikal
+  .form-row {
+    grid-template-columns: 1fr !important;
+    gap: 8px;
+  }
+
+  // Section Header mit Button: vertikal
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+
+    button {
+      width: 100%;
+    }
+  }
+
+  // Form Sections: kompakter
+  .form-section {
+    padding: 12px 0;
+
+    h3 {
+      font-size: 15px;
+      margin-bottom: 12px;
+    }
+  }
+
+  // Sensor Latest Grid: 1 Spalte mit kompakteren Cards
+  .sensors-latest-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .sensor-latest-card {
+    padding: 10px;
+    border-radius: 8px;
+
+    .sensor-latest-header {
+      gap: 8px;
+      margin-bottom: 8px;
+
+      .sensor-icon-sm {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+
+      .sensor-display-name {
+        font-size: 13px;
+      }
+
+      .sensor-model {
+        font-size: 10px;
+      }
+    }
+
+    .sensor-measurements {
+      padding: 8px;
+      border-radius: 6px;
+
+      .measurement-label {
+        font-size: 11px;
+      }
+
+      .measurement-value {
+        font-size: 13px;
+      }
+    }
+
+    .sensor-timestamp {
+      font-size: 10px;
+    }
+  }
+
+  // Sync Status Card kompakter
+  .sync-status-card {
+    padding: 12px;
+    margin-top: 12px;
+
+    .sync-status-header {
+      margin-bottom: 12px;
+
+      .sync-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+
+      .sync-title {
+        font-size: 14px;
+      }
+    }
+
+    .sync-status-grid {
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+
+      .sync-stat {
+        padding: 10px;
+
+        .stat-value {
+          font-size: 20px;
+        }
+
+        .stat-label {
+          font-size: 11px;
+        }
+      }
+    }
+  }
+
+  // Simulation Toggle kompakter
+  .simulation-toggle {
+    padding: 12px;
+    margin-top: 12px;
+
+    .toggle-hint {
+      font-size: 12px;
+    }
+  }
+
+  // Assignment Panel: kompakter
+  .assignment-panel {
+    ::ng-deep .mat-expansion-panel-header {
+      grid-template-columns: 40px 1fr auto !important;
+      gap: 8px;
+      padding: 10px 12px !important;
+      min-height: 70px !important;
+    }
+
+    .header-icon {
+      width: 36px;
+      height: 36px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+
+    .header-info {
+      .sensor-name {
+        font-size: 13px;
+      }
+
+      .header-chips {
+        display: none; // Tags auf Mobile ausblenden
+      }
+    }
+
+    .header-status {
+      .endpoint-badge {
+        font-size: 10px;
+        padding: 3px 6px;
+      }
+    }
+  }
+
+  // Detail Actions: Buttons vertikal
+  .sensor-details {
+    padding: 12px;
+
+    .config-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .detail-actions {
+      flex-direction: column;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  // Form Footer: Buttons vertikal
+  .form-footer {
+    padding: 12px;
+
+    .footer-right {
+      flex-direction: column;
+      width: 100%;
+      gap: 8px;
+
+      button {
+        width: 100%;
+        justify-content: center;
+      }
+    }
+  }
+
+  // Drawer: Vollbild
+  ::ng-deep .gt-drawer-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .drawer-buttons {
+    flex-direction: column;
+    padding: 12px;
+
+    button {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  // Drawer Form: kompakter
+  .drawer-form {
+    .form-row {
+      grid-template-columns: 1fr !important;
+    }
+  }
+
+  // Sync Status Grid
+  .sync-status-card {
+    .sync-status-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

@@ -79,3 +79,31 @@
     grid-template-columns: 1fr;
   }
 }
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .settings-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  // Header ausblenden - sichtbar im Bottom Nav
+  .page-header {
+    display: none;
+  }
+
+  // Cards Grid: minimales Padding (5px Seitenrand)
+  .settings-grid {
+    gap: 10px;
+    padding: 0 5px 16px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .settings-card {
+    border-radius: 8px;
+  }
+}

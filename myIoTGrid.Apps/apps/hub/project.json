@@ -21,7 +21,14 @@
             "input": "apps/hub/public"
           }
         ],
-        "styles": ["apps/hub/src/styles.scss"]
+        "styles": [
+          "@fontsource/roboto/300.css",
+          "@fontsource/roboto/400.css",
+          "@fontsource/roboto/500.css",
+          "@fontsource/roboto/700.css",
+          "material-icons/iconfont/material-icons.css",
+          "apps/hub/src/styles.scss"
+        ]
       },
       "configurations": {
         "production": {
@@ -33,8 +40,8 @@
             },
             {
               "type": "anyComponentStyle",
-              "maximumWarning": "10kb",
-              "maximumError": "20kb"
+              "maximumWarning": "15kb",
+              "maximumError": "25kb"
             }
           ],
           "outputHashing": "all"

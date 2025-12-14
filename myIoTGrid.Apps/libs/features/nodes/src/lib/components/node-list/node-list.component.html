@@ -29,15 +29,16 @@
     </header>
 
     <!-- Toolbar im O365-Style -->
-    <mat-toolbar class="toolbar outlook-toolbar">
+    <mat-toolbar class="toolbar outlook-toolbar" [class.search-active]="isSearchOpen">
       <div class="left-actions">
-        <button mat-flat-button color="primary" (click)="onCreate()">
+        <button mat-flat-button color="primary" (click)="onCreate()" class="btn-new-node">
           <mat-icon>add</mat-icon>
-          Neuer Node
+          <span class="btn-text">Neuer Node</span>
         </button>
-        <button mat-stroked-button color="primary" (click)="onStartWizard()">
+        <button mat-stroked-button color="primary" (click)="onStartWizard()" class="btn-wizard">
           <mat-icon>auto_fix_high</mat-icon>
-          Setup-Assistent
+          <span class="btn-text-full">Setup-Assistent</span>
+          <span class="btn-text-short">Assistent</span>
         </button>
       </div>
 
@@ -67,7 +68,7 @@
       </mat-menu>
 
       <!-- Aktualisieren -->
-      <button type="button" mat-icon-button class="tbar-icon"
+      <button type="button" mat-icon-button class="tbar-icon btn-refresh"
               (click)="onRefresh()"
               matTooltip="Aktualisieren">
         <mat-icon>refresh</mat-icon>

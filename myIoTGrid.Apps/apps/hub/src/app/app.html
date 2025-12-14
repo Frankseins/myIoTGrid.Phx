@@ -6,15 +6,30 @@
     </div>
   </div>
 } @else {
-  <div class="app-shell">
-    <!-- Navigation Rail (Material Design 3) -->
-    @if (showNavigation()) {
+  <div class="app-shell" [class.mobile]="isMobile()">
+    <!-- Navigation Rail (Desktop only - Material Design 3) -->
+    @if (showNavigation() && !isMobile()) {
       <myiotgrid-navigation-rail></myiotgrid-navigation-rail>
     }
 
     <!-- Content Area -->
-    <main class="content-area" [class.no-nav]="!showNavigation()">
+    <main class="content-area"
+          [class.no-nav]="!showNavigation()"
+          [class.mobile]="isMobile()">
       <router-outlet></router-outlet>
     </main>
+
+    <!-- Bottom Navigation (Mobile only - Material Design 3) -->
+    @if (showNavigation() && isMobile()) {
+      <myiotgrid-bottom-nav (menuClick)="openSidebar()"></myiotgrid-bottom-nav>
+    }
+
+    <!-- Mobile Sidebar (slide-in from right) -->
+    @if (isMobile()) {
+      <myiotgrid-mobile-sidebar
+        [isOpen]="isSidebarOpen()"
+        (closeRequest)="closeSidebar()">
+      </myiotgrid-mobile-sidebar>
+    }
   </div>
 }

@@ -29,7 +29,7 @@ import { LoadingSpinnerComponent, GenericListComponent, GenericListColumn, ListL
 import { ConfirmDialogComponent } from '@myiotgrid/shared/ui';
 import { DeleteReadingsDrawerComponent } from '../delete-readings-drawer/delete-readings-drawer.component';
 import { NodeDebugControlComponent } from '../node-debug-control/node-debug-control.component';
-import { LiveLogViewerComponent } from '../live-log-viewer/live-log-viewer.component';
+// TEMPORARILY DISABLED: import { LiveLogViewerComponent } from '../live-log-viewer/live-log-viewer.component';
 import { HardwareStatusWidgetComponent } from '../hardware-status-widget/hardware-status-widget.component';
 
 type FormMode = 'view' | 'edit' | 'create';
@@ -61,7 +61,7 @@ type FormMode = 'view' | 'edit' | 'create';
     ListColumnTemplateDirective,
     DeleteReadingsDrawerComponent,
     NodeDebugControlComponent,
-    LiveLogViewerComponent,
+    // TEMPORARILY DISABLED: LiveLogViewerComponent,
     HardwareStatusWidgetComponent
   ],
   templateUrl: './node-form.component.html',

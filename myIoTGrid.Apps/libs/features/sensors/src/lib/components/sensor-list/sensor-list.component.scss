@@ -9,7 +9,7 @@
   margin-bottom: 24px;
   flex-wrap: wrap;
   gap: 16px;
-  padding-left: 25px;
+  padding: 0 16px;
 
   .header-content {
     .page-title {
@@ -70,5 +70,20 @@ mat-chip {
 @media (max-width: 600px) {
   .page-header {
     flex-direction: column;
+  }
+}
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .sensor-list-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  // Header ausblenden - sichtbar im Bottom Nav
+  .page-header {
+    display: none;
   }
 }

@@ -1,0 +1,193 @@
+// Mobile Sidebar - Slide-in from right
+// Material Design 3 compliant
+
+:host {
+  display: contents;
+}
+
+// Overlay backdrop
+.sidebar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+// Sidebar panel
+.sidebar-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: var(--mat-sys-surface, #ffffff);
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+  z-index: 1200;
+  display: flex;
+  flex-direction: column;
+
+  // Slide animation
+  transform: translateX(100%);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.open {
+    transform: translateX(0);
+  }
+}
+
+// Header
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 16px 20px;
+  border-bottom: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+  min-height: 64px;
+
+  // Safe area for iPhone notch
+  padding-top: calc(16px + env(safe-area-inset-top, 0px));
+}
+
+.sidebar-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--mat-sys-on-surface, #1a1c1e);
+}
+
+.close-button {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+  transition: background 0.2s ease;
+
+  &:hover {
+    background: var(--mat-sys-surface-variant, rgba(0, 0, 0, 0.08));
+  }
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+// Navigation
+.sidebar-nav {
+  flex: 1;
+  padding: 8px 0;
+  overflow-y: auto;
+}
+
+.sidebar-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 14px 20px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.2s ease;
+  gap: 16px;
+
+  &:hover {
+    background: var(--mat-sys-surface-variant, rgba(0, 0, 0, 0.04));
+  }
+
+  &.active {
+    background: rgba(16, 110, 190, 0.08);
+
+    mat-icon:first-child {
+      color: var(--mat-sys-primary, #106ebe);
+    }
+
+    .item-label {
+      color: var(--mat-sys-primary, #106ebe);
+      font-weight: 500;
+    }
+  }
+
+  mat-icon:first-child {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+    color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+  }
+
+  .item-label {
+    flex: 1;
+    font-size: 16px;
+    color: var(--mat-sys-on-surface, #1a1c1e);
+  }
+
+  .chevron {
+    font-size: 20px;
+    width: 20px;
+    height: 20px;
+    color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.38));
+  }
+}
+
+// Footer
+.sidebar-footer {
+  padding: 16px 20px;
+  border-top: 1px solid var(--mat-sys-outline-variant, rgba(0, 0, 0, 0.12));
+
+  // Safe area for iPhone home indicator
+  padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+}
+
+.version {
+  font-size: 12px;
+  color: var(--mat-sys-on-surface-variant, rgba(0, 0, 0, 0.6));
+}
+
+// Dark mode
+@media (prefers-color-scheme: dark) {
+  .sidebar-panel {
+    background: var(--mat-sys-surface, #1e1e1e);
+  }
+
+  .sidebar-overlay {
+    background: rgba(0, 0, 0, 0.7);
+  }
+
+  .sidebar-title {
+    color: var(--mat-sys-on-surface, #e3e3e3);
+  }
+
+  .close-button {
+    color: var(--mat-sys-on-surface-variant, rgba(255, 255, 255, 0.6));
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  .sidebar-item {
+    &:hover {
+      background: rgba(255, 255, 255, 0.04);
+    }
+
+    .item-label {
+      color: var(--mat-sys-on-surface, #e3e3e3);
+    }
+  }
+}

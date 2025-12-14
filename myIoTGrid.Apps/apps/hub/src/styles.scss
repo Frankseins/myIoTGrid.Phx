@@ -8,3 +8,9 @@
 /* SASS @use rules must come first */
 @use './styles/theme.scss';      // Material Design 3 Theme
 @use './styles/master.scss';     // Master Styles
+
+/* ================================
+ * LOCAL FONTS (Offline-capable)
+ * Fonts are loaded via project.json styles array
+ * This ensures the Hub works offline without external dependencies
+ * ================================ */

@@ -195,18 +195,14 @@ try
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<HubDbContext>("database");
 
-    // CORS für lokales Frontend
+    // CORS - Allow All (für Entwicklung)
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.WithOrigins(
-                    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
-                    ?? ["http://localhost:4200", "https://localhost:4200"]
-                )
+            policy.AllowAnyOrigin()
                 .AllowAnyHeader()
-                .AllowAnyMethod()
-                .AllowCredentials();
+                .AllowAnyMethod();
         });
     });
 

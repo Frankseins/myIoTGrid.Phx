@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, computed, signal } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule, NavigationEnd } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,10 +15,9 @@ import { NavigationDestination } from '../navigation-rail/navigation-rail.compon
  * Only visible on mobile devices (< 768px).
  *
  * Features:
- * - 4-5 navigation destinations with icons and labels
+ * - 3 navigation destinations: Dashboard, Nodes, Menu (opens sidebar)
  * - Touch-friendly targets (min 48x48px)
  * - Active state with primary color
- * - Badge support for alerts
  * - Safe area insets for iPhone notch/home indicator
  *
  * @see https://m3.material.io/components/navigation-bar/overview
@@ -41,20 +40,22 @@ export class BottomNavComponent implements OnInit, OnDestroy {
   private routerSubscription?: Subscription;
 
   /**
+   * Emits when the menu/sidebar button is clicked
+   */
+  readonly menuClick = output<void>();
+
+  /**
    * Current route signal
    */
   private currentRoute = signal<string>('');
 
   /**
-   * Navigation destinations for mobile
-   * Limited to 4-5 items for optimal mobile UX
+   * Navigation destinations for mobile - reduced to 3 items
+   * Dashboard, Nodes, and Menu (opens sidebar)
    */
   readonly navItems: NavigationDestination[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
-    { icon: 'router', label: 'Nodes', route: '/nodes' },
-    { icon: 'memory', label: 'Sensoren', route: '/sensors' },
-    { icon: 'warning', label: 'Warnungen', route: '/alerts' },
-    { icon: 'settings', label: 'Settings', route: '/hubs' }
+    { icon: 'router', label: 'Nodes', route: '/nodes' }
   ];
 
   /**
@@ -102,5 +103,21 @@ export class BottomNavComponent implements OnInit, OnDestroy {
    */
   navigateTo(route: string): void {
     this.router.navigate([route]);
+  }
+
+  /**
+   * Open the sidebar menu
+   */
+  openMenu(): void {
+    this.menuClick.emit();
+  }
+
+  /**
+   * Check if any menu route is active (for highlighting menu button)
+   */
+  isMenuActive(): boolean {
+    const current = this.currentRoute();
+    const menuRoutes = ['/sensors', '/alerts', '/settings', '/hubs'];
+    return menuRoutes.some(route => current === route || current.startsWith(route + '/'));
   }
 }

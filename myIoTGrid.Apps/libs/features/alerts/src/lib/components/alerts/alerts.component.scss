@@ -154,3 +154,34 @@
     align-items: flex-start;
   }
 }
+
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .alerts-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+  }
+
+  // Header ausblenden - sichtbar im Bottom Nav
+  .page-header {
+    display: none;
+  }
+
+  // Alerts List: minimales Padding (5px Seitenrand)
+  .tab-content {
+    padding: 0 5px 16px;
+  }
+
+  .alerts-list {
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .alert-card {
+    border-radius: 8px;
+  }
+}

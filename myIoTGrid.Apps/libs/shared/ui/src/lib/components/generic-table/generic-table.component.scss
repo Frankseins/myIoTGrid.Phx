@@ -213,3 +213,208 @@
   white-space: nowrap;
   display: block;
 }
+
+/* ========== MOBILE RESPONSIVE (< 480px) ========== */
+@media (max-width: 480px) {
+  :host {
+    overflow-x: hidden;
+  }
+
+  .card.outlook {
+    padding: 0 5px;
+    overflow: hidden;
+  }
+
+  /* Toolbar: kompakter mit Icon-only Button */
+  .toolbar.outlook-toolbar {
+    flex-wrap: nowrap;
+    padding: 8px 5px;
+    gap: 6px;
+
+    .left-actions {
+      gap: 6px;
+      flex-shrink: 0;
+
+      /* Neu-Button als Icon-only */
+      .btn-create {
+        min-width: 40px !important;
+        width: 40px !important;
+        height: 40px;
+        padding: 0 !important;
+        border-radius: 50%;
+
+        mat-icon {
+          margin: 0 !important;
+        }
+
+        .btn-text {
+          display: none;
+        }
+      }
+    }
+
+    /* Toolbar-Icons kompakter */
+    .tbar-icon {
+      width: 36px !important;
+      height: 36px !important;
+      flex-shrink: 0;
+    }
+  }
+
+  /* Suche auf Mobile */
+  .o365-search.open .o365-search__field {
+    width: calc(100vw - 180px);
+    max-width: 200px;
+  }
+
+  /* Tabelle als Card-Liste */
+  .table-wrap {
+    overflow-x: hidden;
+  }
+
+  .gtm-table.outlook-table {
+    display: block;
+    width: 100%;
+    table-layout: auto;
+
+    thead {
+      display: none; /* Header ausblenden */
+    }
+
+    tbody {
+      display: block;
+    }
+
+    tr.outlook-row {
+      display: flex;
+      flex-direction: column;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e6e6e6;
+      background: #fff;
+      margin: 0;
+      position: relative;
+
+      &:hover {
+        background: #f9f9f9;
+      }
+
+      td {
+        display: flex;
+        align-items: center;
+        padding: 6px 0;
+        border: none !important;
+        background: transparent !important;
+        width: 100% !important;
+        min-height: auto;
+
+        &.select-col {
+          display: none !important; /* Checkboxen ausblenden */
+        }
+
+        &.actions {
+          justify-content: flex-end;
+          padding-top: 12px;
+          margin-top: 8px;
+          border-top: 1px solid #f0f0f0 !important;
+
+          .row-control {
+            opacity: 1;
+            pointer-events: auto;
+          }
+        }
+
+        /* Icon-Spalte: prominent oben links */
+        &[data-field="icon"] {
+          order: -10;
+          position: absolute;
+          top: 12px;
+          left: 16px;
+          width: auto !important;
+          padding: 0;
+        }
+
+        /* Alle anderen Daten-Spalten: mit Label davor */
+        &:not(.select-col):not(.actions):not([data-field="icon"]) {
+          padding-left: 56px; /* Platz für Icon */
+
+          /* Data-Label vor dem Wert anzeigen */
+          &::before {
+            content: attr(data-label) ": ";
+            font-weight: 600;
+            color: #666;
+            min-width: 100px;
+            flex-shrink: 0;
+            font-size: 13px;
+          }
+        }
+
+        /* Leere Label ausblenden */
+        &[data-label=""]::before {
+          display: none;
+        }
+
+        /* Name-Spalte: größer und prominent */
+        &[data-field="name"] {
+          order: -9;
+          font-size: 16px;
+          font-weight: 500;
+          padding-top: 0;
+
+          &::before {
+            display: none; /* Kein Label für Name */
+          }
+        }
+
+        /* Weniger wichtige Spalten auf Mobile ausblenden */
+        &[data-field="serialNumber"],
+        &[data-field="createdAt"],
+        &[data-field="updatedAt"],
+        &[data-field="code"] {
+          display: none !important;
+        }
+      }
+    }
+  }
+
+  /* Zellen-Text nicht mehr ellipsis auf Mobile */
+  .cell-ellipsis {
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    word-break: break-word;
+  }
+
+  /* Footer: Paginator kompakter */
+  .outlook-footer {
+    padding: 8px;
+    flex-wrap: wrap;
+
+    ::ng-deep .mat-mdc-paginator {
+      width: 100%;
+      justify-content: center;
+
+      .mat-mdc-paginator-page-size {
+        display: none; /* Page-Size auf Mobile ausblenden */
+      }
+    }
+  }
+
+  /* Drawer auf Mobile: Vollbild */
+  ::ng-deep .gt-drawer-panel {
+    width: 100vw !important;
+    max-width: 100vw !important;
+  }
+
+  .gt-drawer__body {
+    padding: 12px;
+  }
+
+  .drawer-buttons {
+    flex-direction: column;
+    gap: 8px;
+
+    button {
+      width: 100%;
+    }
+  }
+}

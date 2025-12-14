@@ -1,6 +1,10 @@
 /**
  * App Shell Styles
  * Based on mySocialCare Design System
+ *
+ * Responsive Navigation:
+ * - Desktop (>= 768px): Navigation Rail on left side
+ * - Mobile (< 768px): Bottom Navigation Bar
  */
 
 // App Shell - Flexbox Layout with Navigation Rail
@@ -9,6 +13,11 @@
   min-height: 100vh;
   width: 100%;
   background-color: #FEFBFF; // MD3 surface
+
+  // Mobile: Stack layout for bottom navigation
+  &.mobile {
+    flex-direction: column;
+  }
 }
 
 // Content Area - Main content next to navigation rail
@@ -25,12 +34,23 @@
   // No navigation (auth pages)
   &.no-nav {
     margin-left: 0;
+    padding-bottom: 0;
   }
 
-  // Mobile responsive
-  @media (max-width: 767px) {
-    margin-left: 72px; // Always use collapsed width on mobile
+  // Mobile layout - no left margin, bottom padding for nav bar
+  &.mobile {
+    margin-left: 0;
     padding: 16px;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px) + 8px); // Bottom nav height + safe area + spacing
+    min-height: calc(100vh - 64px); // Account for bottom nav
+  }
+}
+
+// Mobile < 480px: Minimales Padding für volle Kartenbreite
+@media (max-width: 480px) {
+  .content-area.mobile {
+    padding: 0 !important;
+    padding-bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 

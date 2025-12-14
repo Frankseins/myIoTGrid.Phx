@@ -501,6 +501,43 @@ mat-divider {
   }
 }
 
+// ========== MOBILE RESPONSIVE (< 480px) ==========
+@media (max-width: 480px) {
+  .dashboard-page {
+    padding: 0;
+    margin: 0;
+    width: 100%;
+    max-width: 100%;
+
+    // Header ausblenden - sichtbar im Bottom Nav
+    .page-header {
+      display: none;
+    }
+
+    // Widgets Grid: minimales Padding (5px Seitenrand)
+    .widgets-grid {
+      gap: 10px;
+      padding: 0 5px 16px;
+      width: 100%;
+      max-width: 100%;
+      box-sizing: border-box;
+    }
+
+    .location-section {
+      padding: 0 5px;
+      margin-bottom: 1rem;
+
+      .location-title {
+        padding: 0;
+      }
+    }
+
+    .alerts-section {
+      padding: 0 5px;
+    }
+  }
+}
+
 // Tablet Layout (768px - 1023px)
 .dashboard-page.tablet {
   .page-header {

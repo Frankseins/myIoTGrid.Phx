@@ -2,9 +2,9 @@
     <!-- Toolbar -->
     <mat-toolbar *ngIf="showToolbar" class="toolbar outlook-toolbar">
         <div class="left-actions">
-            <button mat-flat-button color="primary" (click)="openCreate()">
+            <button mat-flat-button color="primary" (click)="openCreate()" class="btn-create">
                 <mat-icon>add</mat-icon>
-                {{ createLabel }}
+                <span class="btn-text">{{ createLabel }}</span>
             </button>
 
             <ng-content select="[table-toolbar-actions]"></ng-content>
@@ -107,7 +107,7 @@
                     [mat-sort-header]="col.sortable ? col.field : ''">
                     {{ col.header }}
                 </th>
-                <td mat-cell *matCellDef="let row">
+                <td mat-cell *matCellDef="let row" [attr.data-label]="col.header" [attr.data-field]="col.field">
                     <!-- Custom Template hat Priorität -->
                     <ng-container *ngIf="getColumnTemplate(col.field) as customTemplate; else defaultRenderer">
                         <ng-container *ngTemplateOutlet="customTemplate; context: { $implicit: row, row: row }"></ng-container>
