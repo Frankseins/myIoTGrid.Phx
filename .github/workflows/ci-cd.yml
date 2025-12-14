@@ -18,9 +18,9 @@ env:
 
 # =============================================================================
 # Images Built:
-# - myiotgrid-hub-api          (Hub Backend API)
-# - myiotgrid-hub-frontend     (Hub Frontend - local deployment)
-# - myiotgrid-sensor-sim       (Sensor Simulator)
+# - myiotgrid-hub-phx-api          (Hub Backend API)
+# - myiotgrid-hub-phx-frontend     (Hub Frontend - local deployment)
+# - myiotgrid-phx-sensor-sim       (Sensor Simulator)
 # =============================================================================
 
 defaults:
@@ -161,7 +161,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =============================================================================
-  # Docker Image: Hub Frontend
+  # Docker Image: Hub Frontend (ARM64 + AMD64 with pre-built artifacts)
   # =============================================================================
   docker-hub-frontend:
     name: Build Hub Frontend Image
@@ -178,6 +178,12 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-hub-build
+          path: ./dist/apps/hub
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -203,14 +209,24 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
+      - name: Create runtime Dockerfile
+        run: |
+          cat > Dockerfile.hub-runtime <<EOF
+          FROM nginx:alpine
+          COPY ./dist/apps/hub /usr/share/nginx/html
+          COPY ./myIoTGrid.Apps/docker/nginx.conf /etc/nginx/nginx.conf
+          EXPOSE 80
+          EXPOSE 443
+          CMD ["nginx", "-g", "daemon off;"]
+          EOF
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./myIoTGrid.Apps
-          file: ./myIoTGrid.Apps/docker/Dockerfile.hub
+          context: .
+          file: ./Dockerfile.hub-runtime
           push: true
-          # Only AMD64 - esbuild doesn't work under QEMU ARM64 emulation
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -286,20 +302,20 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Images Built:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Hub API | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Hub Frontend | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Platforms | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub API | linux/amd64, linux/arm64 | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub Frontend | linux/amd64, linux/arm64 | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sensor Simulator | linux/amd64, linux/arm64 | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "# Hub API" >> $GITHUB_STEP_SUMMARY
+          echo "# Hub API (ARM64 + AMD64)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-api:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Hub Frontend" >> $GITHUB_STEP_SUMMARY
+          echo "# Hub Frontend (ARM64 + AMD64 - using pre-built Nx artifacts)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
+          echo "# Sensor Simulator (ARM64 + AMD64)" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-phx-sensor-sim:latest" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
