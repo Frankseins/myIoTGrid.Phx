@@ -141,7 +141,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-hub-api
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-api
           tags: |
             type=ref,event=branch
             type=sha,prefix=
@@ -196,7 +196,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v5
         with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-hub-frontend
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-frontend
           tags: |
             type=ref,event=branch
             type=sha,prefix=
@@ -295,10 +295,10 @@ jobs:
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "# Hub API" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-api:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-api:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Hub Frontend" >> $GITHUB_STEP_SUMMARY
-          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-frontend:latest" >> $GITHUB_STEP_SUMMARY
+          echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-sensor-sim:latest" >> $GITHUB_STEP_SUMMARY
