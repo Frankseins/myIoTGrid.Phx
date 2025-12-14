@@ -163,7 +163,7 @@ jobs:
   # =============================================================================
   # Docker Image: Hub Frontend (ARM64 + AMD64 with pre-built artifacts)
   # =============================================================================
-  docker-hub-frontend:
+ docker-hub-frontend:
     name: Build Hub Frontend Image
     runs-on: ubuntu-latest
     needs: build-and-test-frontend
@@ -209,12 +209,59 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
+      - name: Prepare nginx config
+        run: |
+          # Prüfe ob nginx.conf existiert, sonst Standard-Config erstellen
+          if [ -f "./myIoTGrid.Apps/docker/nginx.conf" ]; then
+            echo "Using existing nginx.conf"
+            cp ./myIoTGrid.Apps/docker/nginx.conf ./nginx.conf
+          else
+            echo "Creating default nginx.conf"
+            cat > nginx.conf <<EOF
+          events {
+              worker_connections 1024;
+          }
+          
+          http {
+              include /etc/nginx/mime.types;
+              default_type application/octet-stream;
+              
+              sendfile on;
+              keepalive_timeout 65;
+              
+              server {
+                  listen 80;
+                  listen [::]:80;
+                  
+                  listen 443 ssl http2;
+                  listen [::]:443 ssl http2;
+                  
+                  server_name _;
+                  
+                  root /usr/share/nginx/html;
+                  index index.html;
+                  
+                  # Angular routing
+                  location / {
+                      try_files \$uri \$uri/ /index.html;
+                  }
+                  
+                  # Caching for static assets
+                  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                      expires 1y;
+                      add_header Cache-Control "public, immutable";
+                  }
+              }
+          }
+          EOF
+          fi
+
       - name: Create runtime Dockerfile
         run: |
           cat > Dockerfile.hub-runtime <<EOF
           FROM nginx:alpine
           COPY ./dist/apps/hub /usr/share/nginx/html
-          COPY ./myIoTGrid.Apps/docker/nginx.conf /etc/nginx/nginx.conf
+          COPY ./nginx.conf /etc/nginx/nginx.conf
           EXPOSE 80
           EXPOSE 443
           CMD ["nginx", "-g", "daemon off;"]
@@ -231,61 +278,6 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
-
-  # =============================================================================
-  # Docker Image: Sensor Simulator
-  # =============================================================================
-  docker-sensor-sim:
-    name: Build Sensor Simulator Image
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push'
-
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Log in to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Extract metadata for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/myiotgrid-phx-sensor-sim
-          tags: |
-            type=ref,event=branch
-            type=sha,prefix=
-            type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
-            type=raw,value={{date 'YYYYMMDD-HHmmss'}}
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: ./myIoTGrid.Sensor
-          file: ./myIoTGrid.Sensor/docker/Dockerfile
-          push: true
-          platforms: linux/amd64,linux/arm64
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
   # =============================================================================
   # Summary Job
   # =============================================================================
