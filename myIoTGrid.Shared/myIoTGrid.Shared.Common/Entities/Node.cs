@@ -108,10 +108,4 @@ public class Node : IEntity
 
     /// <summary>Debug logs from this node (Sprint 8)</summary>
     public ICollection<NodeDebugLog> DebugLogs { get; set; } = new List<NodeDebugLog>();
-
-    /// <summary>Cloud sync state for this node</summary>
-    public NodeSyncState? SyncState { get; set; }
-
-    /// <summary>Sync history entries for this node</summary>
-    public ICollection<SyncHistoryEntry> SyncHistory { get; set; } = new List<SyncHistoryEntry>();
 }

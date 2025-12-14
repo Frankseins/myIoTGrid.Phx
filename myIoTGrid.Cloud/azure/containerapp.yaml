@@ -1,6 +1,0 @@
-properties:
-  configuration:
-    ingress:
-      external: true
-      targetPort: 8080
-      transport: auto
