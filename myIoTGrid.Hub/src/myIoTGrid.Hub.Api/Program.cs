@@ -189,9 +189,10 @@ try
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.AllowAnyOrigin()
+            policy.SetIsOriginAllowed(_ => true) // Erlaubt ALLE Origins
                 .AllowAnyHeader()
-                .AllowAnyMethod();
+                .AllowAnyMethod()
+                .AllowCredentials(); // Wichtig für SignalR!
         });
     });
 
