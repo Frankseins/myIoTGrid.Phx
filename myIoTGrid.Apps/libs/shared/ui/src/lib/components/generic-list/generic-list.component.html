@@ -69,48 +69,64 @@
         <mat-progress-bar mode="indeterminate" class="loading-bar"></mat-progress-bar>
     }
 
-    <!-- Tabelle -->
-    <div class="table-wrap" #scrollWrap (scroll)="onScroll($event)">
-        <table mat-table [dataSource]="data" matSort (matSortChange)="onSortChange($event)" class="gl-table outlook-table">
+    <!-- Mobile Card View -->
+    @if (isMobileView && mobileCardTemplate) {
+        <div class="mobile-cards-container" #scrollWrap (scroll)="onScroll($event)">
+            @if (data.length === 0 && !loading) {
+                <div class="mobile-empty-state">
+                    <mat-icon>inbox</mat-icon>
+                    <p>Keine Einträge vorhanden</p>
+                </div>
+            } @else {
+                @for (row of data; track $index) {
+                    <ng-container *ngTemplateOutlet="mobileCardTemplate; context: { $implicit: row, row: row, index: $index }"></ng-container>
+                }
+            }
+        </div>
+    } @else {
+        <!-- Desktop Tabelle -->
+        <div class="table-wrap" #scrollWrap (scroll)="onScroll($event)">
+            <table mat-table [dataSource]="data" matSort (matSortChange)="onSortChange($event)" class="gl-table outlook-table">
 
-            <!-- Dynamische Spalten -->
-            @for (col of columns; track col.field) {
-                <ng-container [matColumnDef]="col.field">
-                    <th mat-header-cell *matHeaderCellDef
-                        [style.width]="col.width"
-                        [mat-sort-header]="col.sortable ? col.field : ''">
-                        {{ col.header }}
-                    </th>
-                    <td mat-cell *matCellDef="let row">
-                        <!-- Custom Template hat Prioritaet -->
-                        @if (getColumnTemplate(col.field); as customTemplate) {
-                            <ng-container *ngTemplateOutlet="customTemplate; context: { $implicit: row, row: row }"></ng-container>
-                        } @else {
-                            <!-- Default Renderer basierend auf Type -->
-                            @switch (col.type) {
-                                @case ('date') {
-                                    <span class="cell-ellipsis">
-                                        {{ $any(getFieldValue(row, col.field)) | date:'short' }}
-                                    </span>
-                                }
-                                @case ('number') {
-                                    <span class="cell-ellipsis" style="text-align: right; display: block;">
-                                        {{ getFieldValue(row, col.field) }}
-                                    </span>
-                                }
-                                @default {
-                                    <span class="cell-ellipsis">{{ getFieldValue(row, col.field) }}</span>
+                <!-- Dynamische Spalten -->
+                @for (col of columns; track col.field) {
+                    <ng-container [matColumnDef]="col.field">
+                        <th mat-header-cell *matHeaderCellDef
+                            [style.width]="col.width"
+                            [mat-sort-header]="col.sortable ? col.field : ''">
+                            {{ col.header }}
+                        </th>
+                        <td mat-cell *matCellDef="let row">
+                            <!-- Custom Template hat Prioritaet -->
+                            @if (getColumnTemplate(col.field); as customTemplate) {
+                                <ng-container *ngTemplateOutlet="customTemplate; context: { $implicit: row, row: row }"></ng-container>
+                            } @else {
+                                <!-- Default Renderer basierend auf Type -->
+                                @switch (col.type) {
+                                    @case ('date') {
+                                        <span class="cell-ellipsis">
+                                            {{ $any(getFieldValue(row, col.field)) | date:'short' }}
+                                        </span>
+                                    }
+                                    @case ('number') {
+                                        <span class="cell-ellipsis" style="text-align: right; display: block;">
+                                            {{ getFieldValue(row, col.field) }}
+                                        </span>
+                                    }
+                                    @default {
+                                        <span class="cell-ellipsis">{{ getFieldValue(row, col.field) }}</span>
+                                    }
                                 }
                             }
-                        }
-                    </td>
-                </ng-container>
-            }
+                        </td>
+                    </ng-container>
+                }
 
-            <tr mat-header-row *matHeaderRowDef="displayedColumns" class="outlook-header-row"></tr>
-            <tr mat-row *matRowDef="let row; columns: displayedColumns" class="outlook-row"></tr>
-        </table>
-    </div>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns" class="outlook-header-row"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns" class="outlook-row"></tr>
+            </table>
+        </div>
+    }
 
     <!-- Footer -->
     <mat-toolbar class="toolbar outlook-toolbar outlook-footer">

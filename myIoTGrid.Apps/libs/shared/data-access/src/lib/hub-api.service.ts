@@ -87,4 +87,34 @@ export class HubApiService extends BaseApiService {
   update(id: string, dto: UpdateHubDto): Observable<Hub> {
     return this.updateCurrent(dto);
   }
+
+  // === Backup API ===
+
+  /**
+   * Download database backup
+   * GET /api/backup
+   */
+  downloadBackup(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/backup`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Upload and restore database backup
+   * POST /api/backup
+   */
+  uploadBackup(file: File): Observable<{ message: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{ message: string }>(`${this.baseUrl}/backup`, formData);
+  }
+
+  /**
+   * Get database size
+   * GET /api/backup/size
+   */
+  getDatabaseSize(): Observable<{ sizeBytes: number; sizeFormatted: string }> {
+    return this.get<{ sizeBytes: number; sizeFormatted: string }>('/backup/size');
+  }
 }

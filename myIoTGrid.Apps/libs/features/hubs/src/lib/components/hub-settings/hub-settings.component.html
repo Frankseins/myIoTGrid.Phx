@@ -356,6 +356,83 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- Wartung / Backup Card -->
+      <mat-card class="backup-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>backup</mat-icon>
+            Wartung
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="backup-section">
+            <h4>Datenbank-Backup</h4>
+            <p class="card-description">Erstellen Sie ein Backup der SQLite-Datenbank oder stellen Sie ein vorhandenes Backup wieder her.</p>
+
+            @if (databaseSize()) {
+              <div class="db-info">
+                <mat-icon>storage</mat-icon>
+                <span>Datenbankgröße: <strong>{{ databaseSize() }}</strong></span>
+              </div>
+            }
+
+            <div class="backup-actions">
+              <button
+                mat-flat-button
+                color="primary"
+                (click)="downloadBackup()"
+                [disabled]="isBackingUp() || isRestoring()">
+                @if (isBackingUp()) {
+                  <mat-icon class="spin">sync</mat-icon>
+                  Backup wird erstellt...
+                } @else {
+                  <mat-icon>download</mat-icon>
+                  Backup herunterladen
+                }
+              </button>
+
+              <input
+                type="file"
+                accept=".db"
+                #fileInput
+                style="display: none"
+                (change)="onRestoreFileSelected($event)">
+
+              <button
+                mat-stroked-button
+                color="warn"
+                (click)="fileInput.click()"
+                [disabled]="isBackingUp() || isRestoring()">
+                @if (isRestoring()) {
+                  <mat-icon class="spin">sync</mat-icon>
+                  Wiederherstellen...
+                } @else {
+                  <mat-icon>upload</mat-icon>
+                  Backup wiederherstellen
+                }
+              </button>
+            </div>
+
+            @if (!isReconnecting()) {
+              <p class="warning-hint">
+                <mat-icon>warning</mat-icon>
+                Beim Wiederherstellen werden alle aktuellen Daten überschrieben!
+              </p>
+            }
+
+            @if (isReconnecting()) {
+              <div class="reconnecting-banner">
+                <mat-icon class="spin">sync</mat-icon>
+                <div class="reconnecting-content">
+                  <strong>Backend wird neu gestartet...</strong>
+                  <p>Bitte warten Sie, die Verbindung wird wiederhergestellt.</p>
+                </div>
+              </div>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+
     </div>
   }
 </div>

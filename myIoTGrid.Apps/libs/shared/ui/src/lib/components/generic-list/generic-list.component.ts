@@ -2,7 +2,7 @@ import {
     AfterViewInit, ChangeDetectionStrategy, Component, ContentChild, ContentChildren, Directive,
     ElementRef, EventEmitter, Input, OnChanges, OnDestroy, OnInit,
     Output, QueryList, SimpleChanges, TemplateRef, ViewChild, ViewContainerRef,
-    ChangeDetectorRef, AfterContentInit
+    ChangeDetectorRef, AfterContentInit, HostListener
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -107,8 +107,19 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     // Delete Button
     @Input() showDeleteButton = false;
 
+    // Default Sort (applied when no stored state exists)
+    @Input() defaultSortField?: string;
+    @Input() defaultSortOrder: 'asc' | 'desc' = 'desc';
+
+    // Mobile Card View
+    private static readonly MOBILE_BREAKPOINT = 768;
+    isMobileView = false;
+
     // Slot für Filter
     @ContentChild('filterTemplate', { static: false }) filterTemplate!: TemplateRef<unknown>;
+
+    // Slot für Mobile Card Template
+    @ContentChild('mobileCardTemplate', { static: false }) mobileCardTemplate!: TemplateRef<unknown>;
 
     // Slot für zusätzliche Toolbar-Buttons (z.B. Delete Button)
     @ContentChild('toolbarActionsTemplate', { static: false }) toolbarActionsTemplate!: TemplateRef<unknown>;
@@ -151,6 +162,19 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     private subs = new Subscription();
     private _afterInit = false;
 
+    @HostListener('window:resize')
+    onResize(): void {
+        this.checkViewport();
+    }
+
+    private checkViewport(): void {
+        const wasMobile = this.isMobileView;
+        this.isMobileView = typeof window !== 'undefined' && window.innerWidth < GenericListComponent.MOBILE_BREAKPOINT;
+        if (wasMobile !== this.isMobileView) {
+            this.cdr.markForCheck();
+        }
+    }
+
     constructor(
         private overlay: Overlay,
         private vcr: ViewContainerRef,
@@ -178,6 +202,9 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
 
     // ---------- Lifecycle ----------
     ngOnInit(): void {
+        // Check viewport for mobile view
+        this.checkViewport();
+
         const st = this.tableState.loadExtraState(this.storageKey);
         this.hasState = this.computeHasState(st);
 
@@ -222,12 +249,15 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
 
         // Sort/Paging/Scroll anwenden
         const st = this.tableState.loadExtraState(this.storageKey);
+        let hasSavedSort = false;
+
         if (st) {
             if (this.paginator) {
                 if (typeof st.pageSize === 'number') this.paginator.pageSize = st.pageSize;
                 if (typeof st.pageIndex === 'number') this.paginator.pageIndex = st.pageIndex;
             }
             if (this.sort && st.sort?.active) {
+                hasSavedSort = true;
                 const s: MatSortable = {
                     id: st.sort.active,
                     start: (st.sort.direction || 'asc') as 'asc' | 'desc',
@@ -240,6 +270,16 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
                     try { this.scrollWrapRef.nativeElement.scrollTop = st.scrollTop!; } catch { /* ignore */ }
                 }, 0);
             }
+        }
+
+        // Apply default sort if no saved sort state and defaultSortField is set
+        if (!hasSavedSort && this.sort && this.defaultSortField) {
+            const s: MatSortable = {
+                id: this.defaultSortField,
+                start: this.defaultSortOrder,
+                disableClear: false
+            };
+            this.sort.sort(s);
         }
 
         this._afterInit = true;

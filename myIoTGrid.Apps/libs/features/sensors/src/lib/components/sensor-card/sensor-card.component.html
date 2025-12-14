@@ -1,0 +1,101 @@
+<div class="sensor-card" [class.expanded]="expanded" (click)="toggle()" matRipple>
+  <!-- Card Header -->
+  <div class="card-header">
+    <div class="icon-wrapper" [style.background-color]="getSensorColor()">
+      <mat-icon>{{ getSensorIcon() }}</mat-icon>
+    </div>
+
+    <div class="info">
+      <h3 class="sensor-name">{{ sensor.name }}</h3>
+      <div class="meta-row">
+        <span class="category-badge" [style.background-color]="getCategoryColor() + '20'" [style.color]="getCategoryColor()">
+          {{ getCategoryLabel() }}
+        </span>
+        <span class="code">{{ sensor.code }}</span>
+      </div>
+    </div>
+
+    <div class="status-indicator" [class.active]="sensor.isActive" [class.inactive]="!sensor.isActive">
+      <mat-icon>{{ sensor.isActive ? 'check_circle' : 'cancel' }}</mat-icon>
+    </div>
+
+    <mat-icon class="expand-icon" [class.rotated]="expanded">expand_more</mat-icon>
+  </div>
+
+  <!-- Expanded Details -->
+  @if (expanded) {
+    <div class="card-details" (click)="$event.stopPropagation()">
+      <div class="details-grid">
+        <!-- Protokoll -->
+        <div class="detail-item">
+          <span class="label">Protokoll</span>
+          <span class="value">{{ getProtocolLabel() }}</span>
+        </div>
+
+        <!-- Seriennummer -->
+        @if (sensor.serialNumber) {
+          <div class="detail-item">
+            <span class="label">Seriennummer</span>
+            <span class="value">{{ sensor.serialNumber }}</span>
+          </div>
+        }
+
+        <!-- Hersteller -->
+        @if (sensor.manufacturer) {
+          <div class="detail-item">
+            <span class="label">Hersteller</span>
+            <span class="value">{{ sensor.manufacturer }}</span>
+          </div>
+        }
+
+        <!-- Modell -->
+        @if (sensor.model) {
+          <div class="detail-item">
+            <span class="label">Modell</span>
+            <span class="value">{{ sensor.model }}</span>
+          </div>
+        }
+
+        <!-- Intervall -->
+        <div class="detail-item">
+          <span class="label">Intervall</span>
+          <span class="value">{{ sensor.intervalSeconds }}s</span>
+        </div>
+
+        <!-- Capabilities -->
+        @if (getCapabilitiesCount() > 0) {
+          <div class="detail-item full-width">
+            <span class="label">Messwerte</span>
+            <div class="capabilities">
+              @for (cap of sensor.capabilities; track cap.id) {
+                <mat-chip class="capability-chip">
+                  {{ cap.displayName }} ({{ cap.unit }})
+                </mat-chip>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Beschreibung -->
+        @if (sensor.description) {
+          <div class="detail-item full-width">
+            <span class="label">Beschreibung</span>
+            <span class="value description">{{ sensor.description }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button mat-stroked-button (click)="onEdit($event)">
+          <mat-icon>edit</mat-icon>
+          Bearbeiten
+        </button>
+        <button mat-stroked-button color="warn" (click)="onDelete($event)">
+          <mat-icon>delete</mat-icon>
+          Löschen
+        </button>
+      </div>
+    </div>
+  }
+</div>

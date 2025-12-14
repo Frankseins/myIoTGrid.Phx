@@ -201,6 +201,43 @@ export class NodeListComponent implements OnInit, OnDestroy {
       return newMap;
     });
 
+    // sensorsLatestMap aktualisieren (für NodeCard Live-Updates)
+    this.sensorsLatestMap.update(sensorsMap => {
+      const newMap = new Map(sensorsMap);
+      const nodeSensors = newMap.get(reading.nodeId);
+
+      if (nodeSensors) {
+        // Sensor finden und Measurement aktualisieren
+        const updatedSensors = {
+          ...nodeSensors,
+          sensors: nodeSensors.sensors.map(sensor => {
+            // Sensor anhand sensorId oder assignmentId matchen
+            if (sensor.sensorId === reading.sensorId || sensor.assignmentId === reading.assignmentId) {
+              return {
+                ...sensor,
+                measurements: sensor.measurements.map(m => {
+                  if (m.measurementType === reading.measurementType) {
+                    return {
+                      ...m,
+                      readingId: reading.id,
+                      rawValue: reading.rawValue,
+                      value: reading.value,
+                      timestamp: reading.timestamp
+                    };
+                  }
+                  return m;
+                })
+              };
+            }
+            return sensor;
+          })
+        };
+        newMap.set(reading.nodeId, updatedSensors);
+      }
+
+      return newMap;
+    });
+
     // Last Updated für diesen Node aktualisieren
     this.lastUpdated.update(map => {
       const newMap = new Map(map);

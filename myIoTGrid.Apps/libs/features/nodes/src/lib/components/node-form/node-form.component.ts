@@ -151,6 +151,8 @@ export class NodeFormComponent implements OnInit, OnDestroy {
   private historyFilters: Record<string, unknown> = {};
   // Last lazy load event for refresh after filter change
   private lastHistoryEvent: ListLazyEvent | null = null;
+  // Track expanded readings for mobile card view
+  private expandedReadingIds = new Set<number>();
 
   readonly isViewMode = computed(() => this.mode() === 'view');
   readonly isEditMode = computed(() => this.mode() === 'edit');
@@ -512,6 +514,45 @@ export class NodeFormComponent implements OnInit, OnDestroy {
       minute: '2-digit',
       second: '2-digit'
     });
+  }
+
+  // ========== Mobile Card View Helpers ==========
+
+  toggleReadingExpanded(reading: Reading): void {
+    if (this.expandedReadingIds.has(reading.id)) {
+      this.expandedReadingIds.delete(reading.id);
+    } else {
+      this.expandedReadingIds.add(reading.id);
+    }
+  }
+
+  isReadingExpanded(reading: Reading): boolean {
+    return this.expandedReadingIds.has(reading.id);
+  }
+
+  getReadingTimeLabel(timestamp: string): string {
+    const date = new Date(timestamp);
+    return date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  getReadingDateLabel(timestamp: string): string {
+    const date = new Date(timestamp);
+    const today = new Date();
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    // Compare dates only (without time)
+    const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    const todayOnly = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const yesterdayOnly = new Date(yesterday.getFullYear(), yesterday.getMonth(), yesterday.getDate());
+
+    if (dateOnly.getTime() === todayOnly.getTime()) {
+      return ''; // Today - no date shown
+    } else if (dateOnly.getTime() === yesterdayOnly.getTime()) {
+      return 'gestern';
+    } else {
+      return date.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit' });
+    }
   }
 
   private loadNode(id: string): void {

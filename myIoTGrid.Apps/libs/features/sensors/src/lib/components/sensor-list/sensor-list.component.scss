@@ -73,8 +73,63 @@ mat-chip {
   }
 }
 
-// ========== MOBILE RESPONSIVE (< 480px) ==========
-@media (max-width: 480px) {
+// ========== MOBILE CARD VIEW ==========
+.mobile-sensor-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.mobile-toolbar {
+  background: white;
+  padding: 8px 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 56px;
+
+  .spacer {
+    flex: 1;
+  }
+
+  .sensor-count {
+    font-size: 14px;
+    color: #757575;
+  }
+
+  button {
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+.cards-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  background: #f5f5f5;
+}
+
+.load-more {
+  padding: 16px;
+  text-align: center;
+  background: #f5f5f5;
+
+  .pagination-info {
+    font-size: 13px;
+    color: #757575;
+  }
+}
+
+// Desktop-only elements
+.desktop-only {
+  display: block;
+}
+
+// ========== MOBILE RESPONSIVE (< 600px) ==========
+@media (max-width: 600px) {
   .sensor-list-page {
     padding: 0;
     margin: 0;
@@ -82,8 +137,19 @@ mat-chip {
     max-width: 100%;
   }
 
-  // Header ausblenden - sichtbar im Bottom Nav
-  .page-header {
+  // Header ausblenden - mobile toolbar übernimmt
+  .desktop-only {
+    display: none;
+  }
+
+  .cards-container {
+    padding: 12px;
+  }
+}
+
+// ========== TABLET/DESKTOP (> 600px) ==========
+@media (min-width: 601px) {
+  .mobile-sensor-list {
     display: none;
   }
 }

@@ -1,0 +1,70 @@
+<div class="reading-card" [class.expanded]="expanded" (click)="toggle()" matRipple>
+  <!-- Compact View (Always Visible) -->
+  <div class="card-main">
+    <!-- Left: Icon + Label -->
+    <div class="card-left">
+      <div class="measurement-icon" [style.background-color]="color + '20'" [style.color]="color">
+        <mat-icon>{{ measurementIcon }}</mat-icon>
+      </div>
+      <div class="measurement-info">
+        <span class="measurement-label">{{ measurementLabel }}</span>
+        @if (getDateDisplay()) {
+          <span class="date-label">{{ getDateDisplay() }}</span>
+        }
+      </div>
+    </div>
+
+    <!-- Center: Value -->
+    <div class="card-value">
+      <span class="value" [style.color]="color">{{ reading.value | number:'1.1-2' }}</span>
+      <span class="unit">{{ reading.unit }}</span>
+    </div>
+
+    <!-- Right: Time + Trend -->
+    <div class="card-right">
+      <span class="time">{{ getTimeDisplay() }}</span>
+      <mat-icon class="trend-icon" [style.color]="getTrendColor()">
+        {{ getTrendIcon() }}
+      </mat-icon>
+    </div>
+  </div>
+
+  <!-- Expanded Details -->
+  @if (expanded) {
+    <div class="card-details" (click)="$event.stopPropagation()">
+      <div class="detail-row">
+        <mat-icon>schedule</mat-icon>
+        <span class="detail-label">Zeitpunkt:</span>
+        <span class="detail-value">{{ getFullTimestamp() }}</span>
+      </div>
+
+      @if (sensorName) {
+        <div class="detail-row">
+          <mat-icon>sensors</mat-icon>
+          <span class="detail-label">Sensor:</span>
+          <span class="detail-value">{{ sensorName }}</span>
+        </div>
+      }
+
+      @if (nodeName) {
+        <div class="detail-row">
+          <mat-icon>developer_board</mat-icon>
+          <span class="detail-label">Node:</span>
+          <span class="detail-value">{{ nodeName }}</span>
+        </div>
+      }
+
+      <div class="detail-row">
+        <mat-icon [style.color]="getTrendColor()">{{ getTrendIcon() }}</mat-icon>
+        <span class="detail-label">Trend:</span>
+        <span class="detail-value">
+          @switch (reading.trendDirection) {
+            @case ('up') { Steigend }
+            @case ('down') { Fallend }
+            @default { Stabil }
+          }
+        </span>
+      </div>
+    </div>
+  }
+</div>

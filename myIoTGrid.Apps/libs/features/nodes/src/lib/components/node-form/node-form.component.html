@@ -448,7 +448,7 @@
             <!-- Reading History (Generic List) -->
             <section class="form-section reading-history-section">
               <myiotgrid-generic-list
-                title="Messwert-Verlauf"
+                title="Verlauf"
                 [data]="readingHistory()"
                 [columns]="historyColumns"
                 [totalRecords]="historyTotalRecords()"
@@ -458,6 +458,8 @@
                 filterTitle="Messwerte filtern"
                 stateKey="node-reading-history"
                 dataKey="id"
+                defaultSortField="timestamp"
+                defaultSortOrder="desc"
                 (lazyLoad)="loadReadingsLazy($event)"
                 (filterChange)="onHistoryFilterChange($event)"
                 (deleteClicked)="openDeleteDrawer()">
@@ -490,6 +492,55 @@
                         }
                       </mat-select>
                     </mat-form-field>
+                  </div>
+                </ng-template>
+
+                <!-- Mobile Card Template -->
+                <ng-template #mobileCardTemplate let-reading>
+                  <div class="reading-mobile-card" (click)="toggleReadingExpanded(reading)">
+                    <!-- Header: Icon + Type + Time -->
+                    <div class="reading-card-header">
+                      <div class="reading-icon" [style.background-color]="(reading.sensorColor || '#607d8b') + '20'" [style.color]="reading.sensorColor || '#607d8b'">
+                        <mat-icon>{{ reading.sensorIcon || 'sensors' }}</mat-icon>
+                      </div>
+                      <div class="reading-type-info">
+                        <span class="reading-type">{{ reading.displayName || reading.measurementType }}</span>
+                        <span class="reading-sensor-hint">{{ reading.sensorName || reading.sensorCode }}</span>
+                      </div>
+                      <div class="reading-time-info">
+                        <span class="reading-time">{{ getReadingTimeLabel(reading.timestamp) }}</span>
+                        @if (getReadingDateLabel(reading.timestamp)) {
+                          <span class="reading-date">{{ getReadingDateLabel(reading.timestamp) }}</span>
+                        }
+                      </div>
+                    </div>
+
+                    <!-- Value: Large and prominent -->
+                    <div class="reading-card-value">
+                      <span class="value" [style.color]="reading.sensorColor || '#1976d2'">{{ reading.value | number:'1.1-2' }}</span>
+                      <span class="unit">{{ reading.unit }}</span>
+                    </div>
+
+                    <!-- Expanded Details -->
+                    @if (isReadingExpanded(reading)) {
+                      <div class="reading-card-details">
+                        <div class="detail-row">
+                          <mat-icon>schedule</mat-icon>
+                          <span class="detail-label">Zeitpunkt:</span>
+                          <span class="detail-value">{{ formatTimestamp(reading.timestamp) }}</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>sensors</mat-icon>
+                          <span class="detail-label">Sensor:</span>
+                          <span class="detail-value">{{ reading.sensorName || reading.sensorCode || '-' }}</span>
+                        </div>
+                        <div class="detail-row">
+                          <mat-icon>category</mat-icon>
+                          <span class="detail-label">Messtyp:</span>
+                          <span class="detail-value">{{ reading.measurementType }}</span>
+                        </div>
+                      </div>
+                    }
                   </div>
                 </ng-template>
 

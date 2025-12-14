@@ -1437,3 +1437,184 @@ mat-divider {
     }
   }
 }
+
+// ========== Mobile Reading Cards ==========
+.reading-mobile-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 16px;
+  min-height: 100px;
+
+  &:hover {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  }
+
+  &:active {
+    transform: scale(0.99);
+  }
+}
+
+// Header: Icon + Type + Time
+.reading-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.reading-icon {
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  mat-icon {
+    font-size: 24px;
+    width: 24px;
+    height: 24px;
+  }
+}
+
+.reading-type-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0; // Important for text-overflow to work
+  gap: 2px;
+  overflow: hidden;
+}
+
+.reading-type {
+  font-size: 15px;
+  font-weight: 600;
+  color: #333;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reading-sensor-hint {
+  font-size: 11px;
+  color: #9e9e9e;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.reading-time-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+  min-width: 50px; // Ensure time always has space
+}
+
+.reading-time {
+  font-size: 13px;
+  color: #333;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.reading-date {
+  font-size: 11px;
+  color: #9e9e9e;
+  white-space: nowrap;
+}
+
+// Value: Large and prominent
+.reading-card-value {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  padding-left: 56px; // Align with text after icon
+
+  .value {
+    font-size: 28px;
+    font-weight: 700;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+
+  .unit {
+    font-size: 14px;
+    color: #666;
+    font-weight: 500;
+  }
+
+  @media (max-width: 480px) {
+    padding-left: 0;
+    justify-content: center;
+
+    .value {
+      font-size: 22px;
+    }
+
+    .unit {
+      font-size: 13px;
+    }
+  }
+}
+
+// Expanded Details
+.reading-card-details {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+  animation: slideDown 0.2s ease;
+
+  .detail-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid #f5f5f5;
+
+    &:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #9e9e9e;
+      flex-shrink: 0;
+    }
+
+    .detail-label {
+      font-size: 13px;
+      color: #9e9e9e;
+      min-width: 75px;
+      flex-shrink: 0;
+    }
+
+    .detail-value {
+      font-size: 13px;
+      color: #333;
+      flex: 1;
+      word-break: break-word;
+    }
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -84,85 +84,79 @@
   }
 }
 
-/* ========== MOBILE RESPONSIVE (< 480px) ========== */
-@media (max-width: 480px) {
-  .readings-table-container {
-    .table-header {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 12px;
+// ========== MOBILE CARD VIEW ==========
+.readings-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: #f5f5f5;
+  padding: 12px;
+  border-radius: 8px;
+}
 
-      button {
-        width: 100%;
-        justify-content: center;
-      }
+// Mobile-specific styles
+.mobile-view {
+  .table-header {
+    flex-direction: row;
+    align-items: center;
+
+    h3 {
+      font-size: 16px;
     }
 
-    .readings-table {
-      display: block;
-      box-shadow: none;
+    button {
+      padding: 0 12px;
+      min-width: auto;
 
-      thead {
+      .export-label {
         display: none;
       }
 
-      tbody {
-        display: block;
-      }
-
-      tr {
-        display: flex;
-        flex-wrap: wrap;
-        padding: 12px 16px;
-        border-bottom: 1px solid #e6e6e6;
-        background: #fff;
-        align-items: center;
-        gap: 8px;
-
-        &:hover {
-          background: #f9f9f9;
-        }
-      }
-
-      td {
-        border: none !important;
-        padding: 0 !important;
-
-        /* Timestamp: volle Breite oben */
-        &:first-child {
-          width: 100%;
-          order: 1;
-          font-size: 13px;
-          color: #666;
-          margin-bottom: 4px;
-        }
-
-        /* Value: prominent */
-        &:nth-child(2) {
-          order: 2;
-          font-size: 18px;
-          flex: 1;
-
-          strong {
-            font-size: 20px;
-          }
-        }
-
-        /* Trend: rechts neben Value */
-        &:last-child {
-          order: 3;
-        }
+      mat-icon {
+        margin: 0;
       }
     }
+  }
 
-    ::ng-deep mat-paginator {
+  mat-paginator {
+    background: transparent;
+
+    ::ng-deep {
       .mat-mdc-paginator-page-size {
         display: none;
       }
 
       .mat-mdc-paginator-range-label {
         margin: 0 8px;
+        font-size: 12px;
+      }
+
+      .mat-mdc-paginator-container {
+        padding: 0;
+        justify-content: center;
       }
     }
+  }
+}
+
+/* ========== RESPONSIVE (< 768px) ========== */
+@media (max-width: 768px) {
+  .readings-table-container {
+    .readings-table {
+      // Hide table on mobile (cards are shown instead via isMobileView)
+      display: none;
+    }
+  }
+}
+
+/* ========== DESKTOP (>= 768px) ========== */
+@media (min-width: 769px) {
+  .readings-cards {
+    // Hide cards on desktop (table is shown instead)
+    display: none;
+  }
+
+  .export-label {
+    display: inline;
   }
 }

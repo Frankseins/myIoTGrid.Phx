@@ -2,9 +2,10 @@
 // Sensor List Component
 // Verwaltung aller Sensoren mit CRUD
 // Verwendet Route-basiertes Detail-Formular
+// Mit responsiver Card-Ansicht für Mobile
 // ================================
 
-import { Component, OnInit, ChangeDetectionStrategy, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectionStrategy, ChangeDetectorRef, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 
@@ -15,11 +16,13 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { MatInputModule } from '@angular/material/input';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatButtonModule } from '@angular/material/button';
+import { MatToolbarModule } from '@angular/material/toolbar';
 import { FormsModule } from '@angular/forms';
 
 // Services & DTOs
 import { SensorApiService } from '@myiotgrid/shared/data-access';
-import { Sensor } from '@myiotgrid/shared/models';
+import { Sensor, COMMUNICATION_PROTOCOL_LABELS, CommunicationProtocol } from '@myiotgrid/shared/models';
 
 // GenericTable
 import {
@@ -30,6 +33,9 @@ import {
   EmptyStateComponent,
   LoadingSpinnerComponent
 } from '@myiotgrid/shared/ui';
+
+// Mobile Card Component
+import { SensorCardComponent } from '../sensor-card/sensor-card.component';
 
 interface SensorQueryDto {
   page: number;
@@ -55,13 +61,19 @@ interface SensorQueryDto {
     MatSelectModule,
     MatInputModule,
     MatChipsModule,
+    MatButtonModule,
+    MatToolbarModule,
     GenericTableComponent,
     ColumnTemplateDirective,
     EmptyStateComponent,
     LoadingSpinnerComponent,
+    SensorCardComponent,
   ],
 })
-export class SensorListComponent implements OnInit {
+export class SensorListComponent implements OnInit, OnDestroy {
+  // Responsive breakpoint (480px for mobile cards)
+  private readonly MOBILE_BREAKPOINT = 600;
+  isMobileView = false;
   sensors: Sensor[] = [];
   totalRecords = 0;
   loading = false;
@@ -122,6 +134,7 @@ export class SensorListComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
+    this.checkViewport();
     this.loadSensorsLazy({
       first: 0,
       rows: 10,
@@ -129,6 +142,23 @@ export class SensorListComponent implements OnInit {
       sortOrder: 1,
       globalFilter: this.globalFilter,
     });
+  }
+
+  ngOnDestroy(): void {
+    // Cleanup if needed
+  }
+
+  @HostListener('window:resize')
+  onResize(): void {
+    this.checkViewport();
+  }
+
+  private checkViewport(): void {
+    const wasMobile = this.isMobileView;
+    this.isMobileView = window.innerWidth < this.MOBILE_BREAKPOINT;
+    if (wasMobile !== this.isMobileView) {
+      this.cd.markForCheck();
+    }
   }
 
   /**
@@ -221,10 +251,17 @@ export class SensorListComponent implements OnInit {
   }
 
   /**
-   * Navigiert zum Detail-Formular (wird vom GenericTable über Route gemacht)
+   * Navigiert zum Detail-Formular (für Mobile Cards und GenericTable)
    */
-  onEdit(_sensor: Sensor): void {
-    // Navigation wird vom GenericTable mit detailMode='route' gehandhabt
+  onEdit(sensor: Sensor): void {
+    this.router.navigate(['/sensors', sensor.id], { queryParams: { mode: 'edit' } });
+  }
+
+  /**
+   * Navigiert zum Detail-Formular (View-Modus für Mobile Cards)
+   */
+  onCardEdit(sensor: Sensor): void {
+    this.router.navigate(['/sensors', sensor.id], { queryParams: { mode: 'edit' } });
   }
 
   /**
@@ -317,17 +354,8 @@ export class SensorListComponent implements OnInit {
   /**
    * Hilfsmethode: Protocol Label
    */
-  getProtocolLabel(protocol: number): string {
-    const labels: Record<number, string> = {
-      1: 'I²C',
-      2: 'SPI',
-      3: '1-Wire',
-      4: 'Analog',
-      5: 'UART',
-      6: 'Digital',
-      7: 'Ultraschall'
-    };
-    return labels[protocol] || 'Unbekannt';
+  getProtocolLabel(protocol: CommunicationProtocol | string): string {
+    return COMMUNICATION_PROTOCOL_LABELS[protocol as CommunicationProtocol] || protocol || 'Unbekannt';
   }
 
   /**

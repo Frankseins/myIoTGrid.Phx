@@ -14,7 +14,7 @@
 
 .card.outlook { background: #fff; padding: .5rem .75rem 0; width: 100%; overflow: hidden; }
 
-.toolbar.outlook-toolbar { display: flex; align-items: center; gap: .5rem; background: #fff; margin-bottom: .5rem; min-height: 44px; }
+.toolbar.outlook-toolbar { display: flex; align-items: center; gap: .5rem; background: #fff; margin-bottom: .5rem; min-height: 44px; position: relative; }
 .spacer { flex: 1 1 auto; }
 
 /* Titel in Header */
@@ -128,4 +128,129 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   display: block;
+}
+
+/* ======= Mobile Card View ======= */
+.mobile-cards-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 8px;
+  overflow-y: auto;
+  max-height: calc(100vh - 280px);
+}
+
+.mobile-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 16px;
+  color: #9e9e9e;
+  text-align: center;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    margin-bottom: 12px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+/* Mobile Footer adjustments */
+@media (max-width: 768px) {
+  .outlook-footer {
+    ::ng-deep .mat-mdc-paginator {
+      .mat-mdc-paginator-page-size {
+        display: none;
+      }
+
+      .mat-mdc-paginator-range-label {
+        margin: 0 8px;
+        font-size: 12px;
+      }
+
+      .mat-mdc-paginator-container {
+        padding: 0;
+        justify-content: center;
+      }
+    }
+  }
+
+  .gl-title {
+    font-size: 0.9rem;
+  }
+
+  .tbar-icon {
+    width: 36px;
+    height: 36px;
+  }
+}
+
+/* Mobile Toolbar: compact with full-width search */
+@media (max-width: 480px) {
+  .toolbar.outlook-toolbar {
+    padding: 8px 12px;
+    gap: 6px;
+
+    .gl-title {
+      font-size: 14px;
+      line-height: 1.3;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    // Hide refresh button on mobile
+    .tbar-icon[aria-label="Aktualisieren"] {
+      display: none;
+    }
+
+    .tbar-icon {
+      width: 34px;
+      height: 34px;
+
+      .mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+      }
+    }
+
+    // Search expands to full width and hides other elements
+    .o365-search {
+      &.open {
+        position: absolute;
+        left: 8px;
+        right: 8px;
+        z-index: 10;
+        background: #fff;
+
+        .o365-search__btn {
+          display: none;
+        }
+
+        .o365-search__field {
+          width: 100%;
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  .mobile-cards-container {
+    padding: 8px;
+    gap: 6px;
+    max-height: calc(100vh - 320px);
+  }
 }

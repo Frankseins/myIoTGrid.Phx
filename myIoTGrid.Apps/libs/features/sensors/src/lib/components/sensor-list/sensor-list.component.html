@@ -10,13 +10,48 @@
       (actionClicked)="onCreate()">
     </myiotgrid-empty-state>
   } @else {
-    <header class="page-header">
+    <!-- Desktop Header (hidden on mobile) -->
+    <header class="page-header desktop-only">
       <div class="header-content">
         <h1 class="page-title">Sensoren</h1>
         <p class="page-subtitle">Sensor-Instanzen mit Kalibrierung und Pin-Konfiguration verwalten</p>
       </div>
     </header>
-    <myiotgrid-generic-table
+
+    <!-- Mobile Card View -->
+    @if (isMobileView) {
+      <div class="mobile-sensor-list">
+        <!-- Mobile Toolbar -->
+        <mat-toolbar class="mobile-toolbar">
+          <button mat-flat-button color="primary" (click)="onCreate()">
+            <mat-icon>add</mat-icon>
+            Neuer Sensor
+          </button>
+          <span class="spacer"></span>
+          <span class="sensor-count">{{ totalRecords }} Sensoren</span>
+        </mat-toolbar>
+
+        <!-- Sensor Cards -->
+        <div class="cards-container">
+          @for (sensor of sensors; track sensor.id) {
+            <myiotgrid-sensor-card
+              [sensor]="sensor"
+              (edit)="onCardEdit($event)"
+              (delete)="deleteSensor($event)">
+            </myiotgrid-sensor-card>
+          }
+        </div>
+
+        <!-- Load More / Pagination Info -->
+        @if (sensors.length < totalRecords) {
+          <div class="load-more">
+            <span class="pagination-info">{{ sensors.length }} von {{ totalRecords }} Sensoren</span>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Desktop Table View -->
+      <myiotgrid-generic-table
         [data]="sensors"
         [totalRecords]="totalRecords"
         [loading]="loading"
@@ -91,5 +126,6 @@
         </ng-template>
 
     </myiotgrid-generic-table>
+    }
   }
 </div>

@@ -110,10 +110,10 @@ export class HubSelectionComponent implements OnInit {
     this.hubApiService.getProperties().subscribe({
       next: (properties) => {
         this.hubProperties.set(properties);
-        // Pre-fill local address from hub properties, but always use HTTP and port 5002
+        // Pre-fill local address and port from hub properties
         const address = properties.address.replace(/^https:\/\//, 'http://');
         this.localAddress.set(address.startsWith('http://') ? address : `http://${address}`);
-        this.localPort.set(5002); // Always use port 5002 for local API
+        this.localPort.set(properties.port);
         this.isLoading.set(false);
       },
       error: (err) => {

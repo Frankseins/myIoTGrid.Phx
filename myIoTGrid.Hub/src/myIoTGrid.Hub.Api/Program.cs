@@ -126,6 +126,7 @@ try
     builder.Services.AddScoped<IChartService, ChartService>();
     builder.Services.AddScoped<INodeDebugLogService, NodeDebugLogService>();
     builder.Services.AddScoped<INodeHardwareStatusService, NodeHardwareStatusService>();
+    builder.Services.AddScoped<IBackupService, BackupService>();
 
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();

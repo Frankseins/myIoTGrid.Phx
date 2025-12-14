@@ -515,6 +515,136 @@
   }
 }
 
+// Backup Card
+.backup-card {
+  mat-card-header {
+    mat-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      mat-icon {
+        color: #1976d2;
+      }
+    }
+  }
+
+  mat-card-content {
+    padding-top: 16px;
+  }
+
+  .backup-section {
+    h4 {
+      margin: 0 0 8px;
+      font-weight: 500;
+    }
+
+    .card-description {
+      color: rgba(0, 0, 0, 0.6);
+      margin: 0 0 16px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .db-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 8px;
+      margin-bottom: 16px;
+
+      mat-icon {
+        color: rgba(0, 0, 0, 0.54);
+      }
+
+      span {
+        font-size: 14px;
+        color: rgba(0, 0, 0, 0.7);
+
+        strong {
+          color: rgba(0, 0, 0, 0.87);
+        }
+      }
+    }
+
+    .backup-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      button {
+        width: 100%;
+
+        mat-icon {
+          margin-right: 8px;
+        }
+
+        .spin {
+          animation: spin 1s linear infinite;
+        }
+      }
+    }
+
+    .warning-hint {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 16px 0 0;
+      padding: 12px;
+      background: rgba(255, 152, 0, 0.1);
+      border-radius: 8px;
+      font-size: 13px;
+      color: #e65100;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #e65100;
+      }
+    }
+
+    .reconnecting-banner {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin: 16px 0 0;
+      padding: 16px;
+      background: rgba(33, 150, 243, 0.1);
+      border: 1px solid rgba(33, 150, 243, 0.3);
+      border-radius: 8px;
+
+      > mat-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+        color: #1976d2;
+        flex-shrink: 0;
+      }
+
+      .reconnecting-content {
+        flex: 1;
+
+        strong {
+          display: block;
+          font-size: 14px;
+          color: #1565c0;
+          margin-bottom: 4px;
+        }
+
+        p {
+          margin: 0;
+          font-size: 13px;
+          color: rgba(0, 0, 0, 0.7);
+          line-height: 1.5;
+        }
+      }
+    }
+  }
+}
+
 @keyframes spin {
   from {
     transform: rotate(0deg);

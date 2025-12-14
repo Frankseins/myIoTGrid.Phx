@@ -58,6 +58,11 @@ export class HubSettingsComponent implements OnInit {
   readonly status = signal<HubStatus | null>(null);
   readonly nodes = signal<Node[]>([]);
 
+  // Backup state
+  readonly isBackingUp = signal(false);
+  readonly isRestoring = signal(false);
+  readonly databaseSize = signal<string>('');
+
   readonly isViewMode = computed(() => this.mode() === 'view');
   readonly isEditMode = computed(() => this.mode() === 'edit');
 
@@ -66,6 +71,7 @@ export class HubSettingsComponent implements OnInit {
   ngOnInit(): void {
     this.initForm();
     this.loadHub();
+    this.loadDatabaseSize();
   }
 
   private initForm(): void {
@@ -185,5 +191,135 @@ export class HubSettingsComponent implements OnInit {
 
   getStatusText(): string {
     return this.hub()?.isOnline ? 'Online' : 'Offline';
+  }
+
+  // Reconnecting state after restore
+  readonly isReconnecting = signal(false);
+
+  // === Backup Methods ===
+
+  loadDatabaseSize(): void {
+    this.hubApiService.getDatabaseSize().subscribe({
+      next: (result) => {
+        this.databaseSize.set(result.sizeFormatted);
+      },
+      error: (error) => {
+        console.error('Error loading database size:', error);
+      }
+    });
+  }
+
+  downloadBackup(): void {
+    this.isBackingUp.set(true);
+
+    this.hubApiService.downloadBackup().subscribe({
+      next: (blob) => {
+        // Create download link
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `hub_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.db`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+
+        this.snackBar.open('Backup erfolgreich heruntergeladen', 'Schließen', { duration: 3000 });
+        this.isBackingUp.set(false);
+      },
+      error: (error) => {
+        console.error('Error downloading backup:', error);
+        this.snackBar.open('Fehler beim Erstellen des Backups', 'Schließen', { duration: 5000 });
+        this.isBackingUp.set(false);
+      }
+    });
+  }
+
+  onRestoreFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    if (!file.name.endsWith('.db')) {
+      this.snackBar.open('Bitte wählen Sie eine .db Datei aus', 'Schließen', { duration: 5000 });
+      return;
+    }
+
+    // Confirm restore
+    const confirmed = window.confirm(
+      'WARNUNG: Das Wiederherstellen ersetzt die aktuelle Datenbank!\n\n' +
+      'Alle aktuellen Daten gehen verloren.\n' +
+      'Das Backend wird automatisch neu gestartet.\n\n' +
+      'Sind Sie sicher, dass Sie fortfahren möchten?'
+    );
+
+    if (!confirmed) {
+      input.value = '';
+      return;
+    }
+
+    this.isRestoring.set(true);
+
+    this.hubApiService.uploadBackup(file).subscribe({
+      next: () => {
+        this.isRestoring.set(false);
+        this.isReconnecting.set(true);
+        input.value = '';
+
+        this.snackBar.open(
+          'Backup wiederhergestellt! Backend wird neu gestartet...',
+          'OK',
+          { duration: 5000 }
+        );
+
+        // Wait for backend to restart and reconnect
+        this.waitForBackendRestart();
+      },
+      error: (error) => {
+        console.error('Error restoring backup:', error);
+        const message = error.error?.message || error.error?.error || 'Fehler beim Wiederherstellen des Backups';
+        this.snackBar.open(message, 'Schließen', { duration: 5000 });
+        this.isRestoring.set(false);
+        input.value = '';
+      }
+    });
+  }
+
+  private waitForBackendRestart(): void {
+    const maxAttempts = 30; // 30 seconds max
+    let attempts = 0;
+
+    const checkBackend = () => {
+      attempts++;
+
+      this.hubApiService.getStatus().subscribe({
+        next: () => {
+          // Backend is back online
+          this.isReconnecting.set(false);
+          this.snackBar.open('Backend erfolgreich neu gestartet!', 'OK', { duration: 3000 });
+
+          // Reload all data
+          this.loadHub();
+          this.loadDatabaseSize();
+        },
+        error: () => {
+          if (attempts < maxAttempts) {
+            // Retry after 1 second
+            setTimeout(checkBackend, 1000);
+          } else {
+            this.isReconnecting.set(false);
+            this.snackBar.open(
+              'Backend-Neustart dauert länger als erwartet. Bitte Seite manuell neu laden.',
+              'OK',
+              { duration: 0 }
+            );
+          }
+        }
+      });
+    };
+
+    // Start checking after 2 seconds (give backend time to shutdown)
+    setTimeout(checkBackend, 2000);
   }
 }

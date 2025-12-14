@@ -14,6 +14,7 @@ export * from './components/line-chart/line-chart.component';
 export * from './components/interval-selector/interval-selector.component';
 export * from './components/stats-cards/stats-cards.component';
 export * from './components/readings-table/readings-table.component';
+export * from './components/reading-card/reading-card.component';
 export * from './components/gps-status-badge/gps-status-badge.component';
 
 // Services
