@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj": {}
+    "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj": {}
   },
   "projects": {
-    "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj": {
+    "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj",
+        "projectUniqueName": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj",
         "projectName": "myIoTGrid.Shared.Common",
-        "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj",
+        "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj",
         "packagesPath": "/Users/frankbersch/.nuget/packages/",
-        "outputPath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/obj/",
+        "outputPath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/frankbersch/.nuget/NuGet/NuGet.Config"
@@ -63,14 +63,14 @@
         }
       }
     },
-    "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj": {
+    "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
+        "projectUniqueName": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
         "projectName": "myIoTGrid.Shared.Common.Tests",
-        "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
+        "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
         "packagesPath": "/Users/frankbersch/.nuget/packages/",
-        "outputPath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/obj/",
+        "outputPath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/frankbersch/.nuget/NuGet/NuGet.Config"
@@ -85,8 +85,8 @@
           "net10.0": {
             "targetAlias": "net10.0",
             "projectReferences": {
-              "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj": {
-                "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj"
+              "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj": {
+                "projectPath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/myIoTGrid.Shared.Common/myIoTGrid.Shared.Common.csproj"
               }
             }
           }

@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "wAjV7JEJMj4=",
+  "dgSpecHash": "llcOAXdpyyM=",
   "success": true,
-  "projectFilePath": "/Users/frankbersch/RiderProjects/myIoTGrid/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
+  "projectFilePath": "/Users/frankbersch/RiderProjects/myIoTGrid.Phx/myIoTGrid.Shared/Tests/myIoTGrid.Shared.Common.Tests/myIoTGrid.Shared.Common.Tests.csproj",
   "expectedPackageFiles": [
     "/Users/frankbersch/.nuget/packages/coverlet.collector/6.0.4/coverlet.collector.6.0.4.nupkg.sha512",
     "/Users/frankbersch/.nuget/packages/fluentassertions/8.0.1/fluentassertions.8.0.1.nupkg.sha512",
