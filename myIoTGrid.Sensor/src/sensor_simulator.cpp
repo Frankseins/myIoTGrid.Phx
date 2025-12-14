@@ -205,7 +205,7 @@ void SensorSimulator::update() {
     ProfileRange range = getProfileRange();
 
     // Determine step sizes based on profile
-    float tempStep = (_profile == SimulationProfile::STRESS) ? 2.0f : 0.3f;
+    float tempStep = (_profile == SimulationProfile::STRESS) ? 2.0f : 1.0f;
     float humidStep = (_profile == SimulationProfile::STRESS) ? 5.0f : 1.0f;
     float pressStep = (_profile == SimulationProfile::STORM) ? 1.0f : 0.2f;
     float co2Step = (_profile == SimulationProfile::STRESS) ? 50.0f : 10.0f;
@@ -219,10 +219,6 @@ void SensorSimulator::update() {
     _current.co2 = randomWalk(_current.co2, range.co2Min, range.co2Max, co2Step);
     _current.light = randomWalk(_current.light, range.lightMin, range.lightMax, lightStep);
     _current.soilMoisture = randomWalk(_current.soilMoisture, range.soilMin, range.soilMax, soilStep);
-
-    // Apply daily cycle effects
-    float tempAmplitude = (range.tempMax - range.tempMin) * 0.3f;  // 30% of range
-    _current.temperature = applyDailyCycle(_current.temperature, range.tempMin, range.tempMax, tempAmplitude);
 
     // Light has strongest daily cycle
     float lightAmplitude = (range.lightMax - range.lightMin) * 0.8f;
