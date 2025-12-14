@@ -27,6 +27,7 @@
 #include "api_client.h"
 #include "discovery_client.h"
 #include "sensor_simulator.h"
+#include "gps_simulator.h"
 #include "hardware_scanner.h"
 #include "sensor_reader.h"
 #include "led_controller.h"
@@ -68,6 +69,7 @@ WiFiManager wifiManager;
 ApiClient apiClient;
 DiscoveryClient discoveryClient;
 SensorSimulator sensorSimulator;
+GPSSimulator gpsSimulator;
 HardwareScanner hardwareScanner;
 SensorReader sensorReader;
 LEDController ledController;
@@ -1065,75 +1067,28 @@ double generateSimulatedValue(const String& sensorCode, const String& unit) {
         return sensorSimulator.getSoilMoisture();
     }
 
-    // GPS satellites (simulate 0-12, mostly 6-10)
+    // GPS simulated values via GPSSimulator
     if (code.indexOf("gps_satellite") >= 0 || code.indexOf("satellite") >= 0) {
-        // Simulate satellite count with occasional cold start (0 satellites)
-        static int lastSatellites = 0;
-        static unsigned long lastSatUpdate = 0;
-        unsigned long now = millis();
-
-        if (now - lastSatUpdate > 5000) {  // Update every 5 seconds
-            lastSatUpdate = now;
-            // 10% chance of cold start (0 satellites)
-            if (random(100) < 10) {
-                lastSatellites = 0;
-            } else {
-                // Normal operation: 4-12 satellites
-                lastSatellites = random(4, 13);
-            }
-        }
-        return (double)lastSatellites;
+        return (double)gpsSimulator.getSatellites();
     }
-
-    // GPS fix type (0=none, 2=2D, 3=3D)
     if (code.indexOf("gps_fix") >= 0 || code.indexOf("fix_type") >= 0) {
-        // Simulate fix type based on "satellite" count (correlate with satellites)
-        static int lastFixType = 0;
-        static unsigned long lastFixUpdate = 0;
-        unsigned long now = millis();
-
-        if (now - lastFixUpdate > 5000) {
-            lastFixUpdate = now;
-            // 10% chance no fix, 20% chance 2D, 70% chance 3D
-            int r = random(100);
-            if (r < 10) lastFixType = 0;
-            else if (r < 30) lastFixType = 2;
-            else lastFixType = 3;
-        }
-        return (double)lastFixType;
+        return (double)gpsSimulator.getFixType();
     }
-
-    // GPS HDOP (lower is better: <1=ideal, 1-2=excellent, 2-5=good, 5-10=moderate, >10=poor)
     if (code.indexOf("gps_hdop") >= 0 || code.indexOf("hdop") >= 0) {
-        // Simulate HDOP with mostly good values
-        static double lastHdop = 1.5;
-        static unsigned long lastHdopUpdate = 0;
-        unsigned long now = millis();
-
-        if (now - lastHdopUpdate > 5000) {
-            lastHdopUpdate = now;
-            // Random HDOP between 0.5 and 5.0 (mostly good)
-            lastHdop = 0.5 + (random(450) / 100.0);  // 0.5 to 5.0
-        }
-        return lastHdop;
+        return gpsSimulator.getHdop();
     }
-
-    // GPS latitude/longitude/altitude/speed (simulate with fixed location + drift)
     if (code.indexOf("latitude") >= 0 || code.indexOf("lat") >= 0) {
-        // Simulate latitude (e.g., Berlin area: ~52.52)
-        return 52.52 + (random(-100, 100) / 10000.0);  // Small drift
+        return gpsSimulator.getLatitude();
     }
     if (code.indexOf("longitude") >= 0 || code.indexOf("lng") >= 0 || code.indexOf("lon") >= 0) {
-        // Simulate longitude (e.g., Berlin area: ~13.40)
-        return 13.40 + (random(-100, 100) / 10000.0);
+        return gpsSimulator.getLongitude();
     }
     if (code.indexOf("altitude") >= 0 || code.indexOf("alt") >= 0) {
-        // Simulate altitude (e.g., ~34m for Berlin)
-        return 34.0 + (random(-50, 50) / 10.0);
+        return gpsSimulator.getAltitude();
     }
     if (code.indexOf("speed") >= 0) {
-        // Simulate speed (0-5 km/h for stationary with drift)
-        return random(0, 50) / 10.0;
+        // Small reporting jitter around current speed for realism
+        return gpsSimulator.getSpeedKmh() + (random(-10, 11) / 20.0); // +/- 0.5 km/h
     }
 
     // Default: Use temperature as fallback
@@ -2430,9 +2385,11 @@ void setup() {
         Serial.printf("[Simulator] Profile from env: %s\n", getCurrentProfileName());
     } else {
         sensorSimulator.init(SimulationProfile::NORMAL);
+        gpsSimulator.init();
     }
 #else
     sensorSimulator.init(SimulationProfile::NORMAL);
+    gpsSimulator.init();
 #endif
     Serial.printf("[Simulator] Active profile: %s\n", getCurrentProfileName());
     Serial.printf("[Simulator] Daily cycle: %s\n",
@@ -2499,6 +2456,7 @@ void loop() {
     if (millis() - lastSimulatorUpdate >= 1000) {  // Update every second
         lastSimulatorUpdate = millis();
         sensorSimulator.update();
+        gpsSimulator.update();
     }
 
     switch (currentState) {

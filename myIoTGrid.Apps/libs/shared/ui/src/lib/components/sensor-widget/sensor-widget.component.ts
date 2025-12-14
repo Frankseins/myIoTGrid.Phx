@@ -57,7 +57,14 @@ export class SensorWidgetComponent implements OnChanges {
       'temperature', 'water_temperature', 'humidity', 'pressure',
       'soil_moisture', 'battery', 'light', 'uv'
     ];
-    if (oneDecimalTypes.includes(widget.measurementType.toLowerCase())) {
+    const type = widget.measurementType.toLowerCase();
+
+    // Show higher precision for GPS coordinates
+    if (type === 'latitude' || type === 'longitude') {
+      return value.toFixed(6);
+    }
+
+    if (oneDecimalTypes.includes(type)) {
       return value.toFixed(1);
     }
     return value.toFixed(1); // Default to 1 decimal for all sensor values

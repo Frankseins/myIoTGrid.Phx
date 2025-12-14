@@ -215,7 +215,11 @@ bool ApiClient::sendReading(const String& sensorType, double value, const String
     JsonDocument doc;
     doc["deviceId"] = _nodeId;    // SerialNumber (e.g., SIM-8F470D6C-0001)
     doc["type"] = sensorType;     // Measurement type (e.g., temperature, humidity)
-    doc["value"] = value;
+    if (sensorType.indexOf("lat") >= 0 || sensorType.indexOf("lon") >= 0) {
+      doc["value"] = String(value, 6);  // as string with 6 decimals
+    } else {
+      doc["value"] = value;
+    }
     if (unit.length() > 0) {
         doc["unit"] = unit;
     }

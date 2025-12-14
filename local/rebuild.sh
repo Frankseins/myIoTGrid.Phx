@@ -7,8 +7,6 @@
 #   ./local/rebuild.sh sensor-sim   # Rebuild and start only sensor-sim
 
 SERVICE_NAME=$1
-echo pwd
-pwd
 if [ -z "$SERVICE_NAME" ]; then
   echo "Starting all services..."
   docker compose -f docker-compose.yml -f local/compose-extension.yml up -d --build
