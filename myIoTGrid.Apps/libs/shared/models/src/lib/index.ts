@@ -21,4 +21,3 @@ export * from './alert-type.model';
 export * from './alert.model';
 export * from './dashboard.model';
 export * from './chart.model';
-export * from './sync.model';

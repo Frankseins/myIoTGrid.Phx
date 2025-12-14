@@ -18,7 +18,6 @@ using myIoTGrid.Hub.Interface.Services;
 using myIoTGrid.Shared.Contracts.Services;
 using myIoTGrid.Hub.Service.Services;
 using myIoTGrid.Hub.Service.Validators;
-using myIoTGrid.Hub.Service.Adapters;
 using myIoTGrid.Shared.Utilities.Converters;
 using myIoTGrid.Shared.Common.Options;
 using Serilog;
@@ -128,12 +127,6 @@ try
     builder.Services.AddScoped<INodeDebugLogService, NodeDebugLogService>();
     builder.Services.AddScoped<INodeHardwareStatusService, NodeHardwareStatusService>();
 
-    // Cloud Sync Services
-    builder.Services.Configure<CloudApiOptions>(
-        builder.Configuration.GetSection(CloudApiOptions.SectionName));
-    builder.Services.AddHttpClient<ICloudApiClient, myIoTGrid.Hub.Infrastructure.Cloud.CloudApiClient>();
-    builder.Services.AddScoped<IManualCloudSyncService, ManualCloudSyncService>();
-
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();
 
@@ -170,10 +163,6 @@ try
     builder.Services.AddHostedService<MatterBridgeService>();
     builder.Services.AddHostedService<DiscoveryService>();
     builder.Services.AddHostedService<DebugLogCleanupService>();
-
-    // LoRaWAN Gateway Integration
-    // Receives readings from myIoTGrid.Gateway.LoRaWAN.Bridge via MQTT
-    builder.Services.AddHostedService<MqttLoRaWanAdapter>();
 
     // Controllers (aus Interface-Projekt)
     builder.Services.AddControllers()
@@ -264,7 +253,6 @@ try
 
     // SignalR Hubs
     app.MapHub<SensorHub>("/hubs/sensors");
-    app.MapHub<SyncProgressHub>("/hubs/sync-progress");
 
     // Willkommensnachricht im Root
     app.MapGet("/", () => Results.Ok(new

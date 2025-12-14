@@ -55,14 +55,6 @@ public class HubDbContext : DbContext
     /// <summary>Node Debug Logs</summary>
     public DbSet<NodeDebugLog> NodeDebugLogs => Set<NodeDebugLog>();
 
-    // === Cloud Sync ===
-
-    /// <summary>Node Sync States (tracks Cloud sync status per Node)</summary>
-    public DbSet<NodeSyncState> NodeSyncStates => Set<NodeSyncState>();
-
-    /// <summary>Sync History Entries (audit trail for Hub-Cloud sync)</summary>
-    public DbSet<SyncHistoryEntry> SyncHistoryEntries => Set<SyncHistoryEntry>();
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

@@ -12,7 +12,6 @@ export * from './table-state.service';
 
 // SignalR
 export * from './signalr.service';
-export * from './sync-signalr.service';
 
 // API Services
 export * from './hub-api.service';
@@ -27,4 +26,3 @@ export * from './health-api.service';
 export * from './dashboard-api.service';
 export * from './chart-api.service';
 export * from './node-debug-api.service';
-export * from './sync-api.service';
