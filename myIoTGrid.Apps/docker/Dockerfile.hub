@@ -35,8 +35,8 @@ FROM nginx:alpine
 # Install openssl for self-signed cert generation (development)
 RUN apk add --no-cache openssl
 
-# Copy nginx configuration template (will be processed by envsubst at runtime)
-COPY docker/nginx.hub.conf /etc/nginx/nginx.conf.template
+# Copy nginx configuration (HTTPS enabled, proxies to hub-api)
+COPY docker/nginx.hub.conf /etc/nginx/nginx.conf
 
 # Copy built application from build stage
 COPY --from=build /app/dist/apps/hub/browser /usr/share/nginx/html
@@ -53,14 +53,9 @@ RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
 # Expose ports (HTTP for redirect, HTTPS for traffic)
 EXPOSE 80 443
 
-# Default backend URL (Azure Cloud)
-# Override with: -e API_BACKEND_URL=https://hub-api:5001 (for local Docker)
-ENV API_BACKEND_URL=https://phx-api.myiotgrid.cloud
-
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
 
-# Start nginx with envsubst to replace API_BACKEND_URL
-# Only replace $API_BACKEND_URL (not other nginx variables like $host, $uri, etc.)
-CMD ["/bin/sh", "-c", "envsubst '$API_BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
+# Start nginx
+CMD ["nginx", "-g", "daemon off;"]

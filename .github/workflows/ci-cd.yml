@@ -117,8 +117,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
@@ -161,7 +159,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =============================================================================
-  # Docker Image: Hub Frontend (ARM64 + AMD64 with pre-built artifacts)
+  # Docker Image: Hub Frontend
   # =============================================================================
   docker-hub-frontend:
     name: Build Hub Frontend Image
@@ -172,18 +170,10 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Download frontend build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: frontend-hub-build
-          path: ./dist/apps/hub
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -209,54 +199,13 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
-      - name: Copy nginx config from repo
-        run: |
-          cp myIoTGrid.Apps/docker/nginx.hub.conf ./nginx.hub.conf
-
-      - name: Create runtime Dockerfile with API proxy support
-        run: |
-          cat > Dockerfile.hub-runtime <<'EOF'
-          FROM nginx:alpine
-
-          # Install openssl for self-signed cert generation
-          RUN apk add --no-cache openssl
-
-          # Copy nginx configuration template (with API proxy)
-          COPY ./nginx.hub.conf /etc/nginx/nginx.conf.template
-
-          # Copy built application
-          COPY ./dist/apps/hub/browser /usr/share/nginx/html
-
-          # Create certs directory
-          RUN mkdir -p /etc/nginx/certs
-
-          # Generate self-signed certificate for development
-          RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
-              -keyout /etc/nginx/certs/privkey.pem \
-              -out /etc/nginx/certs/fullchain.pem \
-              -subj "/C=DE/ST=NRW/L=Cologne/O=myIoTGrid/OU=Hub/CN=localhost"
-
-          EXPOSE 80 443
-
-          # Default backend URL (Azure Cloud)
-          # Override with: -e API_BACKEND_URL=https://hub-api:5001 (for local Docker)
-          ENV API_BACKEND_URL=https://phx-api.myiotgrid.cloud
-
-          # Health check
-          HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-            CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
-
-          # Start nginx with envsubst to replace API_BACKEND_URL
-          CMD ["/bin/sh", "-c", "envsubst '$API_BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
-          EOF
-
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: .
-          file: ./Dockerfile.hub-runtime
+          context: ./myIoTGrid.Apps
+          file: ./myIoTGrid.Apps/docker/Dockerfile.hub
           push: true
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/amd64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -273,8 +222,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
@@ -332,20 +279,20 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Images Built:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Image | Platforms | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|-----------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Hub API | linux/amd64, linux/arm64 | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Hub Frontend | linux/amd64, linux/arm64 | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Sensor Simulator | linux/amd64, linux/arm64 | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub API | ${{ needs.docker-hub-api.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub Frontend | ${{ needs.docker-hub-frontend.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
-          echo "# Hub API (ARM64 + AMD64)" >> $GITHUB_STEP_SUMMARY
+          echo "# Hub API" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-api:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Hub Frontend (ARM64 + AMD64 - using pre-built Nx artifacts)" >> $GITHUB_STEP_SUMMARY
+          echo "# Hub Frontend" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-frontend:latest" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "# Sensor Simulator (ARM64 + AMD64)" >> $GITHUB_STEP_SUMMARY
+          echo "# Sensor Simulator" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-phx-sensor-sim:latest" >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
