@@ -209,66 +209,45 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
-      - name: Prepare nginx config
+      - name: Copy nginx config from repo
         run: |
-          cat > nginx.conf <<'EOF'
-          events {
-              worker_connections 1024;
-          }
-          
-          http {
-              include /etc/nginx/mime.types;
-              default_type application/octet-stream;
-              
-              sendfile on;
-              keepalive_timeout 65;
-              gzip on;
-              gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
-              
-              server {
-                  listen 80;
-                  listen [::]:80;
-                  server_name _;
-                  return 301 https://$host$request_uri;
-              }
-              
-              server {
-                  listen 443 ssl;
-                  listen [::]:443 ssl;
-                  
-                  server_name _;
-                  
-                  ssl_certificate /etc/nginx/certs/fullchain.pem;
-                  ssl_certificate_key /etc/nginx/certs/privkey.pem;
-                  
-                  ssl_protocols TLSv1.2 TLSv1.3;
-                  ssl_ciphers HIGH:!aNULL:!MD5;
-                  ssl_prefer_server_ciphers on;
-                  
-                  root /usr/share/nginx/html;
-                  index index.html;
-                  
-                  location / {
-                      try_files $uri $uri/ /index.html;
-                  }
-                  
-                  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-                      expires 1y;
-                      add_header Cache-Control "public, immutable";
-                  }
-              }
-          }
-          EOF
+          cp myIoTGrid.Apps/docker/nginx.hub.conf ./nginx.hub.conf
 
-      - name: Create runtime Dockerfile
+      - name: Create runtime Dockerfile with API proxy support
         run: |
-          cat > Dockerfile.hub-runtime <<EOF
+          cat > Dockerfile.hub-runtime <<'EOF'
           FROM nginx:alpine
+
+          # Install openssl for self-signed cert generation
+          RUN apk add --no-cache openssl
+
+          # Copy nginx configuration template (with API proxy)
+          COPY ./nginx.hub.conf /etc/nginx/nginx.conf.template
+
+          # Copy built application
           COPY ./dist/apps/hub/browser /usr/share/nginx/html
-          COPY ./nginx.conf /etc/nginx/nginx.conf
-          EXPOSE 80
-          EXPOSE 443
-          CMD ["nginx", "-g", "daemon off;"]
+
+          # Create certs directory
+          RUN mkdir -p /etc/nginx/certs
+
+          # Generate self-signed certificate for development
+          RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+              -keyout /etc/nginx/certs/privkey.pem \
+              -out /etc/nginx/certs/fullchain.pem \
+              -subj "/C=DE/ST=NRW/L=Cologne/O=myIoTGrid/OU=Hub/CN=localhost"
+
+          EXPOSE 80 443
+
+          # Default backend URL (Azure Cloud)
+          # Override with: -e API_BACKEND_URL=https://hub-api:5001 (for local Docker)
+          ENV API_BACKEND_URL=https://phx-api.myiotgrid.cloud
+
+          # Health check
+          HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+            CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
+
+          # Start nginx with envsubst to replace API_BACKEND_URL
+          CMD ["/bin/sh", "-c", "envsubst '$API_BACKEND_URL' < /etc/nginx/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"]
           EOF
 
       - name: Build and push Docker image
