@@ -209,62 +209,56 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
-      - name: Prepare nginx config
-        run: |
-          cat > nginx.conf <<'EOF'
-          events {
-              worker_connections 1024;
-          }
-          
-          http {
-              include /etc/nginx/mime.types;
-              default_type application/octet-stream;
-              
-              sendfile on;
-              keepalive_timeout 65;
-              gzip on;
-              gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
-              
-              # HTTP Server - Redirect zu HTTPS
-              server {
-                  listen 80;
-                  listen [::]:80;
-                  server_name _;
-                  return 301 https://$host$request_uri;
-              }
-              
-              # HTTPS Server
-              server {
-                  listen 443 ssl;
-                  listen [::]:443 ssl;
-                  
-                  server_name _;
-                  
-                  # SSL Zertifikate (werden per Volume von außen gemountet)
-                  ssl_certificate /etc/nginx/certs/fullchain.pem;
-                  ssl_certificate_key /etc/nginx/certs/privkey.pem;
-                  
-                  # SSL Settings
-                  ssl_protocols TLSv1.2 TLSv1.3;
-                  ssl_ciphers HIGH:!aNULL:!MD5;
-                  ssl_prefer_server_ciphers on;
-                  
-                  root /usr/share/nginx/html;
-                  index index.html;
-                  
-                  # Angular routing
-                  location / {
-                      try_files $uri $uri/ /index.html;
-                  }
-                  
-                  # Caching for static assets
-                  location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
-                      expires 1y;
-                      add_header Cache-Control "public, immutable";
-                  }
-              }
-          }
-          EOFk
+- name: Prepare nginx config
+  run: |
+    cat > nginx.conf <<'EOF'
+    events {
+        worker_connections 1024;
+    }
+    
+    http {
+        include /etc/nginx/mime.types;
+        default_type application/octet-stream;
+        
+        sendfile on;
+        keepalive_timeout 65;
+        gzip on;
+        gzip_types text/plain text/css application/json application/javascript text/xml application/xml text/javascript;
+        
+        server {
+            listen 80;
+            listen [::]:80;
+            server_name _;
+            return 301 https://$host$request_uri;
+        }
+        
+        server {
+            listen 443 ssl;
+            listen [::]:443 ssl;
+            
+            server_name _;
+            
+            ssl_certificate /etc/nginx/certs/fullchain.pem;
+            ssl_certificate_key /etc/nginx/certs/privkey.pem;
+            
+            ssl_protocols TLSv1.2 TLSv1.3;
+            ssl_ciphers HIGH:!aNULL:!MD5;
+            ssl_prefer_server_ciphers on;
+            
+            root /usr/share/nginx/html;
+            index index.html;
+            
+            location / {
+                try_files $uri $uri/ /index.html;
+            }
+            
+            location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                expires 1y;
+                add_header Cache-Control "public, immutable";
+            }
+        }
+    }
+    EOF
 
       - name: Create runtime Dockerfile
         run: |
