@@ -27,3 +27,4 @@ export * from './dashboard-api.service';
 export * from './chart-api.service';
 export * from './node-debug-api.service';
 export * from './nodes-api.service';
+export * from './expedition-api.service';

@@ -237,9 +237,12 @@ public class NodesController : ControllerBase
         _logger.LogInformation("Default hub: {HubId} ({HubName})", defaultHub.Id, defaultHub.Name);
 
         // Convert RegisterNodeDto to CreateNodeDto
+        // IMPORTANT: Only pass dto.Name if explicitly provided by ESP32
+        // For existing nodes, the service will keep the existing name
+        // For new nodes, the service will generate a name from NodeId
         var createDto = new CreateNodeDto(
             NodeId: dto.SerialNumber,
-            Name: dto.Name ?? $"Sensor {dto.SerialNumber}",
+            Name: dto.Name,  // null = keep existing name (for existing nodes) or generate (for new nodes)
             HubId: defaultHub.Id,
             Protocol: dto.HardwareType?.ToUpperInvariant() == "LORA" ? ProtocolDto.LoRaWAN : ProtocolDto.WLAN,
             Location: dto.Location
@@ -653,6 +656,26 @@ public class NodesController : ControllerBase
     }
 
     // === Debug Configuration (Sprint 8) ===
+
+    /// <summary>
+    /// Returns the date range (min/max timestamps) of readings for a node.
+    /// Used to constrain date selection for expeditions.
+    /// </summary>
+    /// <param name="id">Node-ID</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Date range of readings</returns>
+    [HttpGet("{id:guid}/reading-date-range")]
+    [ProducesResponseType(typeof(NodeReadingDateRangeDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> GetReadingDateRange(Guid id, CancellationToken ct)
+    {
+        var dateRange = await _readingService.GetDateRangeByNodeAsync(id, ct);
+
+        if (dateRange == null)
+            return NotFound();
+
+        return Ok(dateRange);
+    }
 
     /// <summary>
     /// Gets debug configuration for a node.

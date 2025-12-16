@@ -1,0 +1,103 @@
+<mat-card class="expedition-card clickable" (click)="onCardClick()">
+  <!-- Header with Status -->
+  <mat-card-header>
+    <div class="card-header-content">
+      <div class="title-row">
+        <mat-icon class="ship-icon">sailing</mat-icon>
+        <div class="title-text">
+          <h3>{{ expedition().name }}</h3>
+          <span class="node-name">{{ expedition().nodeName }}</span>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="status-badge" [ngClass]="statusConfig().class">
+          <mat-icon>{{ statusConfig().icon }}</mat-icon>
+          <span>{{ statusConfig().label }}</span>
+        </span>
+
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="menu"
+          (click)="$event.stopPropagation()"
+          matTooltip="Aktionen">
+          <mat-icon>more_vert</mat-icon>
+        </button>
+
+        <mat-menu #menu="matMenu">
+          <button mat-menu-item (click)="onEdit($event)">
+            <mat-icon>edit</mat-icon>
+            <span>Bearbeiten</span>
+          </button>
+          <button mat-menu-item (click)="onDelete($event)" class="delete-action">
+            <mat-icon>delete</mat-icon>
+            <span>Löschen</span>
+          </button>
+        </mat-menu>
+      </div>
+    </div>
+  </mat-card-header>
+
+  <mat-card-content>
+    <!-- Description -->
+    @if (expedition().description) {
+      <p class="description">{{ expedition().description }}</p>
+    }
+
+    <!-- Info Section -->
+    <div class="info-section">
+      <div class="info-row">
+        <mat-icon>calendar_today</mat-icon>
+        <span>{{ dateRange() }}</span>
+      </div>
+
+      <div class="info-row">
+        <mat-icon>schedule</mat-icon>
+        <span>{{ formattedDuration() }}</span>
+      </div>
+
+      @if (expedition().totalDistanceKm) {
+        <div class="info-row">
+          <mat-icon>straighten</mat-icon>
+          <span>{{ formattedDistance() }}</span>
+        </div>
+      }
+
+      @if (expedition().totalReadings) {
+        <div class="info-row">
+          <mat-icon>gps_fixed</mat-icon>
+          <span>{{ expedition().totalReadings }} Messpunkte</span>
+        </div>
+      }
+    </div>
+
+    <!-- Tags -->
+    @if (expedition().tags && expedition().tags.length > 0) {
+      <div class="tags-section">
+        @for (tag of expedition().tags; track tag) {
+          <mat-chip-option disabled>{{ tag }}</mat-chip-option>
+        }
+      </div>
+    }
+  </mat-card-content>
+
+  <!-- Stats Footer -->
+  @if (expedition().averageSpeedKmh || expedition().maxSpeedKmh) {
+    <mat-card-footer>
+      <div class="stats-footer">
+        @if (expedition().averageSpeedKmh) {
+          <div class="stat">
+            <span class="stat-label">Ø Tempo</span>
+            <span class="stat-value">{{ expedition().averageSpeedKmh | number:'1.1-1' }} km/h</span>
+          </div>
+        }
+        @if (expedition().maxSpeedKmh) {
+          <div class="stat">
+            <span class="stat-label">Max</span>
+            <span class="stat-value">{{ expedition().maxSpeedKmh | number:'1.1-1' }} km/h</span>
+          </div>
+        }
+      </div>
+    </mat-card-footer>
+  }
+</mat-card>

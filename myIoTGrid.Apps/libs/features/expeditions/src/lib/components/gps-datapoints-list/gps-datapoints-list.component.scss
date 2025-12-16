@@ -1,0 +1,294 @@
+.datapoints-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #e0e0e0;
+  overflow: hidden;
+}
+
+.list-header {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #fafafa;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+  }
+
+  .controls {
+    display: flex;
+    gap: 4px;
+
+    button {
+      color: #666;
+
+      &.active {
+        color: #1976d2;
+      }
+
+      &:hover {
+        color: #333;
+      }
+    }
+  }
+}
+
+.loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 16px;
+  color: #666;
+  flex: 1;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 12px;
+  color: #999;
+  flex: 1;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    opacity: 0.5;
+  }
+
+  p {
+    margin: 0;
+    font-size: 14px;
+  }
+}
+
+.datapoints-viewport {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px;
+}
+
+.datapoint-panel {
+  margin-bottom: 8px;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08) !important;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+
+  ::ng-deep .mat-expansion-panel-header {
+    padding: 0 16px;
+    height: auto !important;
+    min-height: 56px;
+
+    &:hover {
+      background: #f5f5f5 !important;
+    }
+  }
+
+  ::ng-deep .mat-expansion-panel-body {
+    padding: 0;
+  }
+}
+
+.point-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  .time {
+    font-weight: 600;
+    font-size: 14px;
+    color: #333;
+    font-family: 'Roboto Mono', monospace;
+  }
+
+  .date {
+    font-size: 11px;
+    color: #999;
+  }
+}
+
+.point-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+
+  .coords {
+    font-size: 11px;
+    color: #666;
+    font-family: 'Roboto Mono', monospace;
+    cursor: pointer;
+
+    &:hover {
+      color: #1976d2;
+    }
+  }
+}
+
+.panel-content {
+  padding: 16px;
+  background: #fafafa;
+  border-top: 1px solid #e8e8e8;
+}
+
+.gps-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+
+  .info-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #fff;
+    border-radius: 6px;
+    border: 1px solid #e0e0e0;
+
+    mat-icon {
+      font-size: 18px;
+      width: 18px;
+      height: 18px;
+      color: #1976d2;
+    }
+
+    .label {
+      font-size: 11px;
+      color: #999;
+      flex: 1;
+    }
+
+    .value {
+      font-size: 13px;
+      font-weight: 600;
+      color: #333;
+    }
+  }
+}
+
+.sensor-readings {
+  h4 {
+    margin: 0 0 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .readings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 8px;
+
+    .reading-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 12px;
+      background: #fff;
+      border-radius: 6px;
+      border: 1px solid #e0e0e0;
+
+      .sensor-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: #1976d2;
+      }
+
+      .reading-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+
+        .sensor-name {
+          font-size: 11px;
+          color: #666;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+        }
+
+        .reading-value {
+          font-size: 14px;
+          font-weight: 600;
+          color: #333;
+        }
+      }
+    }
+  }
+}
+
+.no-sensor-data {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px;
+  background: #f5f5f5;
+  border-radius: 6px;
+  color: #999;
+  font-size: 13px;
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+.point-actions {
+  margin-top: 16px;
+  display: flex;
+  justify-content: flex-end;
+
+  button {
+    mat-icon {
+      margin-right: 4px;
+    }
+  }
+}
+
+// Mobile adjustments
+@media (max-width: 768px) {
+  .datapoints-list {
+    border-left: none;
+    border-top: 1px solid #e0e0e0;
+  }
+
+  .list-header {
+    padding: 12px 16px;
+  }
+
+  .gps-info {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sensor-readings {
+    .readings-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+}

@@ -20,7 +20,8 @@
       "@myiotgrid/sensors/feature": ["libs/features/sensors/src/index.ts"],
       "@myiotgrid/alerts/feature": ["libs/features/alerts/src/index.ts"],
       "@myiotgrid/settings/feature": ["libs/features/settings/src/index.ts"],
-      "@myiotgrid/setup-wizard/feature": ["libs/features/setup-wizard/src/index.ts"]
+      "@myiotgrid/setup-wizard/feature": ["libs/features/setup-wizard/src/index.ts"],
+      "@myiotgrid/expeditions/feature": ["libs/features/expeditions/src/index.ts"]
     },
     "isolatedModules": true
   },

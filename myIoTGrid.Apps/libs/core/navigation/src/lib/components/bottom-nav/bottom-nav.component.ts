@@ -117,7 +117,7 @@ export class BottomNavComponent implements OnInit, OnDestroy {
    */
   isMenuActive(): boolean {
     const current = this.currentRoute();
-    const menuRoutes = ['/sensors', '/alerts', '/settings', '/hubs'];
+    const menuRoutes = ['/expeditions', '/sensors', '/alerts', '/settings', '/hubs'];
     return menuRoutes.some(route => current === route || current.startsWith(route + '/'));
   }
 }

@@ -1,4 +1,4 @@
-import { Component, ElementRef, Input, OnDestroy, AfterViewInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, Input, OnDestroy, AfterViewInit, ViewChild, Output, EventEmitter } from '@angular/core';
 
 // Use global Leaflet loaded via index.html to avoid adding build-time deps
 declare const L: any;
@@ -23,16 +23,20 @@ export interface MapPoint {
   selector: 'myiotgrid-leaflet-map',
   standalone: true,
   template: `
-    <div #mapEl class="leaflet-map" style="width: 100%; height: 500px; border-radius: 8px; overflow: hidden;"></div>
+    <div #mapEl class="leaflet-map" style="width: 100%; height: 100%; overflow: hidden;"></div>
   `
 })
 export class LeafletMapComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mapEl', { static: true }) mapEl!: ElementRef<HTMLDivElement>;
 
+  /** Emits when a marker on the map is clicked */
+  @Output() markerClick = new EventEmitter<MapPoint>();
+
   private map: any;
   private marker: any;
   private polyline: any;
   private markersLayer: any;
+  private highlightMarker: any;
   private didFit = false;
   private leafletOk = false;
 
@@ -40,6 +44,8 @@ export class LeafletMapComponent implements AfterViewInit, OnDestroy {
   private _lon: number | null = null;
   private _trail: [number, number][] = [];
   private _points: MapPoint[] = [];
+  private _highlightLat: number | null = null;
+  private _highlightLon: number | null = null;
 
   @Input()
   set lat(v: number | null) { this._lat = v; this.syncPosition(); }
@@ -57,11 +63,26 @@ export class LeafletMapComponent implements AfterViewInit, OnDestroy {
   set points(v: MapPoint[]) { this._points = v || []; this.syncMarkers(); }
   get points() { return this._points; }
 
+  /** Highlight a specific point and fly to it */
+  @Input()
+  set highlightLat(v: number | null) {
+    this._highlightLat = v;
+    this.syncHighlight();
+  }
+  get highlightLat() { return this._highlightLat; }
+
+  @Input()
+  set highlightLon(v: number | null) {
+    this._highlightLon = v;
+    this.syncHighlight();
+  }
+  get highlightLon() { return this._highlightLon; }
+
   ngAfterViewInit(): void {
     // Guard against missing Leaflet (e.g., CDN blocked or offline)
     try {
       if (typeof (L as any) === 'undefined') {
-        // Provide a friendly inline message so users see what’s wrong
+        // Provide a friendly inline message so users see what's wrong
         this.mapEl.nativeElement.style.display = 'flex';
         this.mapEl.nativeElement.style.alignItems = 'center';
         this.mapEl.nativeElement.style.justifyContent = 'center';
@@ -94,11 +115,24 @@ export class LeafletMapComponent implements AfterViewInit, OnDestroy {
     if (this.map) this.map.remove();
   }
 
+  /** Public method to fly to a specific location */
+  flyTo(lat: number, lon: number, zoom: number = 16): void {
+    if (!this.leafletOk || !this.map) return;
+    this.map.flyTo([lat, lon], zoom, { duration: 0.8 });
+  }
+
+  /** Public method to fit bounds to the trail */
+  fitBoundsToTrail(): void {
+    if (!this.leafletOk || !this.map || !this.polyline) return;
+    this.map.fitBounds(this.polyline.getBounds(), { padding: [20, 20] });
+  }
+
   private syncAll(): void {
     this.didFit = false;
     this.syncPosition();
     this.syncTrail();
     this.syncMarkers();
+    this.syncHighlight();
   }
 
   private syncPosition(): void {
@@ -132,15 +166,55 @@ export class LeafletMapComponent implements AfterViewInit, OnDestroy {
     for (const p of this._points) {
       const m = L.circleMarker([p.lat, p.lon], { radius: 3, color: '#1E88E5', weight: 1, fillColor: '#90CAF9', fillOpacity: 0.9 });
       m.bindPopup(this.buildPopupHtml(p));
+      // Emit click event
+      m.on('click', () => this.markerClick.emit(p));
       m.addTo(this.markersLayer);
+    }
+  }
+
+  /** Sync highlight marker and fly to position */
+  private syncHighlight(): void {
+    if (!this.leafletOk || !this.map) return;
+
+    // Remove existing highlight marker
+    if (this.highlightMarker) {
+      this.map.removeLayer(this.highlightMarker);
+      this.highlightMarker = null;
+    }
+
+    // Add new highlight marker if coordinates are set
+    if (this._highlightLat != null && this._highlightLon != null) {
+      const pos: [number, number] = [this._highlightLat, this._highlightLon];
+
+      // Create pulsing highlight marker
+      this.highlightMarker = L.circleMarker(pos, {
+        radius: 12,
+        color: '#FF5722',
+        weight: 3,
+        fillColor: '#FF5722',
+        fillOpacity: 0.3,
+        className: 'highlight-marker'
+      }).addTo(this.map);
+
+      // Fly to the highlighted position
+      this.map.flyTo(pos, 16, { duration: 0.8 });
+
+      // Open popup for the matching point
+      const matchingPoint = this._points.find(p =>
+        Math.abs(p.lat - this._highlightLat!) < 0.00001 &&
+        Math.abs(p.lon - this._highlightLon!) < 0.00001
+      );
+      if (matchingPoint) {
+        this.highlightMarker.bindPopup(this.buildPopupHtml(matchingPoint)).openPopup();
+      }
     }
   }
 
   private buildPopupHtml(p: MapPoint): string {
     const base: string[] = [
+      `<strong>${new Date(p.ts).toLocaleString('de-DE')}</strong>`,
       `Lat: ${p.lat?.toFixed ? (p.lat as number).toFixed(6) : p.lat}`,
       `Lon: ${p.lon?.toFixed ? (p.lon as number).toFixed(6) : p.lon}`,
-      `Time: ${new Date(p.ts).toLocaleString()}`,
     ];
     const labels: Record<string, string> = {
       temperature: 'Temperatur',

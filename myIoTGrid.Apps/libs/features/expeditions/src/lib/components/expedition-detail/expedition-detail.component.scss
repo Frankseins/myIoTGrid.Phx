@@ -1,0 +1,884 @@
+// Expedition Detail Page - Full Height Map + Sensor Charts Layout
+
+:host {
+  display: block;
+  height: 100%;
+  position: relative;
+}
+
+.expedition-detail-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--gt-surface);
+}
+
+// Loading & Error States
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+
+  mat-icon {
+    font-size: 48px;
+    width: 48px;
+    height: 48px;
+    color: var(--gt-text-secondary);
+  }
+
+  p {
+    color: var(--gt-text-secondary);
+    font-size: 14px;
+  }
+}
+
+// Compact Header
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: var(--gt-surface);
+  border-bottom: 1px solid var(--gt-border);
+  flex-shrink: 0;
+  min-height: 56px;
+  gap: 16px;
+
+  .header-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    flex: 1;
+
+    .header-info {
+      min-width: 0;
+
+      h1 {
+        margin: 0;
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--gt-text-primary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .header-meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 12px;
+        color: var(--gt-text-secondary);
+
+        .node-badge {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          padding: 2px 8px;
+          background: var(--gt-surface-variant);
+          border-radius: 12px;
+
+          mat-icon {
+            font-size: 14px;
+            width: 14px;
+            height: 14px;
+          }
+        }
+
+        .date-range {
+          white-space: nowrap;
+        }
+      }
+    }
+  }
+
+  .header-center {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    button {
+      height: 36px;
+      min-width: 100px;
+      font-size: 13px;
+      font-weight: 500;
+
+      mat-icon {
+        font-size: 18px;
+        width: 18px;
+        height: 18px;
+        margin-right: 4px;
+      }
+    }
+  }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+
+    .header-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding-right: 16px;
+      border-right: 1px solid var(--gt-border);
+
+      .stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--gt-text-primary);
+
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+          color: var(--gt-text-secondary);
+        }
+      }
+    }
+  }
+}
+
+// Status Badge
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 16px;
+  font-size: 12px;
+  font-weight: 500;
+
+  mat-icon {
+    font-size: 16px;
+    width: 16px;
+    height: 16px;
+  }
+
+  .live-indicator {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  &.status-planned {
+    background: rgba(158, 158, 158, 0.15);
+    color: #757575;
+  }
+
+  &.status-active {
+    background: rgba(76, 175, 80, 0.15);
+    color: #388e3c;
+  }
+
+  &.status-completed {
+    background: rgba(33, 150, 243, 0.15);
+    color: #1976d2;
+  }
+
+  &.status-archived {
+    background: rgba(158, 158, 158, 0.15);
+    color: #9e9e9e;
+  }
+}
+
+// Main Layout - Scrollable Content
+.main-layout {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+// Map Section (collapsible)
+.map-section {
+  flex-shrink: 0;
+  background: var(--gt-surface);
+  border-bottom: 1px solid var(--gt-border);
+
+  .map-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+
+    &:hover {
+      background: var(--gt-surface-variant);
+    }
+
+    .map-section-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gt-text-primary);
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--gt-text-secondary);
+      }
+
+      .point-count {
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--gt-text-secondary);
+        background: var(--gt-surface-variant);
+        padding: 2px 8px;
+        border-radius: 10px;
+        margin-left: 8px;
+      }
+    }
+
+    .map-section-actions {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+
+      button {
+        color: var(--gt-text-secondary);
+      }
+    }
+  }
+
+  &.collapsed {
+    .map-section-header {
+      border-bottom: none;
+    }
+  }
+}
+
+// Map Container - Shows section header + part of first chart row
+.map-container {
+  position: relative;
+  height: calc(100vh - 56px - 64px - 200px); // Viewport minus header, rail, and space for section + charts preview
+  min-height: 300px;
+  display: flex;
+  flex-shrink: 0;
+
+  .map-wrapper {
+    position: relative;
+    flex: 1;
+    min-width: 0;
+
+    myiotgrid-leaflet-map {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+
+  // GPS Sidebar - Overlay on right
+  .gps-sidebar {
+    position: absolute;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    width: 360px;
+    background: var(--gt-surface);
+    border-left: 1px solid var(--gt-border);
+    box-shadow: -4px 0 16px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+    z-index: 10;
+  }
+
+  // When sidebar is open, adjust map wrapper
+  &.with-sidebar .map-wrapper {
+    margin-right: 360px;
+  }
+}
+
+// Live Badge Overlay
+.live-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(76, 175, 80, 0.95);
+  color: white;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  z-index: 5;
+
+  .pulse {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: white;
+    animation: pulse 1.5s ease-in-out infinite;
+  }
+
+  mat-icon {
+    font-size: 18px;
+    width: 18px;
+    height: 18px;
+  }
+}
+
+
+// ========== Sensor Charts Section ==========
+.sensor-charts-section {
+  padding: 24px;
+  background: var(--gt-background);
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+
+    h2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0;
+      font-size: 20px;
+      font-weight: 500;
+      color: var(--gt-text-primary);
+
+      mat-icon {
+        font-size: 24px;
+        width: 24px;
+        height: 24px;
+        color: var(--gt-primary);
+      }
+    }
+
+    .data-count {
+      font-size: 13px;
+      color: var(--gt-text-secondary);
+      background: var(--gt-surface-variant);
+      padding: 4px 12px;
+      border-radius: 12px;
+    }
+  }
+
+  .no-data-message {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 24px;
+    background: var(--gt-surface);
+    border-radius: 12px;
+    color: var(--gt-text-secondary);
+
+    mat-icon {
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// Sensor Charts Grid - 2 Columns
+.sensor-charts-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+
+  .no-sensors-message {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 48px 24px;
+    background: var(--gt-surface);
+    border-radius: 12px;
+    color: var(--gt-text-secondary);
+
+    mat-icon {
+      font-size: 48px;
+      width: 48px;
+      height: 48px;
+      opacity: 0.5;
+    }
+
+    p {
+      margin: 0;
+      font-size: 14px;
+    }
+  }
+}
+
+// Individual Sensor Chart Card
+.sensor-chart-card {
+  background: var(--gt-surface);
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  border: 1px solid var(--gt-border);
+
+  .chart-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 16px;
+
+    .chart-actions {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+
+      .maximize-btn {
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+
+        &:hover {
+          opacity: 1;
+        }
+      }
+    }
+
+    .chart-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+
+      .sensor-icon {
+        font-size: 28px;
+        width: 28px;
+        height: 28px;
+
+        &.temperature { color: #f44336; }
+        &.humidity { color: #2196f3; }
+        &.pressure { color: #9c27b0; }
+        &.water { color: #00bcd4; }
+        &.light { color: #ff9800; }
+        &.altitude { color: #795548; }
+        &.speed { color: #4caf50; }
+      }
+
+      span {
+        font-size: 18px;
+        font-weight: 500;
+        color: var(--gt-text-primary);
+      }
+    }
+
+    .chart-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+
+      .current {
+        font-size: 24px;
+        font-weight: 600;
+        color: var(--gt-text-primary);
+      }
+
+      .range {
+        font-size: 12px;
+        color: var(--gt-text-secondary);
+      }
+    }
+  }
+
+  .chart-wrapper {
+    height: 200px;
+    width: 100%;
+
+    myiotgrid-line-chart {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Expedition Details (Description & Tags)
+.expedition-details {
+  margin-top: 24px;
+  padding: 20px;
+  background: var(--gt-surface);
+  border-radius: 12px;
+
+  .description {
+    margin: 0 0 12px 0;
+    font-size: 14px;
+    color: var(--gt-text-secondary);
+    line-height: 1.6;
+  }
+
+  .tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    .tag {
+      padding: 6px 14px;
+      background: var(--gt-surface-variant);
+      border-radius: 16px;
+      font-size: 13px;
+      color: var(--gt-text-secondary);
+    }
+  }
+}
+
+// Animations
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.2);
+  }
+}
+
+// ========== Responsive ==========
+
+@media (max-width: 1200px) {
+  .page-header {
+    .header-right .header-stats {
+      display: none;
+    }
+  }
+
+  .sensor-charts-grid {
+    gap: 16px;
+  }
+
+  .sensor-chart-card {
+    padding: 16px;
+
+    .chart-header {
+      .chart-title {
+        .sensor-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        span {
+          font-size: 16px;
+        }
+      }
+
+      .chart-stats .current {
+        font-size: 20px;
+      }
+    }
+
+    .chart-wrapper {
+      height: 180px;
+    }
+  }
+}
+
+@media (max-width: 968px) {
+  .map-container {
+    height: 50vh;
+    min-height: 300px;
+
+    .gps-sidebar {
+      width: 300px;
+    }
+
+    &.with-sidebar .map-wrapper {
+      margin-right: 0; // Sidebar overlaps on mobile
+    }
+  }
+
+  .sensor-charts-section {
+    padding: 16px;
+  }
+
+  // Keep 2 columns but smaller
+  .sensor-charts-grid {
+    gap: 12px;
+  }
+
+  .sensor-chart-card {
+    padding: 12px;
+
+    .chart-header {
+      flex-direction: column;
+      gap: 8px;
+
+      .chart-stats {
+        align-items: flex-start;
+        flex-direction: row;
+        gap: 12px;
+
+        .current {
+          font-size: 18px;
+        }
+      }
+    }
+
+    .chart-wrapper {
+      height: 160px;
+    }
+  }
+}
+
+@media (max-width: 700px) {
+  // Switch to single column on small screens
+  .sensor-charts-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sensor-chart-card {
+    .chart-wrapper {
+      height: 200px;
+    }
+  }
+}
+
+@media (max-width: 600px) {
+  .page-header {
+    padding: 8px 12px;
+
+    .header-left .header-info {
+      h1 {
+        font-size: 16px;
+      }
+
+      .header-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+      }
+    }
+  }
+
+  .map-container {
+    height: 40vh;
+    min-height: 250px;
+
+    .gps-sidebar {
+      width: 100%;
+      height: 50%;
+      top: auto;
+      bottom: 0;
+      border-left: none;
+      border-top: 1px solid var(--gt-border);
+    }
+  }
+
+  .sensor-charts-section {
+    padding: 12px;
+
+    .section-header h2 {
+      font-size: 18px;
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+      }
+    }
+  }
+
+  .sensor-chart-card {
+    padding: 12px;
+    border-radius: 12px;
+
+    .chart-header {
+      .chart-title {
+        .sensor-icon {
+          font-size: 22px;
+          width: 22px;
+          height: 22px;
+        }
+
+        span {
+          font-size: 15px;
+        }
+      }
+
+      .chart-stats {
+        .current {
+          font-size: 16px;
+        }
+
+        .range {
+          font-size: 11px;
+        }
+      }
+    }
+
+    .chart-wrapper {
+      height: 180px;
+    }
+  }
+}
+
+// ========== Chart Modal (Fullscreen) ==========
+.chart-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 9998;
+  animation: fadeIn 0.2s ease;
+}
+
+.chart-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: calc(100vw - 80px);
+  max-width: 1400px;
+  max-height: calc(100vh - 80px);
+  background: var(--gt-surface);
+  border-radius: 16px;
+  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  animation: slideIn 0.3s ease;
+
+  .chart-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--gt-border);
+
+    .chart-modal-title {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+
+      mat-icon {
+        font-size: 32px;
+        width: 32px;
+        height: 32px;
+      }
+
+      span {
+        font-size: 24px;
+        font-weight: 500;
+        color: var(--gt-text-primary);
+      }
+    }
+
+    .chart-modal-stats {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+
+      .current {
+        font-size: 28px;
+        font-weight: 600;
+        color: var(--gt-text-primary);
+      }
+
+      .range {
+        font-size: 14px;
+        color: var(--gt-text-secondary);
+      }
+    }
+  }
+
+  .chart-modal-content {
+    flex: 1;
+    padding: 24px;
+    min-height: 400px;
+
+    myiotgrid-line-chart {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+// Modal responsive
+@media (max-width: 768px) {
+  .chart-modal {
+    width: calc(100vw - 32px);
+    max-height: calc(100vh - 32px);
+
+    .chart-modal-header {
+      padding: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+
+      .chart-modal-title {
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        span {
+          font-size: 18px;
+        }
+      }
+
+      .chart-modal-stats {
+        .current {
+          font-size: 22px;
+        }
+
+        .range {
+          font-size: 12px;
+        }
+      }
+    }
+
+    .chart-modal-content {
+      padding: 16px;
+      min-height: 300px;
+    }
+  }
+}

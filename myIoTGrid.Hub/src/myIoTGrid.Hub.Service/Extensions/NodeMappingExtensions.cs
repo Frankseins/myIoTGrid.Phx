@@ -115,7 +115,8 @@ public static class NodeMappingExtensions
             CreatedAt = DateTime.UtcNow,
             MacAddress = GenerateMacFromNodeId(dto.NodeId), // Generate MAC from NodeId for simulated nodes
             ApiKeyHash = string.Empty, // Will be set during provisioning
-            Status = NodeStatus.Configured // Nodes created via API/wizard are configured
+            Status = NodeStatus.Configured, // Nodes created via API/wizard are configured
+            IsSimulation = false // IMPORTANT: New nodes default to real hardware mode
         };
     }
 
@@ -151,7 +152,8 @@ public static class NodeMappingExtensions
             Status = NodeStatus.Configured,
             IsOnline = true,
             LastSeen = DateTime.UtcNow,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = DateTime.UtcNow,
+            IsSimulation = false // IMPORTANT: New nodes default to real hardware mode
         };
     }
 

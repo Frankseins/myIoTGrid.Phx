@@ -251,3 +251,15 @@ public record GpsPositionDto(
     double? Speed,
     DateTime Timestamp
 );
+
+/// <summary>
+/// Date range of readings for a node.
+/// Used to constrain date selection for expeditions.
+/// </summary>
+public record NodeReadingDateRangeDto(
+    Guid NodeId,
+    string NodeName,
+    DateTime? MinDate,
+    DateTime? MaxDate,
+    int TotalReadings
+);

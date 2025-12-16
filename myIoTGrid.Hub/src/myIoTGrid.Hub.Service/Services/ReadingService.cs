@@ -797,6 +797,51 @@ public class ReadingService : IReadingService
         return await _hubService.GetCurrentHubAsync(ct);
     }
 
+    /// <inheritdoc />
+    public async Task<NodeReadingDateRangeDto?> GetDateRangeByNodeAsync(Guid nodeId, CancellationToken ct = default)
+    {
+        var node = await _context.Nodes
+            .AsNoTracking()
+            .FirstOrDefaultAsync(n => n.Id == nodeId, ct);
+
+        if (node == null)
+            return null;
+
+        var hasReadings = await _context.Readings
+            .AnyAsync(r => r.NodeId == nodeId, ct);
+
+        if (!hasReadings)
+        {
+            return new NodeReadingDateRangeDto(
+                NodeId: nodeId,
+                NodeName: node.Name,
+                MinDate: null,
+                MaxDate: null,
+                TotalReadings: 0
+            );
+        }
+
+        var minDate = await _context.Readings
+            .Where(r => r.NodeId == nodeId)
+            .MinAsync(r => r.Timestamp, ct);
+
+        var maxDate = await _context.Readings
+            .Where(r => r.NodeId == nodeId)
+            .MaxAsync(r => r.Timestamp, ct);
+
+        var totalReadings = await _context.Readings
+            .Where(r => r.NodeId == nodeId)
+            .CountAsync(ct);
+
+        return new NodeReadingDateRangeDto(
+            NodeId: nodeId,
+            NodeName: node.Name,
+            MinDate: minDate,
+            MaxDate: maxDate,
+            TotalReadings: totalReadings
+        );
+    }
+
     /// <summary>
     /// Builds a dictionary mapping MeasurementType to SensorCapability for DisplayName lookup
     /// </summary>

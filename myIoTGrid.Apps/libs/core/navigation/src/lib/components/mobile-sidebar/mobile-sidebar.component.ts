@@ -45,6 +45,7 @@ export class MobileSidebarComponent {
    * Sidebar menu items
    */
   readonly menuItems = [
+    { icon: 'sailing', label: 'Messfahrten', route: '/expeditions' },
     { icon: 'memory', label: 'Sensoren', route: '/sensors' },
     { icon: 'warning', label: 'Warnungen', route: '/alerts' },
     { icon: 'settings', label: 'Einstellungen', route: '/settings' }

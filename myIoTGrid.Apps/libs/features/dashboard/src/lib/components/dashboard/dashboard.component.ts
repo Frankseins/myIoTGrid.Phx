@@ -9,7 +9,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatTabsModule } from '@angular/material/tabs';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatTooltipModule } from '@angular/material/tooltip';
@@ -38,7 +37,6 @@ import {
   SensorWidgetComponent
 } from '@myiotgrid/shared/ui';
 import { LayoutService } from '@myiotgrid/core/shell';
-import { MapDashboardComponent } from '../map-dashboard/map-dashboard.component';
 import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
 
 @Component({
@@ -54,7 +52,6 @@ import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
     MatSelectModule,
     MatFormFieldModule,
     MatToolbarModule,
-    MatTabsModule,
     MatChipsModule,
     MatCheckboxModule,
     MatTooltipModule,
@@ -64,8 +61,7 @@ import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
     ConnectionStatusComponent,
     EmptyStateComponent,
     SensorWidgetComponent,
-    AlertBannerComponent,
-    MapDashboardComponent
+    AlertBannerComponent
   ],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss'
@@ -125,7 +121,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly dashboard = signal<LocationDashboard | null>(null);
   readonly activeAlerts = signal<Alert[]>([]);
   readonly filterOptions = signal<DashboardFilterOptions | null>(null);
-  readonly selectedTab = signal(0);
 
   // Filter State - only location and measurement type filters
   // Period filter removed - dashboard always shows latest values

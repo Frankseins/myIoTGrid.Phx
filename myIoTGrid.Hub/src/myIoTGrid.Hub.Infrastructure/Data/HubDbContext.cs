@@ -55,6 +55,11 @@ public class HubDbContext : DbContext
     /// <summary>Node Debug Logs</summary>
     public DbSet<NodeDebugLog> NodeDebugLogs => Set<NodeDebugLog>();
 
+    // === Expeditions (Sprint 13) ===
+
+    /// <summary>Expeditions (GPS tracking sessions)</summary>
+    public DbSet<Expedition> Expeditions => Set<Expedition>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

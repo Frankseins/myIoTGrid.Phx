@@ -1,0 +1,124 @@
+<div class="datapoints-list">
+  <!-- Header with Controls -->
+  <div class="list-header">
+    <h3>GPS-Datenpunkte ({{ dataPoints().length }})</h3>
+    <div class="controls">
+      <button
+        mat-icon-button
+        (click)="toggleSort()"
+        [matTooltip]="sortNewestFirst() ? 'Älteste zuerst' : 'Neueste zuerst'">
+        <mat-icon>{{ sortNewestFirst() ? 'arrow_downward' : 'arrow_upward' }}</mat-icon>
+      </button>
+      <button
+        mat-icon-button
+        (click)="toggleAutoScroll()"
+        [matTooltip]="autoScroll() ? 'Auto-Scroll aus' : 'Auto-Scroll an'"
+        [class.active]="autoScroll()">
+        <mat-icon>{{ autoScroll() ? 'vertical_align_top' : 'vertical_align_bottom' }}</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading">
+      <mat-spinner diameter="40"></mat-spinner>
+      <p>Lade Datenpunkte...</p>
+    </div>
+  }
+
+  <!-- Data Points List -->
+  @if (!isLoading()) {
+    <div class="datapoints-viewport">
+      @if (sortedDataPoints().length === 0) {
+        <div class="empty-state">
+          <mat-icon>location_off</mat-icon>
+          <p>Keine GPS-Datenpunkte vorhanden</p>
+        </div>
+      } @else {
+        <mat-accordion multi>
+          @for (point of sortedDataPoints(); track trackByTimestamp($index, point)) {
+            <mat-expansion-panel class="datapoint-panel">
+              <!-- Panel Header (always visible) -->
+              <mat-expansion-panel-header (click)="onPointClick(point, $event)">
+                <mat-panel-title>
+                  <div class="point-summary">
+                    <span class="time">{{ formatTime(point.timestamp) }}</span>
+                    <span class="date">{{ formatDate(point.timestamp) }}</span>
+                  </div>
+                </mat-panel-title>
+                <mat-panel-description>
+                  <div class="point-meta">
+                    <span class="coords" matTooltip="Auf Karte anzeigen">
+                      {{ formatCoordinate(point.latitude) }}, {{ formatCoordinate(point.longitude) }}
+                    </span>
+                  </div>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+
+              <!-- Expandable Content -->
+              <div class="panel-content">
+                <!-- GPS Info -->
+                <div class="gps-info">
+                  <div class="info-item">
+                    <mat-icon>terrain</mat-icon>
+                    <span class="label">Höhe</span>
+                    <span class="value">{{ formatAltitude(point.altitude) }} m</span>
+                  </div>
+                  <div class="info-item">
+                    <mat-icon>speed</mat-icon>
+                    <span class="label">Geschwindigkeit</span>
+                    <span class="value">{{ formatSpeed(point.speed) }} km/h</span>
+                  </div>
+                  @if (point.heading != null) {
+                    <div class="info-item">
+                      <mat-icon>explore</mat-icon>
+                      <span class="label">Richtung</span>
+                      <span class="value">{{ point.heading.toFixed(0) }}°</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Sensor Readings -->
+                @if (point.sensorReadings.length > 0) {
+                  <div class="sensor-readings">
+                    <h4>Sensordaten</h4>
+                    <div class="readings-grid">
+                      @for (reading of point.sensorReadings; track reading.sensorId) {
+                        <div class="reading-item">
+                          <mat-icon class="sensor-icon">{{ getSensorIcon(reading.sensorType) }}</mat-icon>
+                          <div class="reading-info">
+                            <span class="sensor-name">{{ reading.sensorName }}</span>
+                            <span class="reading-value">
+                              {{ reading.value.toFixed(1) }} {{ reading.unit }}
+                            </span>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  </div>
+                } @else {
+                  <div class="no-sensor-data">
+                    <mat-icon>sensors_off</mat-icon>
+                    <span>Keine Sensordaten für diesen Zeitpunkt</span>
+                  </div>
+                }
+
+                <!-- Action Button -->
+                <div class="point-actions">
+                  <button
+                    mat-stroked-button
+                    color="primary"
+                    (click)="onPointClick(point, $event)">
+                    <mat-icon>place</mat-icon>
+                    Auf Karte anzeigen
+                  </button>
+                </div>
+              </div>
+            </mat-expansion-panel>
+          }
+        </mat-accordion>
+      }
+    </div>
+  }
+</div>

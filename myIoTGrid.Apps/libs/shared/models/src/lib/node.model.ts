@@ -387,3 +387,17 @@ export interface BusStatus {
   gpsDetected: boolean;
 }
 
+// === Reading Date Range (for Expeditions) ===
+
+/**
+ * Date range of readings for a node.
+ * Used to constrain date selection for expeditions.
+ */
+export interface NodeReadingDateRange {
+  nodeId: string;
+  nodeName: string;
+  minDate?: string;
+  maxDate?: string;
+  totalReadings: number;
+}
+

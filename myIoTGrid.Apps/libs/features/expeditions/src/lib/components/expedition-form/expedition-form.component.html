@@ -1,0 +1,201 @@
+<div class="gt-drawer gt-form-drawer">
+  <div class="gt-drawer__header">
+    <h3 class="gt-drawer__title">{{ drawerTitle }}</h3>
+    <button mat-icon-button (click)="onCancel()" aria-label="Schließen">
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <div class="gt-drawer__body">
+    <div class="gt-drawer__inner">
+      @if (error()) {
+        <div class="error-message">
+          <mat-icon>error</mat-icon>
+          <span>{{ error() }}</span>
+        </div>
+      }
+
+      <form [formGroup]="form" class="expedition-form">
+        <!-- Name -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Name</mat-label>
+          <input
+            matInput
+            formControlName="name"
+            placeholder="z.B. Erftmündung Messfahrt"
+            required>
+          @if (form.get('name')?.hasError('required') && form.get('name')?.touched) {
+            <mat-error>Name ist erforderlich</mat-error>
+          }
+          @if (form.get('name')?.hasError('minlength')) {
+            <mat-error>Mindestens 3 Zeichen</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Description -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Beschreibung</mat-label>
+          <textarea
+            matInput
+            formControlName="description"
+            rows="3"
+            placeholder="Optional: Zweck der Messfahrt">
+          </textarea>
+        </mat-form-field>
+
+        <!-- Node Selection -->
+        <mat-form-field appearance="outline" class="full-width">
+          <mat-label>Node</mat-label>
+          <mat-select formControlName="nodeId" required [disabled]="isEditMode">
+            @for (node of nodes(); track node.id) {
+              <mat-option [value]="node.id">
+                {{ node.name }}
+              </mat-option>
+            }
+          </mat-select>
+          @if (form.get('nodeId')?.hasError('required') && form.get('nodeId')?.touched) {
+            <mat-error>Node ist erforderlich</mat-error>
+          }
+        </mat-form-field>
+
+        <!-- Status (only in edit mode) -->
+        @if (isEditMode) {
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Status</mat-label>
+            <mat-select formControlName="status">
+              @for (option of statusOptions; track option.value) {
+                <mat-option [value]="option.value">
+                  {{ option.label }}
+                </mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+        }
+
+        <!-- Date Range Info -->
+        @if (selectedNodeDateRange()) {
+          <div class="date-range-info">
+            @if (dateRangeLoading()) {
+              <mat-spinner diameter="16"></mat-spinner>
+              <span>Lade Messdaten...</span>
+            } @else if (selectedNodeDateRange()!.totalReadings > 0) {
+              <mat-icon>info</mat-icon>
+              <span>
+                {{ selectedNodeDateRange()!.totalReadings }} Messwerte ab {{ selectedNodeDateRange()!.minDate | date:'dd.MM.yyyy' }}
+              </span>
+            } @else {
+              <mat-icon class="warning">warning</mat-icon>
+              <span>Keine Messdaten für diesen Node vorhanden</span>
+            }
+          </div>
+        }
+
+        <!-- Date/Time Range -->
+        <div class="date-time-section">
+          <h4>Zeitraum</h4>
+
+          <div class="date-time-row">
+            <mat-form-field appearance="outline" class="date-field">
+              <mat-label>Startdatum</mat-label>
+              <input
+                matInput
+                [matDatepicker]="startPicker"
+                formControlName="startDate"
+                [min]="minDate()"
+                required>
+              <mat-datepicker-toggle matIconSuffix [for]="startPicker"></mat-datepicker-toggle>
+              <mat-datepicker #startPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="time-field">
+              <mat-label>Startzeit</mat-label>
+              <input
+                matInput
+                type="time"
+                formControlName="startTime"
+                required>
+            </mat-form-field>
+          </div>
+
+          <div class="date-time-row">
+            <mat-form-field appearance="outline" class="date-field">
+              <mat-label>Enddatum</mat-label>
+              <input
+                matInput
+                [matDatepicker]="endPicker"
+                formControlName="endDate"
+                [min]="minDate()"
+                required>
+              <mat-datepicker-toggle matIconSuffix [for]="endPicker"></mat-datepicker-toggle>
+              <mat-datepicker #endPicker></mat-datepicker>
+            </mat-form-field>
+
+            <mat-form-field appearance="outline" class="time-field">
+              <mat-label>Endzeit</mat-label>
+              <input
+                matInput
+                type="time"
+                formControlName="endTime"
+                required>
+            </mat-form-field>
+          </div>
+        </div>
+
+        <!-- Tags -->
+        <div class="tags-section">
+          <h4>Tags</h4>
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>Tag hinzufügen</mat-label>
+            <input
+              matInput
+              [value]="tagInput()"
+              (input)="tagInput.set($any($event.target).value)"
+              (keydown)="onTagInputKeydown($event)"
+              placeholder="Tag eingeben und Enter drücken">
+            <button
+              matSuffix
+              mat-icon-button
+              type="button"
+              (click)="addTag()"
+              [disabled]="!tagInput()">
+              <mat-icon>add</mat-icon>
+            </button>
+          </mat-form-field>
+
+          @if (tags().length > 0) {
+            <div class="tags-list">
+              @for (tag of tags(); track tag) {
+                <mat-chip-row (removed)="removeTag(tag)">
+                  {{ tag }}
+                  <button matChipRemove>
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-chip-row>
+              }
+            </div>
+          }
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="drawer-buttons">
+    <button mat-button (click)="onCancel()" [disabled]="isSubmitting()">
+      Abbrechen
+    </button>
+    <button
+      mat-flat-button
+      color="primary"
+      (click)="onSubmit()"
+      [disabled]="form.invalid || isSubmitting() || (selectedNodeDateRange() && selectedNodeDateRange()!.totalReadings === 0)">
+      @if (isSubmitting()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        <ng-container>
+          <mat-icon>{{ isEditMode ? 'save' : 'add' }}</mat-icon>
+          {{ isEditMode ? 'Speichern' : 'Erstellen' }}
+        </ng-container>
+      }
+    </button>
+  </div>
+</div>

@@ -1,0 +1,255 @@
+<div class="expedition-detail-page">
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="loading-container">
+      <mat-spinner diameter="48"></mat-spinner>
+      <p>Messfahrt wird geladen...</p>
+    </div>
+  }
+
+  <!-- Error State -->
+  @if (error()) {
+    <div class="error-container">
+      <mat-icon>error_outline</mat-icon>
+      <p>{{ error() }}</p>
+      <button mat-flat-button color="primary" (click)="goBack()">
+        <mat-icon>arrow_back</mat-icon>
+        Zurück zur Übersicht
+      </button>
+    </div>
+  }
+
+  <!-- Content -->
+  @if (!isLoading() && !error() && expedition()) {
+    <!-- Compact Header -->
+    <header class="page-header">
+      <div class="header-left">
+        <button mat-icon-button (click)="goBack()" matTooltip="Zurück zur Übersicht">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <div class="header-info">
+          <h1>{{ expedition()!.name }}</h1>
+          <div class="header-meta">
+            <span class="node-badge">
+              <mat-icon>router</mat-icon>
+              {{ expedition()!.nodeName }}
+            </span>
+            <span class="date-range">
+              {{ formatDate(expedition()!.startTime) }} - {{ formatDate(expedition()!.endTime) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      @if (computedStatus() !== ExpeditionStatus.Completed) {
+        <div class="header-center">
+          <button mat-flat-button color="primary" (click)="setStartTime()" matTooltip="Setzt die Startzeit auf jetzt">
+            <mat-icon>play_arrow</mat-icon>
+            Messfahrt starten
+          </button>
+          <button mat-flat-button color="warn" (click)="setEndTime()" matTooltip="Setzt die Endzeit auf jetzt">
+            <mat-icon>stop</mat-icon>
+            Messfahrt beenden
+          </button>
+        </div>
+      }
+
+      <div class="header-right">
+        <!-- Compact Stats in Header -->
+        <div class="header-stats">
+          <span class="stat">
+            <mat-icon>straighten</mat-icon>
+            {{ stats()?.distance?.toFixed(1) || '0' }} km
+          </span>
+          <span class="stat">
+            <mat-icon>timer</mat-icon>
+            {{ formatDuration(stats()?.duration || '00:00:00') }}
+          </span>
+          <span class="stat">
+            <mat-icon>pin_drop</mat-icon>
+            {{ stats()?.readings || 0 }}
+          </span>
+        </div>
+
+        <!-- Status Badge (computed based on current time) -->
+        <span class="status-badge" [class]="getStatusClass(computedStatus())">
+          <mat-icon>{{ getStatusIcon(computedStatus()) }}</mat-icon>
+          {{ getStatusLabel(computedStatus()) }}
+          @if (isLive()) {
+            <span class="live-indicator"></span>
+          }
+        </span>
+
+        <!-- Export Button -->
+        <button mat-icon-button (click)="exportToCsv()" matTooltip="Als CSV exportieren">
+          <mat-icon>download</mat-icon>
+        </button>
+
+        <!-- Edit Button -->
+        <button mat-icon-button (click)="openEditDrawer()" matTooltip="Bearbeiten">
+          <mat-icon>edit</mat-icon>
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Layout: Scrollable Content -->
+    <div class="main-layout">
+      <!-- Map Section (collapsible) -->
+      <section class="map-section" [class.collapsed]="mapCollapsed()">
+        <div class="map-section-header" (click)="toggleMapCollapsed()">
+          <div class="map-section-title">
+            <mat-icon>{{ mapCollapsed() ? 'expand_more' : 'expand_less' }}</mat-icon>
+            <mat-icon>map</mat-icon>
+            <span>Karte & GPS-Daten</span>
+            <span class="point-count">{{ gpsDataPoints().length }} Punkte</span>
+          </div>
+          <div class="map-section-actions" (click)="$event.stopPropagation()">
+            @if (!mapCollapsed()) {
+              <button
+                mat-icon-button
+                (click)="toggleSidebar()"
+                [matTooltip]="sidebarOpen() ? 'GPS-Liste ausblenden' : 'GPS-Liste einblenden'">
+                <mat-icon>{{ sidebarOpen() ? 'view_sidebar' : 'list' }}</mat-icon>
+              </button>
+              <button
+                mat-icon-button
+                (click)="fitMapToBounds()"
+                matTooltip="Gesamte Route anzeigen">
+                <mat-icon>fit_screen</mat-icon>
+              </button>
+            }
+          </div>
+        </div>
+
+        @if (!mapCollapsed()) {
+          <div class="map-container" [class.with-sidebar]="sidebarOpen()">
+            <div class="map-wrapper">
+              <myiotgrid-leaflet-map
+                [lat]="currentLat()"
+                [lon]="currentLon()"
+                [trail]="trail()"
+                [points]="mapPoints()"
+                [highlightLat]="highlightedPoint()?.latitude ?? null"
+                [highlightLon]="highlightedPoint()?.longitude ?? null">
+              </myiotgrid-leaflet-map>
+
+              <!-- Live Badge Overlay -->
+              @if (isLive()) {
+                <div class="live-badge">
+                  <span class="pulse"></span>
+                  <mat-icon>sensors</mat-icon>
+                  Live
+                </div>
+              }
+            </div>
+
+            <!-- GPS DataPoints Sidebar (overlay on map) -->
+            @if (sidebarOpen()) {
+              <aside class="gps-sidebar">
+                <myiotgrid-gps-datapoints-list
+                  [dataPoints]="gpsDataPoints()"
+                  [isLoading]="isLoading()"
+                  (pointClick)="onGpsPointClick($event)">
+                </myiotgrid-gps-datapoints-list>
+              </aside>
+            }
+          </div>
+        }
+      </section>
+
+      <!-- Sensor Charts Section (2 columns) -->
+      <section class="sensor-charts-section">
+        <div class="section-header">
+          <h2>
+            <mat-icon>show_chart</mat-icon>
+            Sensorverlauf
+          </h2>
+          <span class="data-count">{{ availableSensors().length }} Sensoren · {{ gpsDataPoints().length }} Messpunkte</span>
+        </div>
+
+        <div class="sensor-charts-grid">
+          @for (sensor of availableSensors(); track sensor.key) {
+            <div class="sensor-chart-card">
+              <div class="chart-header">
+                <div class="chart-title">
+                  <mat-icon class="sensor-icon" [style.color]="sensor.color">{{ sensor.icon }}</mat-icon>
+                  <span>{{ sensor.name }}</span>
+                </div>
+                <div class="chart-actions">
+                  <div class="chart-stats">
+                    <span class="current">{{ formatSensorValue(getLatestValueForSensor(sensor), sensor.decimals) }} {{ sensor.unit }}</span>
+                    <span class="range">{{ formatSensorValue(getMinValueForSensor(sensor), sensor.decimals) }} - {{ formatSensorValue(getMaxValueForSensor(sensor), sensor.decimals) }} {{ sensor.unit }}</span>
+                  </div>
+                  <button mat-icon-button class="maximize-btn" (click)="maximizeChart(sensor)" matTooltip="Vollbild">
+                    <mat-icon>fullscreen</mat-icon>
+                  </button>
+                </div>
+              </div>
+              <div class="chart-wrapper">
+                <myiotgrid-line-chart
+                  [dataPoints]="getChartDataForSensor(sensor)"
+                  [color]="sensor.color"
+                  [unit]="sensor.unit"
+                  [measurementType]="sensor.key"
+                  [showMinMax]="false"
+                  [height]="200">
+                </myiotgrid-line-chart>
+              </div>
+            </div>
+          } @empty {
+            <div class="no-sensors-message">
+              <mat-icon>sensors_off</mat-icon>
+              <p>Keine Sensordaten für diese Messfahrt gefunden.</p>
+            </div>
+          }
+        </div>
+
+        <!-- Description & Tags -->
+        @if (expedition()!.description || (expedition()!.tags && expedition()!.tags.length > 0)) {
+          <div class="expedition-details">
+            @if (expedition()!.description) {
+              <p class="description">{{ expedition()!.description }}</p>
+            }
+            @if (expedition()!.tags && expedition()!.tags.length > 0) {
+              <div class="tags">
+                @for (tag of expedition()!.tags; track tag) {
+                  <span class="tag">{{ tag }}</span>
+                }
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+  }
+</div>
+
+<!-- Maximized Chart Modal (outside overflow:hidden container) -->
+@if (maximizedSensor()) {
+  <div class="chart-modal-backdrop" (click)="closeMaximizedChart()"></div>
+  <div class="chart-modal">
+    <div class="chart-modal-header">
+      <div class="chart-modal-title">
+        <mat-icon [style.color]="maximizedSensor()!.color">{{ maximizedSensor()!.icon }}</mat-icon>
+        <span>{{ maximizedSensor()!.name }}</span>
+      </div>
+      <div class="chart-modal-stats">
+        <span class="current">{{ formatSensorValue(getLatestValueForSensor(maximizedSensor()!), maximizedSensor()!.decimals) }} {{ maximizedSensor()!.unit }}</span>
+        <span class="range">Min: {{ formatSensorValue(getMinValueForSensor(maximizedSensor()!), maximizedSensor()!.decimals) }} · Max: {{ formatSensorValue(getMaxValueForSensor(maximizedSensor()!), maximizedSensor()!.decimals) }} {{ maximizedSensor()!.unit }}</span>
+      </div>
+      <button mat-icon-button (click)="closeMaximizedChart()" matTooltip="Schließen">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+    <div class="chart-modal-content">
+      <myiotgrid-line-chart
+        [dataPoints]="getChartDataForSensor(maximizedSensor()!)"
+        [color]="maximizedSensor()!.color"
+        [unit]="maximizedSensor()!.unit"
+        [measurementType]="maximizedSensor()!.key"
+        [showMinMax]="false"
+        [height]="500">
+      </myiotgrid-line-chart>
+    </div>
+  </div>
+}

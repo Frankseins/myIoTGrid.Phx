@@ -70,7 +70,7 @@ export class SensorWidgetComponent implements OnChanges {
 
     // Integer values (no decimals)
     const integerTypes = ['co2', 'pm25', 'pm10', 'rssi'];
-    if (integerTypes.includes(measurementType)) {
+    if (integerTypes.includes(type)) {
       return Math.round(value).toString();
     }
 

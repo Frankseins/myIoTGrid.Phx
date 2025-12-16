@@ -95,6 +95,7 @@ export class NavigationRailComponent implements OnInit, OnDestroy {
    */
   private mainDestinations: NavigationDestination[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard', disabled: false },
+    { icon: 'sailing', label: 'Messfahrten', route: '/expeditions', disabled: false },
     { icon: 'router', label: 'Nodes', route: '/nodes', disabled: false },
     { icon: 'memory', label: 'Sensoren', route: '/sensors', disabled: false },
     { icon: 'warning', label: 'Warnungen', route: '/alerts', disabled: false }

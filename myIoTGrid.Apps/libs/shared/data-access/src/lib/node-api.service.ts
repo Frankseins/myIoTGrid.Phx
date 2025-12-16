@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 import { BaseApiService } from './base-api.service';
-import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest, NodeGpsStatus, NodeProvisionDto, NodeConfigurationDto } from '@myiotgrid/shared/models';
+import { Node, CreateNodeDto, UpdateNodeDto, Sensor, QueryParams, PagedResult, NodeSensorsLatest, NodeGpsStatus, NodeProvisionDto, NodeConfigurationDto, NodeReadingDateRange } from '@myiotgrid/shared/models';
 import { queryParamsToObject } from './api-query.helper';
 
 @Injectable({ providedIn: 'root' })
@@ -112,5 +112,14 @@ export class NodeApiService extends BaseApiService {
    */
   provision(dto: NodeProvisionDto): Observable<NodeConfigurationDto> {
     return this.post<NodeConfigurationDto>(`${this.endpoint}/provision`, dto);
+  }
+
+  /**
+   * Get the date range (min/max timestamps) of readings for a node.
+   * Used to constrain date selection for expeditions.
+   * GET /api/nodes/{id}/reading-date-range
+   */
+  getReadingDateRange(nodeId: string): Observable<NodeReadingDateRange> {
+    return this.get<NodeReadingDateRange>(`${this.endpoint}/${nodeId}/reading-date-range`);
   }
 }

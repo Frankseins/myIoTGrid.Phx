@@ -53,4 +53,7 @@ public interface IReadingService
 
     /// <summary>Deletes Readings within a date range, optionally filtered by sensor and measurement type</summary>
     Task<DeleteReadingsResultDto> DeleteRangeAsync(DeleteReadingsRangeDto dto, CancellationToken ct = default);
+
+    /// <summary>Returns the date range (min/max timestamps) of Readings for a Node</summary>
+    Task<NodeReadingDateRangeDto?> GetDateRangeByNodeAsync(Guid nodeId, CancellationToken ct = default);
 }
