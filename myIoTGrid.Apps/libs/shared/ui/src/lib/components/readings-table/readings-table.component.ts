@@ -1,11 +1,12 @@
 import { Component, Input, Output, EventEmitter, OnInit, OnDestroy, HostListener, ChangeDetectorRef } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { ReadingListItem, ReadingsList } from '@myiotgrid/shared/models';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 import { ReadingCardComponent } from '../reading-card/reading-card.component';
 
 @Component({
@@ -19,7 +20,7 @@ import { ReadingCardComponent } from '../reading-card/reading-card.component';
     MatButtonModule,
     MatProgressSpinnerModule,
     DatePipe,
-    DecimalPipe,
+    SensorValuePipe,
     ReadingCardComponent
   ],
   templateUrl: './readings-table.component.html',
@@ -33,6 +34,7 @@ export class ReadingsTableComponent implements OnInit, OnDestroy {
   @Input() data: ReadingsList | null = null;
   @Input() loading = false;
   @Input() unit = '';
+  @Input() measurementType = '';
 
   // Additional inputs for mobile card view
   @Input() measurementLabel = 'Messwert';

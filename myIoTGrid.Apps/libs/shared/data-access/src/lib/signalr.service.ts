@@ -5,13 +5,71 @@ import { Reading, Alert, Hub, Node, Sensor, NodeDebugLog, NodeDebugConfiguration
 
 export type ConnectionState = 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
 
+/**
+ * SignalR Service with Signal-based event handling.
+ *
+ * Instead of registering callbacks per component, this service
+ * maintains Signals that components can subscribe to using effects.
+ *
+ * This approach:
+ * - Prevents "No client method found" warnings
+ * - Centralizes event handling
+ * - Leverages Angular's reactivity system
+ */
 @Injectable({ providedIn: 'root' })
 export class SignalRService {
   private readonly config = inject(API_CONFIG, { optional: true }) ?? defaultApiConfig;
   private hubConnection: signalR.HubConnection | null = null;
 
+  // ==========================================
+  // Connection State
+  // ==========================================
   readonly connectionState = signal<ConnectionState>('disconnected');
   readonly lastError = signal<string | null>(null);
+
+  // ==========================================
+  // Event Signals - Components subscribe to these
+  // ==========================================
+
+  /** Latest reading received via SignalR */
+  readonly latestReading = signal<Reading | null>(null);
+
+  /** Latest synced reading received via SignalR */
+  readonly latestSyncedReading = signal<Reading | null>(null);
+
+  /** Latest node status change */
+  readonly nodeStatusChanged = signal<Node | null>(null);
+
+  /** Latest registered node */
+  readonly nodeRegistered = signal<Node | null>(null);
+
+  /** Latest added sensor */
+  readonly sensorAdded = signal<Sensor | null>(null);
+
+  /** Latest removed sensor ID */
+  readonly sensorRemoved = signal<string | null>(null);
+
+  /** Latest hub status change */
+  readonly hubStatusChanged = signal<Hub | null>(null);
+
+  /** Latest alert received */
+  readonly alertReceived = signal<Alert | null>(null);
+
+  /** Latest acknowledged alert ID */
+  readonly alertAcknowledged = signal<string | null>(null);
+
+  /** Cloud sync status */
+  readonly cloudSyncStatus = signal<boolean | null>(null);
+
+  /** Latest debug log received */
+  readonly debugLogReceived = signal<NodeDebugLog | null>(null);
+
+  /** Latest debug config change */
+  readonly debugConfigChanged = signal<NodeDebugConfiguration | null>(null);
+
+  // ==========================================
+  // Connection Management
+  // ==========================================
 
   async startConnection(): Promise<void> {
     if (this.hubConnection?.state === signalR.HubConnectionState.Connected) {
@@ -25,10 +83,11 @@ export class SignalRService {
       this.hubConnection = new signalR.HubConnectionBuilder()
         .withUrl(this.config.signalRUrl)
         .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
-        .configureLogging(signalR.LogLevel.Information)
+        .configureLogging(signalR.LogLevel.Warning) // Reduced from Information to avoid noise
         .build();
 
       this.setupConnectionHandlers();
+      this.setupEventHandlers();
       await this.hubConnection.start();
       this.connectionState.set('connected');
       console.log('SignalR Connected');
@@ -71,108 +130,71 @@ export class SignalRService {
     });
   }
 
-  // ==========================================
-  // Reading Events (RENAMED from SensorData)
-  // ==========================================
-
   /**
-   * Subscribe to new readings
-   * Event: NewReading (RENAMED from NewSensorData)
+   * Register ALL event handlers once at connection time.
+   * This prevents "No client method found" warnings.
    */
-  onNewReading(callback: (reading: Reading) => void): void {
-    this.hubConnection?.on('NewReading', callback);
-  }
+  private setupEventHandlers(): void {
+    if (!this.hubConnection) return;
 
-  /**
-   * Subscribe to new synced readings
-   * Event: NewSyncedReading
-   */
-  onNewSyncedReading(callback: (reading: Reading) => void): void {
-    this.hubConnection?.on('NewSyncedReading', callback);
-  }
+    // Reading events
+    this.hubConnection.on('NewReading', (reading: Reading) => {
+      this.latestReading.set(reading);
+    });
 
-  // ==========================================
-  // Node Events (RENAMED from Sensor events)
-  // ==========================================
+    this.hubConnection.on('NewSyncedReading', (reading: Reading) => {
+      this.latestSyncedReading.set(reading);
+    });
 
-  /**
-   * Subscribe to node status changes
-   * Event: NodeStatusChanged (RENAMED from SensorStatusChanged)
-   */
-  onNodeStatusChanged(callback: (node: Node) => void): void {
-    this.hubConnection?.on('NodeStatusChanged', callback);
-  }
+    // Node events
+    this.hubConnection.on('NodeStatusChanged', (node: Node) => {
+      this.nodeStatusChanged.set(node);
+    });
 
-  /**
-   * Subscribe to new node registrations
-   * Event: NodeRegistered (RENAMED from SensorRegistered)
-   */
-  onNodeRegistered(callback: (node: Node) => void): void {
-    this.hubConnection?.on('NodeRegistered', callback);
-  }
+    this.hubConnection.on('NodeRegistered', (node: Node) => {
+      this.nodeRegistered.set(node);
+    });
 
-  // ==========================================
-  // Sensor Events (NEW - physical sensor chips)
-  // ==========================================
+    // Sensor events
+    this.hubConnection.on('SensorAdded', (sensor: Sensor) => {
+      this.sensorAdded.set(sensor);
+    });
 
-  /**
-   * Subscribe to sensor added events
-   * Event: SensorAdded
-   */
-  onSensorAdded(callback: (sensor: Sensor) => void): void {
-    this.hubConnection?.on('SensorAdded', callback);
-  }
+    this.hubConnection.on('SensorRemoved', (sensorId: string) => {
+      this.sensorRemoved.set(sensorId);
+    });
 
-  /**
-   * Subscribe to sensor removed events
-   * Event: SensorRemoved
-   */
-  onSensorRemoved(callback: (sensorId: string) => void): void {
-    this.hubConnection?.on('SensorRemoved', callback);
-  }
+    // Hub events
+    this.hubConnection.on('HubStatusChanged', (hub: Hub) => {
+      this.hubStatusChanged.set(hub);
+    });
 
-  // ==========================================
-  // Hub Events (unchanged)
-  // ==========================================
+    // Alert events
+    this.hubConnection.on('AlertReceived', (alert: Alert) => {
+      this.alertReceived.set(alert);
+    });
 
-  /**
-   * Subscribe to hub status changes
-   */
-  onHubStatusChanged(callback: (hub: Hub) => void): void {
-    this.hubConnection?.on('HubStatusChanged', callback);
+    this.hubConnection.on('AlertAcknowledged', (alertId: string) => {
+      this.alertAcknowledged.set(alertId);
+    });
+
+    // Cloud sync events
+    this.hubConnection.on('CloudSyncStatus', (isConnected: boolean) => {
+      this.cloudSyncStatus.set(isConnected);
+    });
+
+    // Debug events
+    this.hubConnection.on('DebugLogReceived', (log: NodeDebugLog) => {
+      this.debugLogReceived.set(log);
+    });
+
+    this.hubConnection.on('DebugConfigChanged', (config: NodeDebugConfiguration) => {
+      this.debugConfigChanged.set(config);
+    });
   }
 
   // ==========================================
-  // Alert Events (unchanged)
-  // ==========================================
-
-  /**
-   * Subscribe to new alerts
-   */
-  onAlertReceived(callback: (alert: Alert) => void): void {
-    this.hubConnection?.on('AlertReceived', callback);
-  }
-
-  /**
-   * Subscribe to alert acknowledgements
-   */
-  onAlertAcknowledged(callback: (alertId: string) => void): void {
-    this.hubConnection?.on('AlertAcknowledged', callback);
-  }
-
-  // ==========================================
-  // Cloud Sync Events (unchanged)
-  // ==========================================
-
-  /**
-   * Subscribe to cloud sync status changes
-   */
-  onCloudSyncStatus(callback: (isConnected: boolean) => void): void {
-    this.hubConnection?.on('CloudSyncStatus', callback);
-  }
-
-  // ==========================================
-  // Group Management (RENAMED)
+  // Group Management
   // ==========================================
 
   /**
@@ -191,7 +213,6 @@ export class SignalRService {
 
   /**
    * Join a node group to receive node-specific events
-   * (RENAMED from JoinSensorGroup)
    */
   async joinNodeGroup(nodeId: string): Promise<void> {
     await this.hubConnection?.invoke('JoinNodeGroup', nodeId);
@@ -199,7 +220,6 @@ export class SignalRService {
 
   /**
    * Leave a node group
-   * (RENAMED from LeaveSensorGroup)
    */
   async leaveNodeGroup(nodeId: string): Promise<void> {
     await this.hubConnection?.invoke('LeaveNodeGroup', nodeId);
@@ -219,26 +239,6 @@ export class SignalRService {
     await this.hubConnection?.invoke('LeaveAlertGroup', alertLevel);
   }
 
-  // ==========================================
-  // Debug Events (Sprint 8: Remote Debug System)
-  // ==========================================
-
-  /**
-   * Subscribe to debug log received events
-   * Event: DebugLogReceived
-   */
-  onDebugLogReceived(callback: (log: NodeDebugLog) => void): void {
-    this.hubConnection?.on('DebugLogReceived', callback);
-  }
-
-  /**
-   * Subscribe to debug configuration changed events
-   * Event: DebugConfigChanged
-   */
-  onDebugConfigChanged(callback: (config: NodeDebugConfiguration) => void): void {
-    this.hubConnection?.on('DebugConfigChanged', callback);
-  }
-
   /**
    * Join a debug group to receive debug logs for a specific node
    */
@@ -254,11 +254,48 @@ export class SignalRService {
   }
 
   // ==========================================
-  // Utility Methods
+  // Legacy Callback Methods (deprecated)
+  // Keep for backward compatibility during migration
   // ==========================================
 
   /**
+   * @deprecated Use latestReading signal with effect() instead
+   */
+  onNewReading(callback: (reading: Reading) => void): void {
+    this.hubConnection?.on('NewReading', callback);
+  }
+
+  /**
+   * @deprecated Use nodeStatusChanged signal with effect() instead
+   */
+  onNodeStatusChanged(callback: (node: Node) => void): void {
+    this.hubConnection?.on('NodeStatusChanged', callback);
+  }
+
+  /**
+   * @deprecated Use alertReceived signal with effect() instead
+   */
+  onAlertReceived(callback: (alert: Alert) => void): void {
+    this.hubConnection?.on('AlertReceived', callback);
+  }
+
+  /**
+   * @deprecated Use debugLogReceived signal with effect() instead
+   */
+  onDebugLogReceived(callback: (log: NodeDebugLog) => void): void {
+    this.hubConnection?.on('DebugLogReceived', callback);
+  }
+
+  /**
+   * @deprecated Use debugConfigChanged signal with effect() instead
+   */
+  onDebugConfigChanged(callback: (config: NodeDebugConfiguration) => void): void {
+    this.hubConnection?.on('DebugConfigChanged', callback);
+  }
+
+  /**
    * Remove event handler
+   * @deprecated No longer needed with signal-based approach
    */
   off(eventName: string): void {
     this.hubConnection?.off(eventName);

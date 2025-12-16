@@ -1,10 +1,12 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatTabsModule } from '@angular/material/tabs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 import { AlertApiService, SignalRService } from '@myiotgrid/shared/data-access';
 import { Alert, AlertLevel, AlertSource } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, EmptyStateComponent } from '@myiotgrid/shared/ui';
@@ -31,6 +33,7 @@ import { RelativeTimePipe, AlertLevelPipe } from '@myiotgrid/shared/utils';
 export class AlertsComponent implements OnInit, OnDestroy {
   private readonly alertApiService = inject(AlertApiService);
   private readonly signalRService = inject(SignalRService);
+  private readonly destroyRef = inject(DestroyRef);
 
   // Expose enums to template
   readonly AlertSource = AlertSource;
@@ -55,14 +58,52 @@ export class AlertsComponent implements OnInit, OnDestroy {
     this.activeAlerts().filter(a => a.level === AlertLevel.Warning).length
   );
 
+  constructor() {
+    // Setup reactive subscriptions to SignalR signals
+    this.setupSignalREffects();
+  }
+
+  /**
+   * Setup reactive subscriptions to SignalR signals.
+   * Using toObservable + takeUntilDestroyed for automatic cleanup.
+   */
+  private setupSignalREffects(): void {
+    // React to new alerts
+    toObservable(this.signalRService.alertReceived)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((alert): alert is Alert => alert !== null)
+      )
+      .subscribe(alert => {
+        this.alerts.update(alerts => [alert, ...alerts]);
+      });
+
+    // React to acknowledged alerts
+    toObservable(this.signalRService.alertAcknowledged)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((alertId): alertId is string => alertId !== null)
+      )
+      .subscribe(alertId => {
+        this.alerts.update(alerts =>
+          alerts.map(a => a.id === alertId ? { ...a, isActive: false, acknowledgedAt: new Date().toISOString() } : a)
+        );
+      });
+  }
+
   async ngOnInit(): Promise<void> {
+    // Ensure SignalR is connected
+    try {
+      await this.signalRService.startConnection();
+    } catch (error) {
+      console.error('Error connecting to SignalR:', error);
+    }
+
     await this.loadAlerts();
-    this.setupSignalR();
   }
 
   ngOnDestroy(): void {
-    this.signalRService.off('AlertReceived');
-    this.signalRService.off('AlertAcknowledged');
+    // Cleanup is handled by takeUntilDestroyed
   }
 
   private async loadAlerts(): Promise<void> {
@@ -75,18 +116,6 @@ export class AlertsComponent implements OnInit, OnDestroy {
     } finally {
       this.isLoading.set(false);
     }
-  }
-
-  private setupSignalR(): void {
-    this.signalRService.onAlertReceived((alert: Alert) => {
-      this.alerts.update(alerts => [alert, ...alerts]);
-    });
-
-    this.signalRService.onAlertAcknowledged((alertId: string) => {
-      this.alerts.update(alerts =>
-        alerts.map(a => a.id === alertId ? { ...a, isActive: false, acknowledgedAt: new Date().toISOString() } : a)
-      );
-    });
   }
 
   async acknowledgeAlert(alertId: string): Promise<void> {

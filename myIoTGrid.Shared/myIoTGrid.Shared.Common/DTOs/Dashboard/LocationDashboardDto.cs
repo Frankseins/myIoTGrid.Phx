@@ -48,14 +48,16 @@ public record SensorWidgetDto(
     string Unit,
     /// <summary>Hex color for sparkline (e.g., "#FF5722")</summary>
     string Color,
-    /// <summary>Current/latest value</summary>
-    double CurrentValue,
-    /// <summary>Timestamp of last update</summary>
-    DateTime LastUpdate,
+    /// <summary>Current/latest value (null if offline)</summary>
+    double? CurrentValue,
+    /// <summary>Timestamp of last update (null if no data)</summary>
+    DateTime? LastUpdate,
     /// <summary>Min/Max values with timestamps</summary>
-    MinMaxDto MinMax,
+    MinMaxDto? MinMax,
     /// <summary>Sparkline data points</summary>
-    IEnumerable<SparklinePointDto> DataPoints
+    IEnumerable<SparklinePointDto> DataPoints,
+    /// <summary>Whether the sensor has recent data (online)</summary>
+    bool IsOnline = true
 );
 
 /// <summary>

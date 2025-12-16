@@ -27,13 +27,6 @@
 
     <!-- Toolbar im O365-Style -->
     <mat-toolbar class="toolbar outlook-toolbar">
-      <div class="left-actions">
-        <button mat-stroked-button color="primary" (click)="togglePeriod()">
-          <mat-icon>schedule</mat-icon>
-          {{ selectedPeriodLabel() }}
-        </button>
-      </div>
-
       <span class="spacer"></span>
 
       <!-- Ergebnis-Info in Toolbar -->
@@ -195,37 +188,3 @@
   </div>
 </ng-template>
 
-<!-- Period-Drawer Template -->
-<ng-template #periodDrawer>
-  <div class="gt-drawer gt-period-drawer">
-    <div class="gt-drawer__header">
-      <h3 class="gt-drawer__title">Zeitraum wählen</h3>
-      <button mat-icon-button (click)="closePeriod()" aria-label="Schließen">
-        <mat-icon>close</mat-icon>
-      </button>
-    </div>
-
-    <div class="gt-drawer__body">
-      <div class="gt-drawer__inner">
-        <div class="period-options">
-          @for (option of periodOptions; track option.value) {
-            <button mat-stroked-button
-                    class="period-option"
-                    [class.selected]="selectedPeriod() === option.value"
-                    (click)="selectPeriod(option.value)">
-              <mat-icon>schedule</mat-icon>
-              <span class="period-label">{{ option.label }}</span>
-              <span class="period-badge">{{ option.shortLabel }}</span>
-            </button>
-          }
-        </div>
-      </div>
-    </div>
-
-    <div class="drawer-buttons">
-      <button mat-flat-button color="primary" (click)="applyPeriod()">
-        <mat-icon>check</mat-icon> Anwenden
-      </button>
-    </div>
-  </div>
-</ng-template>

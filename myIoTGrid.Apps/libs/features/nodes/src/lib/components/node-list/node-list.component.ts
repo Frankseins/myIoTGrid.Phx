@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, ViewChild, ElementRef, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, ViewChild, ElementRef, TemplateRef, ViewContainerRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -16,7 +16,9 @@ import { MatDividerModule } from '@angular/material/divider';
 import { FormsModule } from '@angular/forms';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import { HubApiService, NodeApiService, ReadingApiService, SignalRService } from '@myiotgrid/shared/data-access';
 import { Hub, Node, Reading, NodeProvisioningStatus, NodeSensorsLatest, Protocol } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, EmptyStateComponent, ConfirmDialogService, NodeCardComponent } from '@myiotgrid/shared/ui';
@@ -64,7 +66,57 @@ export class NodeListComponent implements OnInit, OnDestroy {
   private readonly signalRService = inject(SignalRService);
   private readonly confirmDialogService = inject(ConfirmDialogService);
   private readonly snackBar = inject(MatSnackBar);
+  private readonly destroyRef = inject(DestroyRef);
   private filterOverlayRef: OverlayRef | null = null;
+
+  constructor() {
+    // Subscribe to SignalR signals using observables
+    this.setupSignalREffects();
+  }
+
+  /**
+   * Setup reactive subscriptions to SignalR signals.
+   * Using toObservable + takeUntilDestroyed for automatic cleanup.
+   */
+  private setupSignalREffects(): void {
+    // React to new readings
+    toObservable(this.signalRService.latestReading)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((reading): reading is Reading => reading !== null)
+      )
+      .subscribe(reading => {
+        this.updateReading(reading);
+      });
+
+    // React to node status changes
+    toObservable(this.signalRService.nodeStatusChanged)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((node): node is Node => node !== null)
+      )
+      .subscribe(updatedNode => {
+        this.nodes.update(nodes =>
+          nodes.map(n => n.id === updatedNode.id ? { ...n, ...updatedNode } : n)
+        );
+      });
+
+    // React to new node registrations
+    toObservable(this.signalRService.nodeRegistered)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((node): node is Node => node !== null)
+      )
+      .subscribe(newNode => {
+        this.nodes.update(nodes => {
+          // Check if node already exists
+          if (nodes.some(n => n.id === newNode.id)) {
+            return nodes.map(n => n.id === newNode.id ? newNode : n);
+          }
+          return [...nodes, newNode];
+        });
+      });
+  }
 
   readonly isLoading = signal(true);
   readonly initialLoadDone = signal(false);
@@ -141,47 +193,20 @@ export class NodeListComponent implements OnInit, OnDestroy {
   }
 
   async ngOnInit(): Promise<void> {
+    // Ensure SignalR is connected
+    try {
+      await this.signalRService.startConnection();
+    } catch (error) {
+      console.error('Error connecting to SignalR:', error);
+    }
+
     await this.loadData();
-    await this.setupSignalR();
   }
 
   ngOnDestroy(): void {
-    // SignalR Event-Handler entfernen
-    this.signalRService.off('NewReading');
-    this.signalRService.off('NodeStatusChanged');
-    this.signalRService.off('NodeRegistered');
-  }
-
-  private async setupSignalR(): Promise<void> {
-    try {
-      // SignalR-Verbindung starten (falls noch nicht verbunden)
-      await this.signalRService.startConnection();
-
-      // Neue Readings empfangen
-      this.signalRService.onNewReading((reading: Reading) => {
-        this.updateReading(reading);
-      });
-
-      // Node-Status-Änderungen empfangen
-      this.signalRService.onNodeStatusChanged((updatedNode: Node) => {
-        this.nodes.update(nodes =>
-          nodes.map(n => n.id === updatedNode.id ? { ...n, ...updatedNode } : n)
-        );
-      });
-
-      // Neue Node-Registrierungen empfangen
-      this.signalRService.onNodeRegistered((newNode: Node) => {
-        this.nodes.update(nodes => {
-          // Prüfen ob Node bereits existiert
-          if (nodes.some(n => n.id === newNode.id)) {
-            return nodes.map(n => n.id === newNode.id ? newNode : n);
-          }
-          return [...nodes, newNode];
-        });
-      });
-    } catch (error) {
-      console.error('Error setting up SignalR:', error);
-    }
+    // SignalR cleanup is handled by takeUntilDestroyed
+    // Just cleanup overlays
+    this.closeFilter();
   }
 
   private updateReading(reading: Reading): void {

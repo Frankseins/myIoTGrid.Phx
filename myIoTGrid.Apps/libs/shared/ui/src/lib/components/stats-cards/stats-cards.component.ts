@@ -3,11 +3,12 @@ import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { ChartStats, Trend } from '@myiotgrid/shared/models';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 
 @Component({
   selector: 'myiotgrid-stats-cards',
   standalone: true,
-  imports: [CommonModule, MatCardModule, MatIconModule, DatePipe, DecimalPipe],
+  imports: [CommonModule, MatCardModule, MatIconModule, DatePipe, DecimalPipe, SensorValuePipe],
   templateUrl: './stats-cards.component.html',
   styleUrl: './stats-cards.component.scss'
 })
@@ -15,6 +16,7 @@ export class StatsCardsComponent {
   @Input() stats: ChartStats | null = null;
   @Input() trend: Trend | null = null;
   @Input() unit = '';
+  @Input() measurementType = '';
   @Input() color = '#1976d2';
 
   getTrendIcon(): string {

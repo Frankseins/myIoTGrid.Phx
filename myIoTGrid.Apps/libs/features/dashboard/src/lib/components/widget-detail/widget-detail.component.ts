@@ -1,14 +1,16 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { CommonModule, DatePipe, DecimalPipe } from '@angular/common';
+import { Component, OnInit, OnDestroy, inject, signal, computed, DestroyRef } from '@angular/core';
+import { CommonModule, DatePipe } from '@angular/common';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTabsModule } from '@angular/material/tabs';
-import { Subject, takeUntil } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 
 import { ChartApiService, SignalRService } from '@myiotgrid/shared/data-access';
+import { Reading } from '@myiotgrid/shared/models';
 import {
   ChartData,
   ChartInterval,
@@ -21,6 +23,7 @@ import {
   StatsCardsComponent,
   ReadingsTableComponent
 } from '@myiotgrid/shared/ui';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 
 @Component({
   selector: 'myiotgrid-widget-detail',
@@ -34,11 +37,11 @@ import {
     MatProgressSpinnerModule,
     MatTabsModule,
     DatePipe,
-    DecimalPipe,
     LineChartComponent,
     IntervalSelectorComponent,
     StatsCardsComponent,
     ReadingsTableComponent,
+    SensorValuePipe,
   ],
   templateUrl: './widget-detail.component.html',
   styleUrl: './widget-detail.component.scss'
@@ -48,12 +51,31 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly chartApi = inject(ChartApiService);
   private readonly signalR = inject(SignalRService);
-  private readonly destroy$ = new Subject<void>();
+  private readonly destroyRef = inject(DestroyRef);
 
   // Route params
   nodeId = '';
   assignmentId = '';
   measurementType = '';
+
+  constructor() {
+    // Setup reactive subscription to SignalR latestReading signal
+    toObservable(this.signalR.latestReading)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((reading): reading is Reading => reading !== null)
+      )
+      .subscribe(reading => {
+        // Check if this reading is for our widget
+        if (reading.nodeId === this.nodeId &&
+            reading.assignmentId === this.assignmentId &&
+            reading.measurementType.toLowerCase() === this.measurementType.toLowerCase()) {
+          // Reload data to get updated stats
+          this.loadChartData();
+          this.loadReadingsList();
+        }
+      });
+  }
 
   // State signals
   chartData = signal<ChartData | null>(null);
@@ -74,22 +96,25 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
   readonly lastUpdate = computed(() => this.chartData()?.lastUpdate ?? '');
   readonly intervalLabel = computed(() => ChartIntervalLabels[this.selectedInterval()]);
 
-  ngOnInit(): void {
-    this.route.params.pipe(takeUntil(this.destroy$)).subscribe(params => {
+  async ngOnInit(): Promise<void> {
+    // Ensure SignalR is connected
+    try {
+      await this.signalR.startConnection();
+    } catch (error) {
+      console.error('SignalR connection failed:', error);
+    }
+
+    this.route.params.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       this.nodeId = params['nodeId'];
       this.assignmentId = params['assignmentId'];
       this.measurementType = params['measurementType'];
       this.loadChartData();
       this.loadReadingsList();
     });
-
-    // SignalR live updates
-    this.setupSignalR();
   }
 
   ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    // Cleanup is handled by takeUntilDestroyed
   }
 
   onIntervalChange(interval: ChartInterval): void {
@@ -132,7 +157,7 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
       this.assignmentId,
       this.measurementType,
       this.selectedInterval()
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.chartData.set(data);
         this.chartLoading.set(false);
@@ -153,7 +178,7 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
       this.assignmentId,
       this.measurementType,
       { page, pageSize }
-    ).pipe(takeUntil(this.destroy$)).subscribe({
+    ).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (data) => {
         this.readingsList.set(data);
         this.tableLoading.set(false);
@@ -163,25 +188,6 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
         this.tableLoading.set(false);
       }
     });
-  }
-
-  private async setupSignalR(): Promise<void> {
-    try {
-      await this.signalR.startConnection();
-
-      this.signalR.onNewReading((reading) => {
-        // Check if this reading is for our widget
-        if (reading.nodeId === this.nodeId &&
-            reading.assignmentId === this.assignmentId &&
-            reading.measurementType.toLowerCase() === this.measurementType.toLowerCase()) {
-          // Reload data to get updated stats
-          this.loadChartData();
-          this.loadReadingsList();
-        }
-      });
-    } catch (error) {
-      console.error('SignalR connection failed:', error);
-    }
   }
 
   private getMeasurementLabel(type: string): string {

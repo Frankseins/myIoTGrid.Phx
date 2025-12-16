@@ -32,6 +32,7 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
   @Input() dataPoints: ChartPoint[] = [];
   @Input() color = '#FF5722';
   @Input() unit = '';
+  @Input() measurementType = '';
   @Input() showMinMax = true;
   @Input() height = 300;
   @Input() interval: ChartInterval = ChartInterval.OneDay;
@@ -66,6 +67,26 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
     }
   }
 
+  /**
+   * Format sensor value based on measurement type:
+   * - GPS (latitude/longitude): 4 decimal places
+   * - Integer types (co2, pm25, pm10, rssi): no decimals
+   * - Default: 1 decimal place
+   */
+  private formatSensorValue(value: number): string {
+    const type = this.measurementType.toLowerCase();
+
+    if (type === 'latitude' || type === 'longitude') {
+      return value.toFixed(4);
+    }
+
+    if (['co2', 'pm25', 'pm10', 'rssi'].includes(type)) {
+      return Math.round(value).toString();
+    }
+
+    return value.toFixed(1);
+  }
+
   private createChart(): void {
     if (!this.chartCanvas?.nativeElement) return;
 
@@ -80,9 +101,10 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
     // Determine point size based on data count
     const pointRadius = this.dataPoints.length > 100 ? 2 : 4;
 
-    // Store dataPoints reference for tooltip access
+    // Store references for tooltip access
     const dataPointsRef = this.dataPoints;
     const unitRef = this.unit;
+    const formatValueRef = this.formatSensorValue.bind(this);
     const { timeUnit, tooltipFormat } = this.getTimeConfig();
 
     const datasets: any[] = [
@@ -200,7 +222,7 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
               label: (item: TooltipItem<'line'>) => {
                 if (item.datasetIndex === 0 && item.parsed?.y !== undefined) {
                   const value = typeof item.parsed.y === 'number' ? item.parsed.y : 0;
-                  return `${value.toFixed(1)} ${unitRef}`;
+                  return `${formatValueRef(value)} ${unitRef}`;
                 }
                 return '';
               }
@@ -249,7 +271,7 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
               font: {
                 size: 11
               },
-              callback: (value) => `${value} ${this.unit}`
+              callback: (value) => `${formatValueRef(Number(value))} ${unitRef}`
             }
           }
         }

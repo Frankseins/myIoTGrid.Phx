@@ -46,21 +46,27 @@ export class SensorWidgetComponent implements OnChanges {
 
   readonly formattedValue = computed(() => {
     const widget = this._widget();
-    if (!widget) return '0';
+    if (!widget || widget.currentValue === null || widget.currentValue === undefined) return '--';
 
     // Format based on measurement type
     const value = widget.currentValue;
-    if (Number.isNaN(value)) return 'NaN';
+    if (Number.isNaN(value)) return '--';
 
-    // Use appropriate decimal places based on measurement type
-    const oneDecimalTypes = [
-      'temperature', 'water_temperature', 'humidity', 'pressure',
-      'soil_moisture', 'battery', 'light', 'uv'
-    ];
-    if (oneDecimalTypes.includes(widget.measurementType.toLowerCase())) {
-      return value.toFixed(1);
+    const measurementType = widget.measurementType.toLowerCase();
+
+    // GPS coordinates need 4 decimal places for precision
+    if (measurementType === 'latitude' || measurementType === 'longitude') {
+      return value.toFixed(4);
     }
-    return value.toFixed(1); // Default to 1 decimal for all sensor values
+
+    // Integer values (no decimals)
+    const integerTypes = ['co2', 'pm25', 'pm10', 'rssi'];
+    if (integerTypes.includes(measurementType)) {
+      return Math.round(value).toString();
+    }
+
+    // Default to 1 decimal for all other sensor values
+    return value.toFixed(1);
   });
 
   ngOnChanges(changes: SimpleChanges): void {

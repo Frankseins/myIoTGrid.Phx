@@ -7,7 +7,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">Minimum</span>
-        <span class="stat-value">{{ stats.minValue | number:'1.1-1' }} {{ unit }}</span>
+        <span class="stat-value">{{ stats.minValue | sensorValue:measurementType }} {{ unit }}</span>
         <span class="stat-time">{{ stats.minTimestamp | date:'dd.MM. HH:mm' }}</span>
       </div>
     </mat-card>
@@ -19,7 +19,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">Maximum</span>
-        <span class="stat-value">{{ stats.maxValue | number:'1.1-1' }} {{ unit }}</span>
+        <span class="stat-value">{{ stats.maxValue | sensorValue:measurementType }} {{ unit }}</span>
         <span class="stat-time">{{ stats.maxTimestamp | date:'dd.MM. HH:mm' }}</span>
       </div>
     </mat-card>
@@ -31,7 +31,7 @@
       </div>
       <div class="stat-content">
         <span class="stat-label">Durchschnitt</span>
-        <span class="stat-value">{{ stats.avgValue | number:'1.1-1' }} {{ unit }}</span>
+        <span class="stat-value">{{ stats.avgValue | sensorValue:measurementType }} {{ unit }}</span>
       </div>
     </mat-card>
 
