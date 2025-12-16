@@ -50,13 +50,22 @@ export class SensorWidgetComponent implements OnChanges {
 
     // Format based on measurement type
     const value = widget.currentValue;
-    if (Number.isNaN(value)) return '--';
+    if (Number.isNaN(value)) return 'NaN';
 
-    const measurementType = widget.measurementType.toLowerCase();
+    // Use appropriate decimal places based on measurement type
+    const oneDecimalTypes = [
+      'temperature', 'water_temperature', 'humidity', 'pressure',
+      'soil_moisture', 'battery', 'light', 'uv'
+    ];
+    const type = widget.measurementType.toLowerCase();
 
-    // GPS coordinates need 4 decimal places for precision
-    if (measurementType === 'latitude' || measurementType === 'longitude') {
-      return value.toFixed(4);
+    // Show higher precision for GPS coordinates
+    if (type === 'latitude' || type === 'longitude') {
+      return value.toFixed(6);
+    }
+
+    if (oneDecimalTypes.includes(type)) {
+      return value.toFixed(1);
     }
 
     // Integer values (no decimals)

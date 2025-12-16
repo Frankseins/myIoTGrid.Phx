@@ -55,67 +55,83 @@
       }
     </mat-toolbar>
 
-    <!-- Alerts Banner -->
-    @if (criticalAlerts().length > 0 || warningAlerts().length > 0) {
-      <section class="alerts-section">
-        @for (alert of criticalAlerts(); track alert.id) {
-          <myiotgrid-alert-banner
-            [alert]="alert"
-            (acknowledge)="acknowledgeAlert($event)">
-          </myiotgrid-alert-banner>
-        }
-        @for (alert of warningAlerts(); track alert.id) {
-          <myiotgrid-alert-banner
-            [alert]="alert"
-            (acknowledge)="acknowledgeAlert($event)">
-          </myiotgrid-alert-banner>
-        }
-      </section>
-    }
-
-    @if (totalWidgets() === 0 && hasActiveFilters()) {
-      <myiotgrid-empty-state
-        icon="search_off"
-        title="Keine Widgets gefunden"
-        message="Keine Sensordaten entsprechen den aktuellen Filterkriterien."
-        actionLabel="Filter zurücksetzen"
-        (actionClicked)="clearFilters(); refresh()">
-      </myiotgrid-empty-state>
-    } @else {
-      <!-- Hero Locations (Full Width) -->
-      @for (location of heroLocations(); track location.locationName) {
-        <section class="location-section hero-section">
-          <div class="widgets-grid hero-grid">
-            @for (widget of location.widgets; track widget.widgetId) {
-              <myiotgrid-sensor-widget
-                [widget]="widget"
-                [isHero]="true"
-                (widgetClick)="onWidgetClick($event)">
-              </myiotgrid-sensor-widget>
+    <!-- Subnavigation: Tabs for Classic and Map dashboards (match Alerts style) -->
+    <mat-tab-group [(selectedIndex)]="selectedTab">
+      <mat-tab>
+        <ng-template mat-tab-label>
+          Classic
+        </ng-template>
+        <!-- Alerts Banner -->
+        @if (criticalAlerts().length > 0 || warningAlerts().length > 0) {
+          <section class="alerts-section">
+            @for (alert of criticalAlerts(); track alert.id) {
+              <myiotgrid-alert-banner
+                [alert]="alert"
+                (acknowledge)="acknowledgeAlert($event)">
+              </myiotgrid-alert-banner>
             }
-          </div>
-        </section>
-      }
-
-      <!-- Regular Locations -->
-      @for (location of regularLocations(); track location.locationName) {
-        <section class="location-section">
-          <h2 class="location-title">
-            <mat-icon class="location-icon">{{ getLocationIcon(location) }}</mat-icon>
-            {{ location.locationName }}
-          </h2>
-          <div class="widgets-grid">
-            @for (widget of location.widgets; track widget.widgetId) {
-              <myiotgrid-sensor-widget
-                [widget]="widget"
-                [isHero]="false"
-                (widgetClick)="onWidgetClick($event)">
-              </myiotgrid-sensor-widget>
+            @for (alert of warningAlerts(); track alert.id) {
+              <myiotgrid-alert-banner
+                [alert]="alert"
+                (acknowledge)="acknowledgeAlert($event)">
+              </myiotgrid-alert-banner>
             }
-          </div>
-        </section>
-      }
-    }
+          </section>
+        }
+
+        @if (totalWidgets() === 0 && hasActiveFilters()) {
+          <myiotgrid-empty-state
+            icon="search_off"
+            title="Keine Widgets gefunden"
+            message="Keine Sensordaten entsprechen den aktuellen Filterkriterien."
+            actionLabel="Filter zurücksetzen"
+            (actionClicked)="clearFilters(); refresh()">
+          </myiotgrid-empty-state>
+        } @else {
+          <!-- Hero Locations (Full Width) -->
+          @for (location of heroLocations(); track location.locationName) {
+            <section class="location-section hero-section">
+              <div class="widgets-grid hero-grid">
+                @for (widget of location.widgets; track widget.widgetId) {
+                  <myiotgrid-sensor-widget
+                    [widget]="widget"
+                    [isHero]="true"
+                    (widgetClick)="onWidgetClick($event)">
+                  </myiotgrid-sensor-widget>
+                }
+              </div>
+            </section>
+          }
+
+          <!-- Regular Locations -->
+          @for (location of regularLocations(); track location.locationName) {
+            <section class="location-section">
+              <h2 class="location-title">
+                <mat-icon class="location-icon">{{ getLocationIcon(location) }}</mat-icon>
+                {{ location.locationName }}
+              </h2>
+              <div class="widgets-grid">
+                @for (widget of location.widgets; track widget.widgetId) {
+                  <myiotgrid-sensor-widget
+                    [widget]="widget"
+                    [isHero]="false"
+                    (widgetClick)="onWidgetClick($event)">
+                  </myiotgrid-sensor-widget>
+                }
+              </div>
+            </section>
+          }
+        }
+      </mat-tab>
+      <mat-tab>
+        <ng-template mat-tab-label>
+          Map
+        </ng-template>
+        <div class="tab-content">
+          <myiotgrid-map-dashboard></myiotgrid-map-dashboard>
+        </div>
+      </mat-tab>
+    </mat-tab-group>
   }
 </div>
 

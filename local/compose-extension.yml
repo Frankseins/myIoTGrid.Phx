@@ -1,0 +1,9 @@
+name: "local-myIoTGrid"
+
+services:
+  hub-api:
+    ports: !override
+      - "5101:5001"
+      - "5100:5000"
+      - "5102:5002"
+      - "5101:5001/udp"
