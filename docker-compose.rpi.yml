@@ -16,7 +16,7 @@ services:
   # Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
   # ---------------------------------------------------------------------------
   hub-api:
-    image: ghcr.io/frankseins/myiotgrid-hub-api:latest
+    image: ghcr.io/frankseins/myiotgrid-hub-phx-api:latest
     container_name: myIoTGrid.Hub
     restart: unless-stopped
     ports:
@@ -64,12 +64,16 @@ services:
   # Frontend (Angular + nginx with HTTPS) - Port 443
   # ---------------------------------------------------------------------------
   hub-frontend:
-    image: ghcr.io/frankseins/myiotgrid-hub-frontend:latest
+    image: ghcr.io/frankseins/myiotgrid-hub-phx-frontend:latest
     container_name: myIoTGrid.Frontend
     restart: unless-stopped
     ports:
       - "443:443"
       - "80:80"
+    environment:
+      # Local Docker: use internal Docker network DNS
+      # Azure: default is https://phx-api.myiotgrid.cloud (set in Dockerfile)
+      - API_BACKEND_URL=https://hub-api:5001
     volumes:
       - ./certs:/etc/nginx/certs:ro
     networks:
@@ -91,7 +95,7 @@ services:
   # Sensor Simulator (Native Build) - Auto-discovers Hub via UDP broadcast
   # ---------------------------------------------------------------------------
   sensor-sim:
-    image: ghcr.io/frankseins/myiotgrid-sensor-sim:latest
+    image: ghcr.io/frankseins/myiotgrid-phx-sensor-sim:latest
     container_name: myIoTGrid.Sensor
     restart: unless-stopped
     environment:

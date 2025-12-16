@@ -1,26 +1,64 @@
-# Angular specific
-/dist/
-/out-tsc/
-/tmp/
-/coverage/
-/e2e/test-output/
-/.angular/
+# =============================================================================
+# .NET
+# =============================================================================
+bin/
+obj/
+*.user
+*.userosscache
+*.suo
+*.cache
+*.dll
+*.exe
+*.pdb
+*.nupkg
+*.snupkg
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# NuGet
+*.nuget.props
+*.nuget.targets
+.nuget/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Rider
+.idea/
+*.sln.iml
+
+# =============================================================================
+# Angular / Node.js
+# =============================================================================
+dist/
+out-tsc/
+tmp/
+coverage/
+e2e/test-output/
 .angular/
+node_modules/
+.nx/
+.cache/
 
-# Node modules and dependency files
-/node_modules/
-/package-lock.json
-/yarn.lock
+# Dependency lock files (optional - remove if you want to track them)
+# package-lock.json
+# yarn.lock
 
-# Environment files
-/.env
-.env
-.env.local
-.env.*.local
-
-# Angular CLI and build artefacts
-/.angular-cli.json
-/.ng/
+# Angular CLI
+.angular-cli.json
+.ng/
 
 # TypeScript cache
 *.tsbuildinfo
@@ -29,6 +67,19 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+lerna-debug.log*
+.pnpm-debug.log*
+
+# =============================================================================
+# Environment & Secrets
+# =============================================================================
+.env
+.env.*
+!.env.example
+*.local
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
 
 # SSL Certificates (NEVER commit private keys!)
 certs/
@@ -38,16 +89,50 @@ certs/
 *.p12
 *.pfx
 
+# =============================================================================
 # System Files
+# =============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# IDE Files
+# =============================================================================
+# IDE / Editor
+# =============================================================================
 .idea/
 *.iml
 .vscode/
 .vs/
+*.swp
+*.swo
+*~
 
-# Claude Code / AI
+# =============================================================================
+# AI / Tools
+# =============================================================================
 .claude/
 .cursor/
+
+# =============================================================================
+# PlatformIO (ESP32)
+# =============================================================================
+.pio/
+.pioenvs/
+.piolibdeps/
+
+# =============================================================================
+# Docker
+# =============================================================================
+docker-compose.override.yml
+
+# =============================================================================
+# Test Results
+# =============================================================================
+TestResults/
+*.trx
+coverage.cobertura.xml

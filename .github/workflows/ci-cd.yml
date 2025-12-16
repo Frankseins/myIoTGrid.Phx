@@ -18,9 +18,9 @@ env:
 
 # =============================================================================
 # Images Built:
-# - myiotgrid-hub-api          (Hub Backend API)
-# - myiotgrid-hub-frontend     (Hub Frontend - local deployment)
-# - myiotgrid-sensor-sim       (Sensor Simulator)
+# - myiotgrid-hub-phx-api          (Hub Backend API)
+# - myiotgrid-hub-phx-frontend     (Hub Frontend - local deployment)
+# - myiotgrid-phx-sensor-sim       (Sensor Simulator)
 # =============================================================================
 
 defaults:
@@ -117,8 +117,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
@@ -161,7 +159,7 @@ jobs:
           cache-to: type=gha,mode=max
 
   # =============================================================================
-  # Docker Image: Hub Frontend
+  # Docker Image: Hub Frontend (ARM64 + AMD64 with pre-built artifacts)
   # =============================================================================
   docker-hub-frontend:
     name: Build Hub Frontend Image
@@ -172,12 +170,16 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-hub-build
+          path: ./dist/apps/hub
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
@@ -203,14 +205,44 @@ jobs:
             type=raw,value=latest,enable=${{ github.ref == 'refs/heads/main' }}
             type=raw,value={{date 'YYYYMMDD-HHmmss'}}
 
+      - name: Create runtime-only Dockerfile
+        run: |
+          cat > Dockerfile.frontend-runtime << 'EOF'
+          FROM nginx:alpine
+
+          # Install openssl for self-signed cert generation
+          RUN apk add --no-cache openssl
+
+          # Copy nginx configuration
+          COPY myIoTGrid.Apps/docker/nginx.hub.conf /etc/nginx/nginx.conf
+
+          # Copy pre-built frontend assets (built on amd64, works on any arch)
+          COPY dist/apps/hub/browser /usr/share/nginx/html
+
+          # Create certs directory
+          RUN mkdir -p /etc/nginx/certs
+
+          # Generate self-signed certificate
+          RUN openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+              -keyout /etc/nginx/certs/privkey.pem \
+              -out /etc/nginx/certs/fullchain.pem \
+              -subj "/C=DE/ST=NRW/L=Cologne/O=myIoTGrid/OU=Hub/CN=localhost"
+
+          EXPOSE 80 443
+
+          HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+            CMD wget --no-verbose --tries=1 --spider http://localhost/health || exit 1
+
+          CMD ["nginx", "-g", "daemon off;"]
+          EOF
+
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
         with:
-          context: ./myIoTGrid.Apps
-          file: ./myIoTGrid.Apps/docker/Dockerfile.hub
+          context: .
+          file: ./Dockerfile.frontend-runtime
           push: true
-          # Only AMD64 - esbuild doesn't work under QEMU ARM64 emulation
-          platforms: linux/amd64
+          platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
@@ -227,8 +259,6 @@ jobs:
     permissions:
       contents: read
       packages: write
-      attestations: write
-      id-token: write
 
     steps:
       - name: Checkout code
