@@ -455,6 +455,7 @@
                 [loading]="isLoadingHistory()"
                 [showFilter]="true"
                 [showDeleteButton]="isEditMode()"
+                [showExportButton]="true"
                 filterTitle="Messwerte filtern"
                 stateKey="node-reading-history"
                 dataKey="id"
@@ -462,7 +463,8 @@
                 defaultSortOrder="desc"
                 (lazyLoad)="loadReadingsLazy($event)"
                 (filterChange)="onHistoryFilterChange($event)"
-                (deleteClicked)="openDeleteDrawer()">
+                (deleteClicked)="openDeleteDrawer()"
+                (exportClicked)="onExportReadingsCsv()">
 
                 <!-- Filter Template -->
                 <ng-template #filterTemplate let-filters>

@@ -5,6 +5,7 @@ import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatTooltipModule } from '@angular/material/tooltip';
 import { ReadingListItem, ReadingsList } from '@myiotgrid/shared/models';
 import { SensorValuePipe } from '@myiotgrid/shared/utils';
 import { ReadingCardComponent } from '../reading-card/reading-card.component';
@@ -19,6 +20,7 @@ import { ReadingCardComponent } from '../reading-card/reading-card.component';
     MatIconModule,
     MatButtonModule,
     MatProgressSpinnerModule,
+    MatTooltipModule,
     DatePipe,
     SensorValuePipe,
     ReadingCardComponent

@@ -1,9 +1,12 @@
 <div class="readings-table-container" [class.mobile-view]="isMobileView">
   <div class="table-header">
     <h3>Messwerte</h3>
-    <button mat-stroked-button (click)="onExportClick()" [disabled]="loading || !data?.items?.length">
+    <button mat-icon-button
+            (click)="onExportClick()"
+            [disabled]="loading || !data?.items?.length"
+            matTooltip="CSV Export"
+            aria-label="CSV Export">
       <mat-icon>download</mat-icon>
-      <span class="export-label">CSV Export</span>
     </button>
   </div>
 

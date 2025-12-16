@@ -58,6 +58,15 @@
             </button>
         }
 
+        <!-- Export Button (5. von links) -->
+        @if (showExportButton) {
+            <button type="button" mat-icon-button class="tbar-icon"
+                    aria-label="CSV Export" (click)="exportClicked.emit()"
+                    matTooltip="CSV Export">
+                <mat-icon>download</mat-icon>
+            </button>
+        }
+
         <!-- Custom Toolbar Actions (zusätzliche Buttons) -->
         @if (toolbarActionsTemplate) {
             <ng-container *ngTemplateOutlet="toolbarActionsTemplate"></ng-container>

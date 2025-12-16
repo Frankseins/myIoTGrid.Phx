@@ -107,6 +107,9 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     // Delete Button
     @Input() showDeleteButton = false;
 
+    // Export Button
+    @Input() showExportButton = false;
+
     // Default Sort (applied when no stored state exists)
     @Input() defaultSortField?: string;
     @Input() defaultSortOrder: 'asc' | 'desc' = 'desc';
@@ -135,6 +138,7 @@ export class GenericListComponent implements OnInit, AfterViewInit, AfterContent
     @Output() filterChange = new EventEmitter<Record<string, unknown>>();
     @Output() refresh = new EventEmitter<void>();
     @Output() deleteClicked = new EventEmitter<void>();
+    @Output() exportClicked = new EventEmitter<void>();
 
     // Material Table
     displayedColumns: string[] = [];

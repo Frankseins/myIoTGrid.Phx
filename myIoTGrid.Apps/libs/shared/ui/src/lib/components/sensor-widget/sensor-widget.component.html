@@ -15,8 +15,8 @@
 
   <div class="widget-body">
     <div class="value-section">
-      @if (widget.isOnline && widget.currentValue !== null) {
-        <span class="value">{{ formattedValue() }}</span>
+      @if (widget.currentValue !== null && widget.currentValue !== undefined) {
+        <span class="value" [class.offline-value]="!widget.isOnline">{{ formattedValue() }}</span>
         <span class="unit">{{ widget.unit }}</span>
       } @else {
         <span class="value offline-value">--</span>
@@ -25,7 +25,7 @@
     </div>
 
     <div class="sparkline-section">
-      @if (widget.isOnline && widget.dataPoints.length > 0) {
+      @if (widget.dataPoints && widget.dataPoints.length > 0) {
         <myiotgrid-sparkline-chart
           [series]="sparklineSeries()"
           [height]="sparklineHeight()"
@@ -40,7 +40,7 @@
 
   <div class="widget-footer">
     <div class="widget-minmax">
-      @if (widget.isOnline && widget.minMax) {
+      @if (widget.minMax) {
         <div class="minmax-item">
           <span class="minmax-label">Min</span>
           <span class="minmax-value">{{ widget.minMax.minValue | number:'1.1-1' }}{{ widget.unit }}</span>
@@ -70,9 +70,9 @@
       <div class="last-update">
         <mat-icon>schedule</mat-icon>
         @if (widget.lastUpdate) {
-          <span>{{ widget.lastUpdate | date:'HH:mm:ss' }}</span>
+          <span>{{ widget.lastUpdate | date:'dd.MM. HH:mm' }}</span>
         } @else {
-          <span>--:--:--</span>
+          <span>--</span>
         }
       </div>
     </div>

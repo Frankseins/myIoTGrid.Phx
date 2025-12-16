@@ -1148,4 +1148,32 @@ export class NodeFormComponent implements OnInit, OnDestroy {
       this.loadSensorsLatest(nodeId);
     }
   }
+
+  // === CSV Export ===
+
+  onExportReadingsCsv(): void {
+    const nodeId = this.node()?.id;
+    if (!nodeId) return;
+
+    const filters = {
+      sensorCode: this.historyFilters['sensorCode'] as string | undefined,
+      measurementType: this.historyFilters['measurementType'] as string | undefined
+    };
+
+    this.readingApiService.exportToCsv(nodeId, filters).subscribe({
+      next: (blob) => {
+        const nodeName = this.node()?.name || 'node';
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${nodeName}_readings_${new Date().toISOString().slice(0, 10)}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: (err) => {
+        console.error('CSV Export failed:', err);
+        this.snackBar.open('CSV Export fehlgeschlagen', 'Schließen', { duration: 3000 });
+      }
+    });
+  }
 }
