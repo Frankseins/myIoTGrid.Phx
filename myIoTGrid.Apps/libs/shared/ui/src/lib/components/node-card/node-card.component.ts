@@ -1,10 +1,11 @@
 import { Component, Input, Output, EventEmitter, signal, computed } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatCardModule } from '@angular/material/card';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Node, NodeProvisioningStatus, NodeSensorsLatest, Protocol } from '@myiotgrid/shared/models';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 
 @Component({
   selector: 'myiotgrid-node-card',
@@ -15,7 +16,7 @@ import { Node, NodeProvisioningStatus, NodeSensorsLatest, Protocol } from '@myio
     MatIconModule,
     MatButtonModule,
     MatTooltipModule,
-    DecimalPipe
+    SensorValuePipe
   ],
   templateUrl: './node-card.component.html',
   styleUrl: './node-card.component.scss'

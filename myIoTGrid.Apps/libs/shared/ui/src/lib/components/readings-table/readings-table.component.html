@@ -21,6 +21,7 @@
           <myiotgrid-reading-card
             [reading]="reading"
             [measurementLabel]="measurementLabel"
+            [measurementType]="measurementType"
             [measurementIcon]="measurementIcon"
             [color]="color"
             [sensorName]="sensorName"
@@ -43,7 +44,7 @@
         <ng-container matColumnDef="value">
           <th mat-header-cell *matHeaderCellDef>Wert</th>
           <td mat-cell *matCellDef="let reading">
-            <strong>{{ reading.value | number:'1.2-2' }}</strong> {{ getReadingUnit(reading) }}
+            <strong>{{ reading.value | sensorValue:measurementType }}</strong> {{ getReadingUnit(reading) }}
           </td>
         </ng-container>
 

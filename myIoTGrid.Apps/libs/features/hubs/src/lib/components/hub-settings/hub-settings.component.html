@@ -383,11 +383,15 @@
                 (click)="downloadBackup()"
                 [disabled]="isBackingUp() || isRestoring()">
                 @if (isBackingUp()) {
-                  <mat-icon class="spin">sync</mat-icon>
-                  Backup wird erstellt...
+                  <ng-container>
+                    <mat-icon class="spin">sync</mat-icon>
+                    <span>Backup wird erstellt...</span>
+                  </ng-container>
                 } @else {
-                  <mat-icon>download</mat-icon>
-                  Backup herunterladen
+                  <ng-container>
+                    <mat-icon>download</mat-icon>
+                    <span>Backup herunterladen</span>
+                  </ng-container>
                 }
               </button>
 
@@ -404,11 +408,15 @@
                 (click)="fileInput.click()"
                 [disabled]="isBackingUp() || isRestoring()">
                 @if (isRestoring()) {
-                  <mat-icon class="spin">sync</mat-icon>
-                  Wiederherstellen...
+                  <ng-container>
+                    <mat-icon class="spin">sync</mat-icon>
+                    <span>Wiederherstellen...</span>
+                  </ng-container>
                 } @else {
-                  <mat-icon>upload</mat-icon>
-                  Backup wiederherstellen
+                  <ng-container>
+                    <mat-icon>upload</mat-icon>
+                    <span>Backup wiederherstellen</span>
+                  </ng-container>
                 }
               </button>
             </div>

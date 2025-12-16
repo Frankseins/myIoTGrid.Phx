@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, ViewChild, TemplateRef, ViewContainerRef, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, ViewChild, TemplateRef, ViewContainerRef, effect, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute, Router } from '@angular/router';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule, FormsModule } from '@angular/forms';
@@ -18,7 +18,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Overlay, OverlayRef, OverlayModule } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 import { firstValueFrom } from 'rxjs';
+import { filter, skip } from 'rxjs/operators';
 import { NodeApiService, HubApiService, NodeSensorAssignmentApiService, SensorApiService, SignalRService, ReadingApiService, NodeDebugApiService } from '@myiotgrid/shared/data-access';
 import {
   Node, CreateNodeDto, UpdateNodeDto, Hub, Protocol, StorageMode,
@@ -27,6 +29,7 @@ import {
 } from '@myiotgrid/shared/models';
 import { LoadingSpinnerComponent, GenericListComponent, GenericListColumn, ListLazyEvent, ListColumnTemplateDirective } from '@myiotgrid/shared/ui';
 import { ConfirmDialogComponent } from '@myiotgrid/shared/ui';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 import { DeleteReadingsDrawerComponent } from '../delete-readings-drawer/delete-readings-drawer.component';
 import { NodeDebugControlComponent } from '../node-debug-control/node-debug-control.component';
 // TEMPORARILY DISABLED: import { LiveLogViewerComponent } from '../live-log-viewer/live-log-viewer.component';
@@ -62,7 +65,8 @@ type FormMode = 'view' | 'edit' | 'create';
     DeleteReadingsDrawerComponent,
     NodeDebugControlComponent,
     // TEMPORARILY DISABLED: LiveLogViewerComponent,
-    HardwareStatusWidgetComponent
+    HardwareStatusWidgetComponent,
+    SensorValuePipe
   ],
   templateUrl: './node-form.component.html',
   styleUrl: './node-form.component.scss'
@@ -86,12 +90,37 @@ export class NodeFormComponent implements OnInit, OnDestroy {
   private readonly readingApiService = inject(ReadingApiService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly dialog = inject(MatDialog);
+  private readonly destroyRef = inject(DestroyRef);
 
   private assignmentOverlayRef: OverlayRef | null = null;
   private deleteOverlayRef: OverlayRef | null = null;
   private deleteNodeOverlayRef: OverlayRef | null = null;
   private timestampInterval: ReturnType<typeof setInterval> | null = null;
   private currentNodeId: string | null = null; // For SignalR group cleanup
+
+  constructor() {
+    // Setup reactive subscription to SignalR latestReading signal
+    // Skip initial null value and filter by current node
+    toObservable(this.signalRService.latestReading)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((reading): reading is Reading => reading !== null)
+      )
+      .subscribe(reading => {
+        // Only process readings for this node
+        if (this.currentNodeId && reading.nodeId?.toLowerCase() === this.currentNodeId.toLowerCase()) {
+          console.log('[NodeForm] Received reading via signal:', reading.nodeId);
+          this.updateSensorsLatestFromReading(reading);
+
+          // Update history: If on first page, reload from server
+          if (this.lastHistoryEvent && this.lastHistoryEvent.first === 0) {
+            this.loadReadingsLazy(this.lastHistoryEvent);
+          } else {
+            this.historyTotalRecords.update(c => c + 1);
+          }
+        }
+      });
+  }
 
   // Delete Node Drawer
   deleteConfirmInput = '';
@@ -226,23 +255,29 @@ export class NodeFormComponent implements OnInit, OnDestroy {
     if (this.timestampInterval) {
       clearInterval(this.timestampInterval);
     }
-    // Cleanup SignalR: leave node group and unsubscribe
+    // Cleanup SignalR: leave node group (subscription cleanup is handled by takeUntilDestroyed)
     if (this.currentNodeId) {
       this.signalRService.leaveNodeGroup(this.currentNodeId).catch(err =>
         console.warn('[NodeForm] Failed to leave node group:', err)
       );
     }
-    this.signalRService.off('NewReading');
     // Cleanup overlays
     this.assignmentOverlayRef?.dispose();
     this.deleteOverlayRef?.dispose();
     this.deleteNodeOverlayRef?.dispose();
   }
 
+  /**
+   * Setup SignalR connection and join node-specific group.
+   * Event handling is done via signal subscription in constructor.
+   */
   private async setupSignalR(nodeId: string): Promise<void> {
-    // Ensure SignalR is connected before subscribing
+    // Store nodeId for filtering in signal subscription
+    this.currentNodeId = nodeId;
+
+    // Ensure SignalR is connected
     if (this.signalRService.connectionState() !== 'connected') {
-      console.log('[NodeForm] SignalR not connected, waiting...');
+      console.log('[NodeForm] SignalR not connected, connecting...');
       try {
         await this.signalRService.startConnection();
       } catch (error) {
@@ -251,41 +286,13 @@ export class NodeFormComponent implements OnInit, OnDestroy {
       }
     }
 
-    console.log('[NodeForm] Setting up SignalR subscription for nodeId:', nodeId);
-
-    // Store nodeId for cleanup
-    this.currentNodeId = nodeId;
-
-    // WICHTIG: Join Node Group um Events zu empfangen!
-    // Das Backend sendet an Gruppen, nicht broadcast.
+    // Join node group to receive node-specific events
     try {
       await this.signalRService.joinNodeGroup(nodeId);
       console.log('[NodeForm] Joined node group:', nodeId);
     } catch (error) {
       console.error('[NodeForm] Failed to join node group:', error);
     }
-
-    // Subscribe to new readings - update sensorsLatest directly (no HTTP call = no flicker)
-    this.signalRService.onNewReading((reading: Reading) => {
-      console.log('[NodeForm] Received reading:', reading.nodeId, 'current nodeId:', nodeId);
-      // Case-insensitive comparison for GUIDs
-      if (reading.nodeId?.toLowerCase() === nodeId?.toLowerCase()) {
-        console.log('[NodeForm] Match! Updating sensorsLatest directly...');
-
-        // Update sensorsLatest directly without HTTP call (no flicker!)
-        this.updateSensorsLatestFromReading(reading);
-
-        // Update history: If on first page, just reload from server to avoid duplicates
-        // Otherwise just update total count
-        if (this.lastHistoryEvent && this.lastHistoryEvent.first === 0) {
-          // Reload first page from server (will include the new reading)
-          this.loadReadingsLazy(this.lastHistoryEvent);
-        } else {
-          // Just increment total so pagination shows correct count
-          this.historyTotalRecords.update(c => c + 1);
-        }
-      }
-    });
   }
 
   /**

@@ -1,38 +1,66 @@
-<mat-card class="sensor-widget" [class.hero]="isHero" (click)="onWidgetClick()" role="button" tabindex="0">
+<mat-card class="sensor-widget" [class.hero]="isHero" [class.offline]="!widget.isOnline" (click)="onWidgetClick()" role="button" tabindex="0">
   <div class="widget-header">
-    <mat-icon class="header-icon" [style.color]="widget.color">{{ getLocationIcon() }}</mat-icon>
+    <mat-icon class="header-icon" [style.color]="widget.isOnline ? widget.color : '#9e9e9e'">{{ getLocationIcon() }}</mat-icon>
     <div class="header-text">
       <span class="measurement-type">{{ getMeasurementLabel() }}</span>
       <span class="sensor-name">{{ widget.sensorName }}</span>
     </div>
+    @if (!widget.isOnline) {
+      <div class="offline-badge">
+        <mat-icon>cloud_off</mat-icon>
+        <span>Offline</span>
+      </div>
+    }
   </div>
 
   <div class="widget-body">
     <div class="value-section">
-      <span class="value">{{ formattedValue() }}</span>
-      <span class="unit">{{ widget.unit }}</span>
+      @if (widget.isOnline && widget.currentValue !== null) {
+        <span class="value">{{ formattedValue() }}</span>
+        <span class="unit">{{ widget.unit }}</span>
+      } @else {
+        <span class="value offline-value">--</span>
+        <span class="unit">{{ widget.unit }}</span>
+      }
     </div>
 
     <div class="sparkline-section">
-      <myiotgrid-sparkline-chart
-        [series]="sparklineSeries()"
-        [height]="sparklineHeight()"
-      />
+      @if (widget.isOnline && widget.dataPoints.length > 0) {
+        <myiotgrid-sparkline-chart
+          [series]="sparklineSeries()"
+          [height]="sparklineHeight()"
+        />
+      } @else {
+        <div class="no-data-placeholder">
+          <span>Keine Daten</span>
+        </div>
+      }
     </div>
   </div>
 
   <div class="widget-footer">
     <div class="widget-minmax">
-      <div class="minmax-item">
-        <span class="minmax-label">Min</span>
-        <span class="minmax-value">{{ widget.minMax.minValue | number:'1.1-1' }}{{ widget.unit }}</span>
-        <span class="minmax-time">{{ widget.minMax.minTimestamp | date:'HH:mm' }}</span>
-      </div>
-      <div class="minmax-item">
-        <span class="minmax-label">Max</span>
-        <span class="minmax-value">{{ widget.minMax.maxValue | number:'1.1-1' }}{{ widget.unit }}</span>
-        <span class="minmax-time">{{ widget.minMax.maxTimestamp | date:'HH:mm' }}</span>
-      </div>
+      @if (widget.isOnline && widget.minMax) {
+        <div class="minmax-item">
+          <span class="minmax-label">Min</span>
+          <span class="minmax-value">{{ widget.minMax.minValue | number:'1.1-1' }}{{ widget.unit }}</span>
+          <span class="minmax-time">{{ widget.minMax.minTimestamp | date:'HH:mm' }}</span>
+        </div>
+        <div class="minmax-item">
+          <span class="minmax-label">Max</span>
+          <span class="minmax-value">{{ widget.minMax.maxValue | number:'1.1-1' }}{{ widget.unit }}</span>
+          <span class="minmax-time">{{ widget.minMax.maxTimestamp | date:'HH:mm' }}</span>
+        </div>
+      } @else {
+        <div class="minmax-item">
+          <span class="minmax-label">Min</span>
+          <span class="minmax-value">--</span>
+        </div>
+        <div class="minmax-item">
+          <span class="minmax-label">Max</span>
+          <span class="minmax-value">--</span>
+        </div>
+      }
     </div>
     <div class="footer-right">
       <div class="location-info">
@@ -41,7 +69,11 @@
       </div>
       <div class="last-update">
         <mat-icon>schedule</mat-icon>
-        <span>{{ widget.lastUpdate | date:'HH:mm:ss' }}</span>
+        @if (widget.lastUpdate) {
+          <span>{{ widget.lastUpdate | date:'HH:mm:ss' }}</span>
+        } @else {
+          <span>--:--:--</span>
+        }
       </div>
     </div>
   </div>

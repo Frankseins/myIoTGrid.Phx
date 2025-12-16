@@ -46,7 +46,7 @@ export class SensorWidgetComponent implements OnChanges {
 
   readonly formattedValue = computed(() => {
     const widget = this._widget();
-    if (!widget) return '0';
+    if (!widget || widget.currentValue === null || widget.currentValue === undefined) return '--';
 
     // Format based on measurement type
     const value = widget.currentValue;
@@ -67,7 +67,15 @@ export class SensorWidgetComponent implements OnChanges {
     if (oneDecimalTypes.includes(type)) {
       return value.toFixed(1);
     }
-    return value.toFixed(1); // Default to 1 decimal for all sensor values
+
+    // Integer values (no decimals)
+    const integerTypes = ['co2', 'pm25', 'pm10', 'rssi'];
+    if (integerTypes.includes(measurementType)) {
+      return Math.round(value).toString();
+    }
+
+    // Default to 1 decimal for all other sensor values
+    return value.toFixed(1);
   });
 
   ngOnChanges(changes: SimpleChanges): void {

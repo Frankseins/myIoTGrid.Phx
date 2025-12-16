@@ -1,4 +1,6 @@
-import { Component, OnInit, OnDestroy, inject, signal, computed, ViewChild, TemplateRef, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed, ViewChild, TemplateRef, ViewContainerRef, effect, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { filter } from 'rxjs/operators';
 import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MatCardModule } from '@angular/material/card';
@@ -24,7 +26,6 @@ import {
   LocationDashboard,
   LocationGroup,
   SensorWidget,
-  SparklinePeriod,
   Alert,
   AlertLevel,
   Reading,
@@ -71,7 +72,6 @@ import { AlertBannerComponent } from '../alert-banner/alert-banner.component';
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   @ViewChild('filterDrawer') filterDrawerTemplate!: TemplateRef<unknown>;
-  @ViewChild('periodDrawer') periodDrawerTemplate!: TemplateRef<unknown>;
 
   private readonly router = inject(Router);
   private readonly overlay = inject(Overlay);
@@ -79,10 +79,41 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private readonly signalRService = inject(SignalRService);
   private readonly dashboardApiService = inject(DashboardApiService);
   private readonly alertApiService = inject(AlertApiService);
+  private readonly destroyRef = inject(DestroyRef);
   readonly layout = inject(LayoutService);
 
   private filterOverlayRef: OverlayRef | null = null;
-  private periodOverlayRef: OverlayRef | null = null;
+
+  constructor() {
+    // Subscribe to SignalR signals using effect
+    this.setupSignalREffects();
+  }
+
+  /**
+   * Setup reactive subscriptions to SignalR signals.
+   * Using effects instead of manual callbacks.
+   */
+  private setupSignalREffects(): void {
+    // React to new readings
+    toObservable(this.signalRService.latestReading)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((reading): reading is Reading => reading !== null)
+      )
+      .subscribe(reading => {
+        this.updateWidgetWithReading(reading);
+      });
+
+    // React to new alerts
+    toObservable(this.signalRService.alertReceived)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((alert): alert is Alert => alert !== null)
+      )
+      .subscribe(alert => {
+        this.activeAlerts.update(alerts => [alert, ...alerts]);
+      });
+  }
 
   // Responsive layout signals
   readonly isMobile = this.layout.isMobile;
@@ -96,12 +127,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
   readonly filterOptions = signal<DashboardFilterOptions | null>(null);
   readonly selectedTab = signal(0);
 
-  // Filter State
-  readonly selectedPeriod = signal<SparklinePeriod>(SparklinePeriod.Day);
+  // Filter State - only location and measurement type filters
+  // Period filter removed - dashboard always shows latest values
   readonly selectedLocations = signal<string[]>([]);
   readonly selectedMeasurementTypes = signal<string[]>([]);
   isFilterOpen = false;
-  isPeriodOpen = false;
 
   readonly criticalAlerts = computed(() =>
     this.activeAlerts().filter(a => a.level === AlertLevel.Critical)
@@ -127,28 +157,21 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.selectedLocations().length > 0 || this.selectedMeasurementTypes().length > 0
   );
 
-  readonly periodOptions = [
-    { value: SparklinePeriod.Hour, label: 'Letzte Stunde', shortLabel: '1h' },
-    { value: SparklinePeriod.Day, label: 'Heute', shortLabel: '24h' },
-    { value: SparklinePeriod.Week, label: 'Diese Woche', shortLabel: '7d' }
-  ];
-
-  readonly selectedPeriodLabel = computed(() => {
-    const option = this.periodOptions.find(o => o.value === this.selectedPeriod());
-    return option?.label || 'Heute';
-  });
-
   async ngOnInit(): Promise<void> {
+    // Ensure SignalR is connected
+    try {
+      await this.signalRService.startConnection();
+    } catch (error) {
+      console.error('Error connecting to SignalR:', error);
+    }
+
     await this.loadFilterOptions();
     await this.loadData();
-    await this.setupSignalR();
   }
 
   ngOnDestroy(): void {
-    this.signalRService.off('NewReading');
-    this.signalRService.off('AlertReceived');
+    // Cleanup overlays (SignalR cleanup is handled by takeUntilDestroyed)
     this.closeFilter();
-    this.closePeriod();
   }
 
   private async loadFilterOptions(): Promise<void> {
@@ -163,10 +186,12 @@ export class DashboardComponent implements OnInit, OnDestroy {
   private async loadData(): Promise<void> {
     this.isLoading.set(true);
     try {
+      // Load all nodes with their latest values - no period filtering
+      // Period is only used on the widget detail page for historical data
       const filter = {
         locations: this.selectedLocations().length > 0 ? this.selectedLocations() : undefined,
-        measurementTypes: this.selectedMeasurementTypes().length > 0 ? this.selectedMeasurementTypes() : undefined,
-        period: this.selectedPeriod()
+        measurementTypes: this.selectedMeasurementTypes().length > 0 ? this.selectedMeasurementTypes() : undefined
+        // No period - always show latest values
       };
 
       const [dashboard, alerts] = await Promise.all([
@@ -184,22 +209,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     }
   }
 
-  private async setupSignalR(): Promise<void> {
-    try {
-      await this.signalRService.startConnection();
-
-      this.signalRService.onNewReading((reading: Reading) => {
-        this.updateWidgetWithReading(reading);
-      });
-
-      this.signalRService.onAlertReceived((alert: Alert) => {
-        this.activeAlerts.update(alerts => [alert, ...alerts]);
-      });
-    } catch (error) {
-      console.error('Error connecting to SignalR:', error);
-    }
-  }
-
   private updateWidgetWithReading(reading: Reading): void {
     const currentDashboard = this.dashboard();
     if (!currentDashboard) return;
@@ -213,7 +222,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
             ...widget,
             currentValue: reading.value,
             lastUpdate: reading.timestamp,
-            minMax: this.updateMinMax(widget.minMax, reading.value, reading.timestamp)
+            minMax: this.updateMinMax(widget.minMax, reading.value, reading.timestamp),
+            isOnline: true
           };
         }
         return widget;
@@ -224,6 +234,15 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   private updateMinMax(minMax: SensorWidget['minMax'], value: number, timestamp: string): SensorWidget['minMax'] {
+    if (!minMax) {
+      return {
+        minValue: value,
+        minTimestamp: timestamp,
+        maxValue: value,
+        maxTimestamp: timestamp
+      };
+    }
+
     let updated = { ...minMax };
 
     if (value < minMax.minValue) {
@@ -286,56 +305,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.isFilterOpen = false;
   }
 
-  // Period Drawer
-  togglePeriod(): void {
-    if (this.isPeriodOpen) {
-      this.closePeriod();
-    } else {
-      this.openPeriod();
-    }
-  }
-
-  openPeriod(): void {
-    if (this.periodOverlayRef) return;
-
-    this.isPeriodOpen = true;
-
-    const positionStrategy = this.overlay.position()
-      .global()
-      .right('0')
-      .top('0');
-
-    this.periodOverlayRef = this.overlay.create({
-      positionStrategy,
-      hasBackdrop: true,
-      backdropClass: 'gt-drawer-backdrop',
-      panelClass: ['gt-drawer-panel'],
-      width: '320px',
-      height: '100vh',
-      scrollStrategy: this.overlay.scrollStrategies.block()
-    });
-
-    this.periodOverlayRef.backdropClick().subscribe(() => this.closePeriod());
-
-    const portal = new TemplatePortal(this.periodDrawerTemplate, this.viewContainerRef);
-    this.periodOverlayRef.attach(portal);
-
-    requestAnimationFrame(() => {
-      this.periodOverlayRef?.addPanelClass('open');
-    });
-  }
-
-  closePeriod(): void {
-    if (this.periodOverlayRef) {
-      this.periodOverlayRef.removePanelClass('open');
-      setTimeout(() => {
-        this.periodOverlayRef?.dispose();
-        this.periodOverlayRef = null;
-      }, 200);
-    }
-    this.isPeriodOpen = false;
-  }
-
   // Filter Actions
   isLocationSelected(location: string): boolean {
     return this.selectedLocations().includes(location);
@@ -370,16 +339,6 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   async applyFilters(): Promise<void> {
     this.closeFilter();
-    await this.loadData();
-  }
-
-  // Period Actions
-  selectPeriod(period: SparklinePeriod): void {
-    this.selectedPeriod.set(period);
-  }
-
-  async applyPeriod(): Promise<void> {
-    this.closePeriod();
     await this.loadData();
   }
 

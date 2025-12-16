@@ -1,4 +1,4 @@
-import { Component, Input, inject, signal, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, TemplateRef, ViewContainerRef, ChangeDetectorRef } from '@angular/core';
+import { Component, Input, inject, signal, OnInit, OnDestroy, OnChanges, SimpleChanges, ViewChild, ElementRef, AfterViewChecked, TemplateRef, ViewContainerRef, ChangeDetectorRef, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { MatIconModule } from '@angular/material/icon';
@@ -15,7 +15,8 @@ import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { Overlay, OverlayConfig, OverlayModule, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal, PortalModule } from '@angular/cdk/portal';
-import { debounceTime, distinctUntilChanged, Subject } from 'rxjs';
+import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
+import { debounceTime, distinctUntilChanged, Subject, filter } from 'rxjs';
 
 import { NodeDebugApiService, SignalRService } from '@myiotgrid/shared/data-access';
 import { NodeDebugLog, DebugLevel, LogCategory, DebugLogFilter } from '@myiotgrid/shared/models';
@@ -66,6 +67,21 @@ export class LiveLogViewerComponent implements OnInit, OnDestroy, OnChanges, Aft
   private readonly overlay = inject(Overlay);
   private readonly vcr = inject(ViewContainerRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    // Setup reactive subscription to SignalR debugLogReceived signal
+    toObservable(this.signalRService.debugLogReceived)
+      .pipe(
+        takeUntilDestroyed(this.destroyRef),
+        filter((log): log is NodeDebugLog => log !== null)
+      )
+      .subscribe(log => {
+        if (log.nodeId === this.nodeId && !this.isPaused()) {
+          this.addLog(log);
+        }
+      });
+  }
 
   readonly isLoading = signal(true);
   readonly isClearing = signal(false);
@@ -156,6 +172,10 @@ export class LiveLogViewerComponent implements OnInit, OnDestroy, OnChanges, Aft
     });
   }
 
+  /**
+   * Setup SignalR connection and join debug group.
+   * Event handling is done via signal subscription in constructor.
+   */
   private async setupSignalR(): Promise<void> {
     if (!this.nodeId) return;
 
@@ -166,25 +186,18 @@ export class LiveLogViewerComponent implements OnInit, OnDestroy, OnChanges, Aft
 
       // Join debug group for this node
       await this.signalRService.joinDebugGroup(this.nodeId);
-
-      // Subscribe to debug log events
-      this.signalRService.onDebugLogReceived((log: NodeDebugLog) => {
-        if (log.nodeId === this.nodeId && !this.isPaused()) {
-          this.addLog(log);
-        }
-      });
     } catch (error) {
       console.error('Error setting up SignalR:', error);
     }
   }
 
   private cleanupSignalR(): void {
+    // Leave debug group (subscription cleanup is handled by takeUntilDestroyed)
     if (this.nodeId) {
       this.signalRService.leaveDebugGroup(this.nodeId).catch(err =>
         console.warn('Failed to leave debug group:', err)
       );
     }
-    this.signalRService.off('DebugLogReceived');
   }
 
   private addLog(log: NodeDebugLog): void {

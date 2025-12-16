@@ -16,7 +16,7 @@
 
     <!-- Center: Value -->
     <div class="card-value">
-      <span class="value" [style.color]="color">{{ reading.value | number:'1.1-2' }}</span>
+      <span class="value" [style.color]="color">{{ reading.value | sensorValue:measurementType }}</span>
       <span class="unit">{{ reading.unit }}</span>
     </div>
 

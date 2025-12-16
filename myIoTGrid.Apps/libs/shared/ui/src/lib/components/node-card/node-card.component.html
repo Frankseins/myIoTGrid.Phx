@@ -70,7 +70,7 @@
                   @for (m of sensor.measurements; track m.measurementType) {
                     <div class="measurement-row">
                       <span class="measurement-label">{{ m.displayName }}</span>
-                      <span class="measurement-value">{{ m.value | number:'1.1-1' }} {{ m.unit }}</span>
+                      <span class="measurement-value">{{ m.value | sensorValue:m.measurementType }} {{ m.unit }}</span>
                     </div>
                   }
                 </div>

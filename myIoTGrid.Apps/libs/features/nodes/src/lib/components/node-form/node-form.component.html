@@ -265,7 +265,7 @@
                         @for (m of sensor.measurements; track m.measurementType) {
                           <div class="measurement-row">
                             <span class="measurement-label">{{ m.displayName }}</span>
-                            <span class="measurement-value">{{ m.value | number:'1.1-1' }} {{ m.unit }}</span>
+                            <span class="measurement-value">{{ m.value | sensorValue:m.measurementType }} {{ m.unit }}</span>
                           </div>
                         }
                       </div>
@@ -517,7 +517,7 @@
 
                     <!-- Value: Large and prominent -->
                     <div class="reading-card-value">
-                      <span class="value" [style.color]="reading.sensorColor || '#1976d2'">{{ reading.value | number:'1.1-2' }}</span>
+                      <span class="value" [style.color]="reading.sensorColor || '#1976d2'">{{ reading.value | sensorValue:reading.measurementType }}</span>
                       <span class="unit">{{ reading.unit }}</span>
                     </div>
 
@@ -556,7 +556,7 @@
 
                 <!-- Custom value column with unit -->
                 <ng-template myiotgridListColumnTemplate="value" let-row>
-                  <span class="reading-value">{{ row.value | number:'1.1-2' }} {{ row.unit }}</span>
+                  <span class="reading-value">{{ row.value | sensorValue:row.measurementType }} {{ row.unit }}</span>
                 </ng-template>
 
               </myiotgrid-generic-list>

@@ -104,44 +104,104 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
+    /// <summary>
+    /// Gets dashboard data showing ALL nodes with their LATEST sensor values.
+    /// No time filtering - always shows the most recent reading per sensor.
+    /// Sparkline data is loaded separately in the widget detail view.
+    /// </summary>
     public async Task<LocationDashboardDto> GetLocationDashboardAsync(
         SparklinePeriod period = SparklinePeriod.Day,
         CancellationToken ct = default)
     {
-        var tenantId = _tenantService.GetCurrentTenantId();
-        var (startTime, intervalMinutes) = GetSparklineParameters(period);
+        // Period parameter is ignored - we always show all nodes with latest values
+        // Kept for backwards compatibility, but not used
+        return await GetDashboardWithLatestValuesAsync(ct);
+    }
 
-        _logger.LogDebug("Getting dashboard data for tenant {TenantId}, period {Period}, startTime {StartTime}",
-            tenantId, period, startTime);
+    /// <summary>
+    /// Core method that loads all nodes with their latest sensor values and sparkline data.
+    /// </summary>
+    private async Task<LocationDashboardDto> GetDashboardWithLatestValuesAsync(CancellationToken ct)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        _logger.LogDebug("Getting dashboard data for tenant {TenantId} - loading all nodes with latest values and sparkline", tenantId);
 
         // Get all nodes with their locations and sensor assignments
         var nodes = await _context.Nodes
             .AsNoTracking()
+            .Include(n => n.Hub)
             .Include(n => n.Location)
             .Include(n => n.SensorAssignments)
                 .ThenInclude(a => a.Sensor)
-                    .ThenInclude(s => s.Capabilities)
-            .Where(n => n.Hub!.TenantId == tenantId)
+                    .ThenInclude(s => s!.Capabilities)
+            .Where(n => n.Hub != null && n.Hub.TenantId == tenantId)
             .ToListAsync(ct);
 
-        // Get all readings within the time period
-        var readings = await _context.Readings
+        _logger.LogInformation("Dashboard: Found {NodeCount} nodes for tenant {TenantId}", nodes.Count, tenantId);
+
+        // Time range for sparkline data: last month
+        var sparklineStartTime = DateTime.UtcNow.AddMonths(-1);
+        const int intervalMinutes = 360; // 6-hour intervals for monthly view (4 points per day)
+
+        // Get ALL readings and find the latest per node/measurementType
+        // Note: Some readings may not have AssignmentId set (older data, simulator)
+        var allReadings = await _context.Readings
             .AsNoTracking()
-            .Where(r => r.TenantId == tenantId && r.Timestamp >= startTime)
-            .OrderBy(r => r.Timestamp)
+            .Where(r => r.TenantId == tenantId)
             .ToListAsync(ct);
 
-        // Group readings by NodeId, AssignmentId, and MeasurementType for quick lookup
-        // This ensures DHT22 and BME280 readings for same measurement type are kept separate
-        var readingsLookup = readings
+        // Build two lookups for latest values:
+        // 1. By NodeId + AssignmentId + MeasurementType (for readings with AssignmentId)
+        // 2. By NodeId + MeasurementType only (fallback for readings without AssignmentId)
+        var latestByAssignment = allReadings
+            .Where(r => r.AssignmentId.HasValue)
             .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
-            .ToDictionary(g => g.Key, g => g.ToList());
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(r => r.Timestamp).First()
+            );
 
-        // Build location groups
+        var latestByNodeAndType = allReadings
+            .GroupBy(r => (r.NodeId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(r => r.Timestamp).First()
+            );
+
+        // Build sparkline lookups (filtered by time range)
+        var sparklineReadings = allReadings
+            .Where(r => r.Timestamp >= sparklineStartTime)
+            .ToList();
+
+        var sparklineByAssignment = sparklineReadings
+            .Where(r => r.AssignmentId.HasValue)
+            .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(r => r.Timestamp).ToList()
+            );
+
+        var sparklineByNodeAndType = sparklineReadings
+            .GroupBy(r => (r.NodeId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(r => r.Timestamp).ToList()
+            );
+
+        // Build location groups with sparkline data
         var locationGroups = nodes
             .GroupBy(n => n.Location?.Name ?? "Unbekannt")
-            .Select(g => BuildLocationGroup(g.Key, g.ToList(), readingsLookup, intervalMinutes))
-            .Where(lg => lg.Widgets.Any()) // Only include locations with widgets
+            .Select(g => BuildLocationGroupWithSparkline(
+                g.Key,
+                g.ToList(),
+                latestByAssignment,
+                latestByNodeAndType,
+                sparklineByAssignment,
+                sparklineByNodeAndType,
+                intervalMinutes,
+                null))
+            .Where(lg => lg.Widgets.Any())
             .OrderByDescending(lg => lg.IsHero)
             .ThenBy(lg => lg.LocationName)
             .ToList();
@@ -152,7 +212,8 @@ public class DashboardService : IDashboardService
     private LocationGroupDto BuildLocationGroup(
         string locationName,
         List<Node> nodes,
-        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), List<Reading>> readingsLookup,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), List<Reading>> sparklineLookup,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), Reading> latestLookup,
         int intervalMinutes)
     {
         var widgets = new List<SensorWidgetDto>();
@@ -164,10 +225,17 @@ public class DashboardService : IDashboardService
                 .Where(a => a.IsActive)
                 .ToList();
 
+            _logger.LogDebug("Dashboard: Node {NodeName} has {AssignmentCount} active assignments",
+                node.Name, activeAssignments.Count);
+
             // Process each assignment separately to get separate widgets per sensor
             foreach (var assignment in activeAssignments)
             {
-                var capabilities = assignment.Sensor?.Capabilities ?? Enumerable.Empty<SensorCapability>();
+                var sensor = assignment.Sensor;
+                var capabilities = sensor?.Capabilities ?? Enumerable.Empty<SensorCapability>();
+
+                _logger.LogDebug("Dashboard: Assignment {AssignmentId} - Sensor={SensorName}, Capabilities={CapCount}",
+                    assignment.Id, sensor?.Name ?? "null", capabilities.Count());
 
                 foreach (var capability in capabilities)
                 {
@@ -176,25 +244,81 @@ public class DashboardService : IDashboardService
                     // Skip invalid measurement types
                     if (!ValidMeasurementTypes.Contains(measurementType))
                     {
+                        _logger.LogDebug("Dashboard: Skipping invalid measurement type: {MeasurementType}", measurementType);
                         continue;
                     }
 
                     var key = (node.Id, (Guid?)assignment.Id, measurementType);
-                    if (!readingsLookup.TryGetValue(key, out var nodeReadings) || !nodeReadings.Any())
-                    {
-                        continue; // Skip if no readings for this assignment/measurement type
-                    }
+                    sparklineLookup.TryGetValue(key, out var sparklineReadings);
+                    latestLookup.TryGetValue(key, out var latestReading);
 
-                    var widget = BuildSensorWidget(node, assignment, measurementType, nodeReadings, intervalMinutes, locationName);
+                    // Create widget even if no readings (offline node)
+                    var widget = BuildSensorWidget(node, assignment, measurementType, sparklineReadings ?? [], latestReading, intervalMinutes, locationName);
                     if (widget != null)
                     {
                         widgets.Add(widget);
+                        _logger.LogDebug("Dashboard: Created widget for {NodeName}/{MeasurementType}", node.Name, measurementType);
                     }
                 }
             }
+        }
 
-            // NOTE: Readings without AssignmentId (legacy) are intentionally excluded
-            // Only sensors with active assignments should appear in the dashboard
+        _logger.LogDebug("Dashboard: Location {Location} has {WidgetCount} widgets", locationName, widgets.Count);
+
+        return new LocationGroupDto(
+            LocationName: locationName,
+            LocationIcon: GetLocationIcon(locationName),
+            IsHero: IsHeroLocation(locationName),
+            Widgets: widgets
+        );
+    }
+
+    /// <summary>
+    /// Simplified version that only uses latest readings - no sparkline data.
+    /// Used by the main dashboard view.
+    /// Uses fallback logic: first try with AssignmentId, then fallback to NodeId + MeasurementType.
+    /// </summary>
+    private LocationGroupDto BuildLocationGroupSimple(
+        string locationName,
+        List<Node> nodes,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), Reading> latestByAssignment,
+        Dictionary<(Guid NodeId, string MeasurementType), Reading> latestByNodeAndType)
+    {
+        var widgets = new List<SensorWidgetDto>();
+
+        foreach (var node in nodes)
+        {
+            var activeAssignments = node.SensorAssignments
+                .Where(a => a.IsActive)
+                .ToList();
+
+            foreach (var assignment in activeAssignments)
+            {
+                var capabilities = assignment.Sensor?.Capabilities ?? Enumerable.Empty<SensorCapability>();
+
+                foreach (var capability in capabilities)
+                {
+                    var measurementType = capability.MeasurementType.ToLowerInvariant();
+
+                    if (!ValidMeasurementTypes.Contains(measurementType))
+                        continue;
+
+                    // Try to find reading by AssignmentId first
+                    var keyWithAssignment = (node.Id, (Guid?)assignment.Id, measurementType);
+                    Reading? latestReading = null;
+
+                    if (!latestByAssignment.TryGetValue(keyWithAssignment, out latestReading))
+                    {
+                        // Fallback: find by NodeId + MeasurementType only
+                        var keyWithoutAssignment = (node.Id, measurementType);
+                        latestByNodeAndType.TryGetValue(keyWithoutAssignment, out latestReading);
+                    }
+
+                    var widget = BuildSensorWidgetSimple(node, assignment, measurementType, latestReading, locationName);
+                    if (widget != null)
+                        widgets.Add(widget);
+                }
+            }
         }
 
         return new LocationGroupDto(
@@ -205,36 +329,24 @@ public class DashboardService : IDashboardService
         );
     }
 
-    private SensorWidgetDto? BuildSensorWidget(
+    /// <summary>
+    /// Simplified widget builder - only latest value, no sparkline data.
+    /// Sparkline data is loaded on the widget detail page.
+    /// </summary>
+    private SensorWidgetDto BuildSensorWidgetSimple(
         Node node,
         NodeSensorAssignment? assignment,
         string measurementType,
-        List<Reading> readings,
-        int intervalMinutes,
+        Reading? latestReading,
         string locationName)
     {
-        if (!readings.Any()) return null;
-
-        var latestReading = readings.MaxBy(r => r.Timestamp)!;
-
         var capability = assignment?.Sensor?.Capabilities
             .FirstOrDefault(c => c.MeasurementType.Equals(measurementType, StringComparison.OrdinalIgnoreCase));
 
-        // Build sparkline data points (aggregated by interval)
-        var dataPoints = BuildSparklineDataPoints(readings, intervalMinutes);
-
-        // Calculate min/max with timestamps
-        var minMax = CalculateMinMax(readings);
-
-        // Get color and display info
-        var color = assignment?.Sensor?.Color
-            ?? GetDefaultColor(measurementType);
-        var unit = latestReading.Unit;
-
-        // Get sensor name (e.g., "DHT22", "BME280")
+        var color = assignment?.Sensor?.Color ?? GetDefaultColor(measurementType);
+        var unit = latestReading?.Unit ?? capability?.Unit ?? "";
         var sensorName = assignment?.Sensor?.Name ?? "";
 
-        // WidgetId includes AssignmentId to make it unique per sensor
         var widgetId = assignment != null
             ? $"{node.Id}_{assignment.Id}_{measurementType}".ToLowerInvariant()
             : $"{node.Id}_{measurementType}".ToLowerInvariant();
@@ -248,13 +360,73 @@ public class DashboardService : IDashboardService
             MeasurementType: measurementType.ToLowerInvariant(),
             SensorName: sensorName,
             LocationName: locationName,
-            Label: sensorName, // Simplified label - just sensor name
+            Label: sensorName,
             Unit: unit,
             Color: color,
-            CurrentValue: latestReading.Value,
-            LastUpdate: latestReading.Timestamp,
+            CurrentValue: latestReading?.Value,
+            LastUpdate: latestReading?.Timestamp,
+            MinMax: null,  // No min/max on dashboard - loaded on detail page
+            DataPoints: [], // No sparkline on dashboard - loaded on detail page
+            IsOnline: node.IsOnline
+        );
+    }
+
+    private SensorWidgetDto? BuildSensorWidget(
+        Node node,
+        NodeSensorAssignment? assignment,
+        string measurementType,
+        List<Reading> sparklineReadings,
+        Reading? latestReading,
+        int intervalMinutes,
+        string locationName)
+    {
+        var hasSparklineData = sparklineReadings.Any();
+
+        var capability = assignment?.Sensor?.Capabilities
+            .FirstOrDefault(c => c.MeasurementType.Equals(measurementType, StringComparison.OrdinalIgnoreCase));
+
+        // Build sparkline data points (aggregated by interval) - these are filtered by period
+        var dataPoints = hasSparklineData ? BuildSparklineDataPoints(sparklineReadings, intervalMinutes) : [];
+
+        // Calculate min/max with timestamps from sparkline readings (within the selected period)
+        var minMax = hasSparklineData ? CalculateMinMax(sparklineReadings) : null;
+
+        // Get color and display info
+        var color = assignment?.Sensor?.Color
+            ?? GetDefaultColor(measurementType);
+
+        // Get unit from latest reading or capability - latest reading is NOT filtered by period
+        var unit = latestReading?.Unit ?? capability?.Unit ?? "";
+
+        // Get sensor name (e.g., "DHT22", "BME280")
+        var sensorName = assignment?.Sensor?.Name ?? "";
+
+        // WidgetId includes AssignmentId to make it unique per sensor
+        var widgetId = assignment != null
+            ? $"{node.Id}_{assignment.Id}_{measurementType}".ToLowerInvariant()
+            : $"{node.Id}_{measurementType}".ToLowerInvariant();
+
+        // IsOnline is based on node's online status, NOT on whether we have readings in the current period
+        // This ensures offline nodes are still shown with their last known values
+        var isOnline = node.IsOnline;
+
+        return new SensorWidgetDto(
+            WidgetId: widgetId,
+            NodeId: node.Id,
+            NodeName: node.Name,
+            AssignmentId: assignment?.Id,
+            SensorId: assignment?.SensorId,
+            MeasurementType: measurementType.ToLowerInvariant(),
+            SensorName: sensorName,
+            LocationName: locationName,
+            Label: sensorName,
+            Unit: unit,
+            Color: color,
+            CurrentValue: latestReading?.Value,  // Uses latest reading (not filtered by period)
+            LastUpdate: latestReading?.Timestamp, // Uses latest reading (not filtered by period)
             MinMax: minMax,
-            DataPoints: dataPoints
+            DataPoints: dataPoints,
+            IsOnline: isOnline
         );
     }
 
@@ -368,12 +540,14 @@ public class DashboardService : IDashboardService
     }
 
     /// <inheritdoc />
+    /// <summary>
+    /// Gets filtered dashboard data with sparkline data for the last month.
+    /// </summary>
     public async Task<LocationDashboardDto> GetFilteredDashboardAsync(
         DashboardFilterDto filter,
         CancellationToken ct = default)
     {
         var tenantId = _tenantService.GetCurrentTenantId();
-        var (startTime, intervalMinutes) = GetSparklineParameters(filter.Period);
 
         _logger.LogDebug("Getting filtered dashboard for tenant {TenantId}, filter: locations={Locations}, types={Types}",
             tenantId, filter.Locations?.Length ?? 0, filter.MeasurementTypes?.Length ?? 0);
@@ -381,11 +555,12 @@ public class DashboardService : IDashboardService
         // Get all nodes with their locations and sensor assignments
         var nodesQuery = _context.Nodes
             .AsNoTracking()
+            .Include(n => n.Hub)
             .Include(n => n.Location)
             .Include(n => n.SensorAssignments)
                 .ThenInclude(a => a.Sensor)
-                    .ThenInclude(s => s.Capabilities)
-            .Where(n => n.Hub!.TenantId == tenantId);
+                    .ThenInclude(s => s!.Capabilities)
+            .Where(n => n.Hub != null && n.Hub.TenantId == tenantId);
 
         // Filter by locations if specified
         if (filter.Locations?.Length > 0)
@@ -396,30 +571,72 @@ public class DashboardService : IDashboardService
 
         var nodes = await nodesQuery.ToListAsync(ct);
 
-        // Get all readings within the time period
-        var readingsQuery = _context.Readings
-            .AsNoTracking()
-            .Where(r => r.TenantId == tenantId && r.Timestamp >= startTime);
+        // Time range for sparkline data: last month
+        var sparklineStartTime = DateTime.UtcNow.AddMonths(-1);
+        const int intervalMinutes = 360; // 6-hour intervals for monthly view (4 points per day)
 
-        // Filter by measurement types if specified
+        // Get ALL readings for this tenant (for finding latest values - no time filter)
+        var allReadingsQuery = _context.Readings
+            .AsNoTracking()
+            .Where(r => r.TenantId == tenantId);
+
+        // Apply measurement type filter if specified
         if (filter.MeasurementTypes?.Length > 0)
         {
             var lowerTypes = filter.MeasurementTypes.Select(t => t.ToLowerInvariant()).ToArray();
-            readingsQuery = readingsQuery.Where(r => lowerTypes.Contains(r.MeasurementType.ToLower()));
+            allReadingsQuery = allReadingsQuery.Where(r => lowerTypes.Contains(r.MeasurementType.ToLower()));
         }
 
-        var readings = await readingsQuery.OrderBy(r => r.Timestamp).ToListAsync(ct);
+        var allReadings = await allReadingsQuery.ToListAsync(ct);
 
-        // Group readings by NodeId, AssignmentId, and MeasurementType for quick lookup
-        // This ensures DHT22 and BME280 readings for same measurement type are kept separate
-        var readingsLookup = readings
+        // Build latest lookups (for current value - using ALL readings)
+        var latestByAssignment = allReadings
+            .Where(r => r.AssignmentId.HasValue)
             .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
-            .ToDictionary(g => g.Key, g => g.ToList());
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(r => r.Timestamp).First()
+            );
 
-        // Build location groups
+        var latestByNodeAndType = allReadings
+            .GroupBy(r => (r.NodeId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderByDescending(r => r.Timestamp).First()
+            );
+
+        // Build sparkline lookups (filtered by time range)
+        var sparklineReadings = allReadings
+            .Where(r => r.Timestamp >= sparklineStartTime)
+            .ToList();
+
+        var sparklineByAssignment = sparklineReadings
+            .Where(r => r.AssignmentId.HasValue)
+            .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(r => r.Timestamp).ToList()
+            );
+
+        var sparklineByNodeAndType = sparklineReadings
+            .GroupBy(r => (r.NodeId, r.MeasurementType.ToLowerInvariant()))
+            .ToDictionary(
+                g => g.Key,
+                g => g.OrderBy(r => r.Timestamp).ToList()
+            );
+
+        // Build location groups with sparkline data
         var locationGroups = nodes
             .GroupBy(n => n.Location?.Name ?? "Unbekannt")
-            .Select(g => BuildLocationGroup(g.Key, g.ToList(), readingsLookup, intervalMinutes, filter.MeasurementTypes))
+            .Select(g => BuildLocationGroupWithSparkline(
+                g.Key,
+                g.ToList(),
+                latestByAssignment,
+                latestByNodeAndType,
+                sparklineByAssignment,
+                sparklineByNodeAndType,
+                intervalMinutes,
+                filter.MeasurementTypes))
             .Where(lg => lg.Widgets.Any())
             .OrderByDescending(lg => lg.IsHero)
             .ThenBy(lg => lg.LocationName)
@@ -428,10 +645,134 @@ public class DashboardService : IDashboardService
         return new LocationDashboardDto(locationGroups);
     }
 
+    /// <summary>
+    /// Builds location group with sparkline data and optional measurement type filter.
+    /// Uses fallback logic: first try with AssignmentId, then fallback to NodeId + MeasurementType.
+    /// </summary>
+    private LocationGroupDto BuildLocationGroupWithSparkline(
+        string locationName,
+        List<Node> nodes,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), Reading> latestByAssignment,
+        Dictionary<(Guid NodeId, string MeasurementType), Reading> latestByNodeAndType,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), List<Reading>> sparklineByAssignment,
+        Dictionary<(Guid NodeId, string MeasurementType), List<Reading>> sparklineByNodeAndType,
+        int intervalMinutes,
+        string[]? measurementTypeFilter)
+    {
+        var widgets = new List<SensorWidgetDto>();
+
+        foreach (var node in nodes)
+        {
+            var activeAssignments = node.SensorAssignments
+                .Where(a => a.IsActive)
+                .ToList();
+
+            foreach (var assignment in activeAssignments)
+            {
+                var capabilities = assignment.Sensor?.Capabilities ?? Enumerable.Empty<SensorCapability>();
+
+                foreach (var capability in capabilities)
+                {
+                    var measurementType = capability.MeasurementType.ToLowerInvariant();
+
+                    if (!ValidMeasurementTypes.Contains(measurementType))
+                        continue;
+
+                    // Apply measurement type filter if specified
+                    if (measurementTypeFilter?.Length > 0)
+                    {
+                        var lowerFilter = measurementTypeFilter.Select(t => t.ToLowerInvariant()).ToArray();
+                        if (!lowerFilter.Contains(measurementType))
+                            continue;
+                    }
+
+                    // Try to find latest reading by AssignmentId first, then fallback
+                    var keyWithAssignment = (node.Id, (Guid?)assignment.Id, measurementType);
+                    var keyWithoutAssignment = (node.Id, measurementType);
+
+                    Reading? latestReading = null;
+                    if (!latestByAssignment.TryGetValue(keyWithAssignment, out latestReading))
+                    {
+                        latestByNodeAndType.TryGetValue(keyWithoutAssignment, out latestReading);
+                    }
+
+                    // Try to find sparkline readings by AssignmentId first, then fallback
+                    List<Reading>? sparklineReadings = null;
+                    if (!sparklineByAssignment.TryGetValue(keyWithAssignment, out sparklineReadings))
+                    {
+                        sparklineByNodeAndType.TryGetValue(keyWithoutAssignment, out sparklineReadings);
+                    }
+
+                    var widget = BuildSensorWidgetWithSparkline(
+                        node, assignment, measurementType, latestReading,
+                        sparklineReadings ?? [], intervalMinutes, locationName);
+                    widgets.Add(widget);
+                }
+            }
+        }
+
+        return new LocationGroupDto(
+            LocationName: locationName,
+            LocationIcon: GetLocationIcon(locationName),
+            IsHero: IsHeroLocation(locationName),
+            Widgets: widgets
+        );
+    }
+
+    /// <summary>
+    /// Builds a sensor widget with sparkline data.
+    /// </summary>
+    private SensorWidgetDto BuildSensorWidgetWithSparkline(
+        Node node,
+        NodeSensorAssignment? assignment,
+        string measurementType,
+        Reading? latestReading,
+        List<Reading> sparklineReadings,
+        int intervalMinutes,
+        string locationName)
+    {
+        var capability = assignment?.Sensor?.Capabilities
+            .FirstOrDefault(c => c.MeasurementType.Equals(measurementType, StringComparison.OrdinalIgnoreCase));
+
+        var color = assignment?.Sensor?.Color ?? GetDefaultColor(measurementType);
+        var unit = latestReading?.Unit ?? capability?.Unit ?? "";
+        var sensorName = assignment?.Sensor?.Name ?? "";
+
+        var widgetId = assignment != null
+            ? $"{node.Id}_{assignment.Id}_{measurementType}".ToLowerInvariant()
+            : $"{node.Id}_{measurementType}".ToLowerInvariant();
+
+        // Build sparkline data points
+        var dataPoints = BuildSparklineDataPoints(sparklineReadings, intervalMinutes);
+
+        // Calculate min/max from sparkline readings
+        var minMax = sparklineReadings.Any() ? CalculateMinMax(sparklineReadings) : null;
+
+        return new SensorWidgetDto(
+            WidgetId: widgetId,
+            NodeId: node.Id,
+            NodeName: node.Name,
+            AssignmentId: assignment?.Id,
+            SensorId: assignment?.SensorId,
+            MeasurementType: measurementType.ToLowerInvariant(),
+            SensorName: sensorName,
+            LocationName: locationName,
+            Label: sensorName,
+            Unit: unit,
+            Color: color,
+            CurrentValue: latestReading?.Value,
+            LastUpdate: latestReading?.Timestamp,
+            MinMax: minMax,
+            DataPoints: dataPoints,
+            IsOnline: node.IsOnline
+        );
+    }
+
     private LocationGroupDto BuildLocationGroup(
         string locationName,
         List<Node> nodes,
-        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), List<Reading>> readingsLookup,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), List<Reading>> sparklineLookup,
+        Dictionary<(Guid NodeId, Guid? AssignmentId, string MeasurementType), Reading> latestLookup,
         int intervalMinutes,
         string[]? measurementTypeFilter)
     {
@@ -470,21 +811,17 @@ public class DashboardService : IDashboardService
                     }
 
                     var key = (node.Id, (Guid?)assignment.Id, measurementType);
-                    if (!readingsLookup.TryGetValue(key, out var nodeReadings) || !nodeReadings.Any())
-                    {
-                        continue; // Skip if no readings for this assignment/measurement type
-                    }
+                    sparklineLookup.TryGetValue(key, out var sparklineReadings);
+                    latestLookup.TryGetValue(key, out var latestReading);
 
-                    var widget = BuildSensorWidget(node, assignment, measurementType, nodeReadings, intervalMinutes, locationName);
+                    // Create widget even if no readings (offline node)
+                    var widget = BuildSensorWidget(node, assignment, measurementType, sparklineReadings ?? [], latestReading, intervalMinutes, locationName);
                     if (widget != null)
                     {
                         widgets.Add(widget);
                     }
                 }
             }
-
-            // NOTE: Readings without AssignmentId (legacy) are intentionally excluded
-            // Only sensors with active assignments should appear in the dashboard
         }
 
         return new LocationGroupDto(

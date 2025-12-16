@@ -43,10 +43,11 @@ export interface SensorWidget {
   label: string;
   unit: string;
   color: string;
-  currentValue: number;
-  lastUpdate: string;
-  minMax: MinMax;
+  currentValue: number | null;
+  lastUpdate: string | null;
+  minMax: MinMax | null;
   dataPoints: SparklinePoint[];
+  isOnline: boolean;
 }
 
 /**

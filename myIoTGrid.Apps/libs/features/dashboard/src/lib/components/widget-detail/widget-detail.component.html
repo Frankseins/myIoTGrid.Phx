@@ -20,7 +20,7 @@
     </div>
 
     <div class="current-value">
-      <span class="value" [style.color]="color()">{{ currentValue() | number:'1.1-1' }}</span>
+      <span class="value" [style.color]="color()">{{ currentValue() | sensorValue:measurementType }}</span>
       <span class="unit">{{ unit() }}</span>
       <div class="last-update">
         <mat-icon>schedule</mat-icon>
@@ -56,6 +56,7 @@
         [dataPoints]="chartData()!.dataPoints"
         [color]="color()"
         [unit]="unit()"
+        [measurementType]="measurementType"
         [height]="350"
         [interval]="selectedInterval()"
       />
@@ -73,6 +74,7 @@
       [stats]="chartData()!.stats"
       [trend]="chartData()!.trend"
       [unit]="unit()"
+      [measurementType]="measurementType"
       [color]="color()"
     />
   }
@@ -83,6 +85,7 @@
       [data]="readingsList()"
       [loading]="tableLoading()"
       [unit]="unit()"
+      [measurementType]="measurementType"
       [measurementLabel]="measurementLabel()"
       [measurementIcon]="getMeasurementIcon()"
       [color]="color()"

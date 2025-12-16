@@ -4,11 +4,12 @@
 // ================================
 
 import { Component, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { CommonModule, DecimalPipe } from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { MatIconModule } from '@angular/material/icon';
 import { MatRippleModule } from '@angular/material/core';
 
 import { ReadingListItem } from '@myiotgrid/shared/models';
+import { SensorValuePipe } from '@myiotgrid/shared/utils';
 
 @Component({
   selector: 'myiotgrid-reading-card',
@@ -17,7 +18,7 @@ import { ReadingListItem } from '@myiotgrid/shared/models';
     CommonModule,
     MatIconModule,
     MatRippleModule,
-    DecimalPipe
+    SensorValuePipe
   ],
   templateUrl: './reading-card.component.html',
   styleUrls: ['./reading-card.component.scss'],
@@ -26,6 +27,7 @@ import { ReadingListItem } from '@myiotgrid/shared/models';
 export class ReadingCardComponent {
   @Input() reading!: ReadingListItem;
   @Input() measurementLabel = '';
+  @Input() measurementType = '';
   @Input() measurementIcon = 'sensors';
   @Input() color = '#1976d2';
   @Input() sensorName = '';
