@@ -29,4 +29,10 @@ public interface IChartService
         DateTime? from,
         DateTime? to,
         CancellationToken ct = default);
+
+    Task<byte[]> ExportNodeReadingsToCsvAsync(
+        Guid nodeId,
+        string? sensorCode,
+        string? measurementType,
+        CancellationToken ct = default);
 }

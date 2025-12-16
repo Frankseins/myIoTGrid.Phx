@@ -252,6 +252,48 @@ public class ChartService : IChartService
         return Encoding.UTF8.GetBytes(sb.ToString());
     }
 
+    /// <inheritdoc />
+    public async Task<byte[]> ExportNodeReadingsToCsvAsync(
+        Guid nodeId,
+        string? sensorCode,
+        string? measurementType,
+        CancellationToken ct = default)
+    {
+        var tenantId = _tenantService.GetCurrentTenantId();
+
+        var query = _context.Readings
+            .AsNoTracking()
+            .Include(r => r.Assignment)
+            .ThenInclude(a => a!.Sensor)
+            .Where(r => r.TenantId == tenantId && r.NodeId == nodeId);
+
+        if (!string.IsNullOrWhiteSpace(sensorCode))
+        {
+            query = query.Where(r => r.Assignment != null && r.Assignment.Sensor != null
+                && r.Assignment.Sensor.Code.ToLower() == sensorCode.ToLower());
+        }
+
+        if (!string.IsNullOrWhiteSpace(measurementType))
+        {
+            query = query.Where(r => r.MeasurementType.ToLower() == measurementType.ToLower());
+        }
+
+        var readings = await query
+            .OrderByDescending(r => r.Timestamp)
+            .ToListAsync(ct);
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Zeitstempel;Messtyp;Wert;Einheit;Sensor");
+
+        foreach (var reading in readings)
+        {
+            var sensorName = reading.Assignment?.Sensor?.Name ?? reading.Assignment?.Sensor?.Code ?? "-";
+            sb.AppendLine($"{reading.Timestamp:dd.MM.yyyy HH:mm:ss};{reading.MeasurementType};{reading.Value.ToString("F2", CultureInfo.InvariantCulture)};{reading.Unit};{sensorName}");
+        }
+
+        return Encoding.UTF8.GetBytes(sb.ToString());
+    }
+
     private static (DateTime startTime, int aggregationMinutes, int maxPoints) GetIntervalParameters(ChartInterval interval)
     {
         return interval switch

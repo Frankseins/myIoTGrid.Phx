@@ -80,4 +80,22 @@ export class ReadingApiService extends BaseApiService {
   deleteRange(dto: DeleteReadingsRangeDto): Observable<DeleteReadingsResultDto> {
     return this.deleteWithBody<DeleteReadingsResultDto>(`${this.endpoint}/range`, dto);
   }
+
+  /**
+   * Export readings to CSV for a specific node
+   * GET /api/readings/export/csv
+   */
+  exportToCsv(nodeId: string, filters?: { sensorCode?: string; measurementType?: string }): Observable<Blob> {
+    const params: Record<string, unknown> = { nodeId };
+    if (filters?.sensorCode) params['sensorCode'] = filters.sensorCode;
+    if (filters?.measurementType) params['measurementType'] = filters.measurementType;
+
+    return this.http.get(
+      `${this.baseUrl}${this.endpoint}/export/csv`,
+      {
+        params: this.buildParams(params),
+        responseType: 'blob'
+      }
+    );
+  }
 }

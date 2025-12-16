@@ -142,7 +142,7 @@ public class DashboardService : IDashboardService
 
         // Time range for sparkline data: last month
         var sparklineStartTime = DateTime.UtcNow.AddMonths(-1);
-        const int intervalMinutes = 360; // 6-hour intervals for monthly view (4 points per day)
+        const int intervalMinutes = 30; // 30-minute intervals for more detail in sparkline
 
         // Get ALL readings and find the latest per node/measurementType
         // Note: Some readings may not have AssignmentId set (older data, simulator)
@@ -174,6 +174,7 @@ public class DashboardService : IDashboardService
             .Where(r => r.Timestamp >= sparklineStartTime)
             .ToList();
 
+
         var sparklineByAssignment = sparklineReadings
             .Where(r => r.AssignmentId.HasValue)
             .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
@@ -188,6 +189,7 @@ public class DashboardService : IDashboardService
                 g => g.Key,
                 g => g.OrderBy(r => r.Timestamp).ToList()
             );
+
 
         // Build location groups with sparkline data
         var locationGroups = nodes
@@ -438,14 +440,7 @@ public class DashboardService : IDashboardService
 
         // Group readings into intervals and take average
         var grouped = readings
-            .GroupBy(r => new DateTime(
-                r.Timestamp.Year,
-                r.Timestamp.Month,
-                r.Timestamp.Day,
-                r.Timestamp.Hour,
-                (r.Timestamp.Minute / intervalMinutes) * intervalMinutes,
-                0,
-                DateTimeKind.Utc))
+            .GroupBy(r => GetIntervalBucket(r.Timestamp, intervalMinutes))
             .OrderBy(g => g.Key)
             .Select(g => new SparklinePointDto(
                 Timestamp: g.Key,
@@ -454,6 +449,29 @@ public class DashboardService : IDashboardService
             .ToList();
 
         return grouped;
+    }
+
+    /// <summary>
+    /// Calculates the time bucket for a given timestamp based on interval.
+    /// For 6-hour intervals (360 min): groups to 00:00, 06:00, 12:00, 18:00
+    /// For 1-hour intervals (60 min): groups to hour start
+    /// For 15-minute intervals: groups to 15-min boundaries
+    /// </summary>
+    private static DateTime GetIntervalBucket(DateTime timestamp, int intervalMinutes)
+    {
+        if (intervalMinutes >= 60)
+        {
+            // Hour-based intervals
+            var intervalHours = intervalMinutes / 60;
+            var hourBucket = (timestamp.Hour / intervalHours) * intervalHours;
+            return new DateTime(timestamp.Year, timestamp.Month, timestamp.Day, hourBucket, 0, 0, DateTimeKind.Utc);
+        }
+        else
+        {
+            // Minute-based intervals
+            var minuteBucket = (timestamp.Minute / intervalMinutes) * intervalMinutes;
+            return new DateTime(timestamp.Year, timestamp.Month, timestamp.Day, timestamp.Hour, minuteBucket, 0, DateTimeKind.Utc);
+        }
     }
 
     private static MinMaxDto CalculateMinMax(List<Reading> readings)
@@ -573,7 +591,7 @@ public class DashboardService : IDashboardService
 
         // Time range for sparkline data: last month
         var sparklineStartTime = DateTime.UtcNow.AddMonths(-1);
-        const int intervalMinutes = 360; // 6-hour intervals for monthly view (4 points per day)
+        const int intervalMinutes = 30; // 30-minute intervals for more detail in sparkline
 
         // Get ALL readings for this tenant (for finding latest values - no time filter)
         var allReadingsQuery = _context.Readings
@@ -610,6 +628,7 @@ public class DashboardService : IDashboardService
             .Where(r => r.Timestamp >= sparklineStartTime)
             .ToList();
 
+
         var sparklineByAssignment = sparklineReadings
             .Where(r => r.AssignmentId.HasValue)
             .GroupBy(r => (r.NodeId, r.AssignmentId, r.MeasurementType.ToLowerInvariant()))
@@ -624,6 +643,7 @@ public class DashboardService : IDashboardService
                 g => g.Key,
                 g => g.OrderBy(r => r.Timestamp).ToList()
             );
+
 
         // Build location groups with sparkline data
         var locationGroups = nodes
@@ -703,6 +723,7 @@ public class DashboardService : IDashboardService
                         sparklineByNodeAndType.TryGetValue(keyWithoutAssignment, out sparklineReadings);
                     }
 
+
                     var widget = BuildSensorWidgetWithSparkline(
                         node, assignment, measurementType, latestReading,
                         sparklineReadings ?? [], intervalMinutes, locationName);
@@ -744,6 +765,7 @@ public class DashboardService : IDashboardService
 
         // Build sparkline data points
         var dataPoints = BuildSparklineDataPoints(sparklineReadings, intervalMinutes);
+
 
         // Calculate min/max from sparkline readings
         var minMax = sparklineReadings.Any() ? CalculateMinMax(sparklineReadings) : null;

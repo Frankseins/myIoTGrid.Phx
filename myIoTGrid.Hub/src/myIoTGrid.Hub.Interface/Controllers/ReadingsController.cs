@@ -309,4 +309,26 @@ public class ReadingsController : ControllerBase
         var fileName = $"readings_{measurementType}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
         return File(csvData, "text/csv", fileName);
     }
+
+    /// <summary>
+    /// Exports all readings for a node to CSV file
+    /// </summary>
+    /// <param name="nodeId">Node-ID</param>
+    /// <param name="sensorCode">Optional sensor code filter</param>
+    /// <param name="measurementType">Optional measurement type filter</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>CSV file download</returns>
+    [HttpGet("export/csv")]
+    [Produces("text/csv")]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ExportNodeReadingsToCsv(
+        [FromQuery] Guid nodeId,
+        [FromQuery] string? sensorCode = null,
+        [FromQuery] string? measurementType = null,
+        CancellationToken ct = default)
+    {
+        var csvData = await _chartService.ExportNodeReadingsToCsvAsync(nodeId, sensorCode, measurementType, ct);
+        var fileName = $"readings_{nodeId:N}_{DateTime.UtcNow:yyyyMMdd_HHmmss}.csv";
+        return File(csvData, "text/csv", fileName);
+    }
 }

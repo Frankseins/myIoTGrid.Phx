@@ -80,7 +80,7 @@ export class WidgetDetailComponent implements OnInit, OnDestroy {
   // State signals
   chartData = signal<ChartData | null>(null);
   readingsList = signal<ReadingsList | null>(null);
-  selectedInterval = signal<ChartInterval>(ChartInterval.OneDay);
+  selectedInterval = signal<ChartInterval>(ChartInterval.OneWeek);
   chartLoading = signal(false);
   tableLoading = signal(false);
   error = signal<string | null>(null);
