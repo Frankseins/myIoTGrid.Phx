@@ -58,11 +58,11 @@ export class DeleteReadingsDrawerComponent {
   readonly deleteResult = signal<DeleteReadingsResultDto | null>(null);
   readonly error = signal<string | null>(null);
 
-  // Form values
-  fromDate: Date | null = null;
-  toDate: Date | null = null;
-  selectedAssignmentId: string | null = null;
-  selectedMeasurementType: string | null = null;
+  // Form values as signals for reactivity with computed()
+  readonly fromDate = signal<Date | null>(null);
+  readonly toDate = signal<Date | null>(null);
+  readonly selectedAssignmentId = signal<string | null>(null);
+  readonly selectedMeasurementType = signal<string | null>(null);
 
   readonly measurementTypes = signal<MeasurementTypeOption[]>([
     { value: 'temperature', label: 'Temperatur' },
@@ -78,9 +78,11 @@ export class DeleteReadingsDrawerComponent {
   ]);
 
   readonly canDelete = computed(() => {
-    return this.fromDate !== null &&
-           this.toDate !== null &&
-           this.fromDate <= this.toDate &&
+    const from = this.fromDate();
+    const to = this.toDate();
+    return from !== null &&
+           to !== null &&
+           from <= to &&
            !this.isDeleting();
   });
 
@@ -104,7 +106,9 @@ export class DeleteReadingsDrawerComponent {
 
   async onDelete(): Promise<void> {
     const node = this.currentNode();
-    if (!node || !this.fromDate || !this.toDate) return;
+    const from = this.fromDate();
+    const to = this.toDate();
+    if (!node || !from || !to) return;
 
     this.isDeleting.set(true);
     this.error.set(null);
@@ -112,10 +116,10 @@ export class DeleteReadingsDrawerComponent {
 
     const dto: DeleteReadingsRangeDto = {
       nodeId: node.id,
-      from: this.toIsoString(this.fromDate),
-      to: this.toIsoString(this.toDate, true),
-      assignmentId: this.selectedAssignmentId || undefined,
-      measurementType: this.selectedMeasurementType || undefined
+      from: this.toIsoString(from),
+      to: this.toIsoString(to, true),
+      assignmentId: this.selectedAssignmentId() || undefined,
+      measurementType: this.selectedMeasurementType() || undefined
     };
 
     try {
@@ -133,10 +137,10 @@ export class DeleteReadingsDrawerComponent {
   }
 
   onReset(): void {
-    this.fromDate = null;
-    this.toDate = null;
-    this.selectedAssignmentId = null;
-    this.selectedMeasurementType = null;
+    this.fromDate.set(null);
+    this.toDate.set(null);
+    this.selectedAssignmentId.set(null);
+    this.selectedMeasurementType.set(null);
     this.deleteResult.set(null);
     this.error.set(null);
   }

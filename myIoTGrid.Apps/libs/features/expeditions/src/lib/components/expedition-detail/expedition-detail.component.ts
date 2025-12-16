@@ -214,23 +214,48 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
   /** Available sensors - only those with actual data */
   readonly availableSensors = computed<SensorConfig[]>(() => {
     const points = this.gpsData()?.points;
+    console.log('[Expedition] GPS points count:', points?.length || 0);
     if (!points?.length) return [];
 
-    return SENSOR_CONFIGS.filter(config => {
+    const available = SENSOR_CONFIGS.filter(config => {
       return points.some(p => {
         const value = (p as unknown as Record<string, unknown>)[config.key];
         return value != null;
       });
     });
+    console.log('[Expedition] Available sensors:', available.map(s => s.key));
+    return available;
   });
 
   constructor() {
     // Setup SignalR subscription when expedition is active
     effect(() => {
-      if (this.isLive() && !this.liveUpdatesEnabled()) {
+      const live = this.isLive();
+      const exp = this.expedition();
+      const enabled = this.liveUpdatesEnabled();
+
+      console.log('[Expedition] Live check - isLive:', live, 'liveUpdatesEnabled:', enabled, 'expedition:', exp?.id);
+
+      if (live && !enabled && exp) {
         this.startLiveUpdates();
       }
     });
+
+    // React to new readings - refresh GPS data when new reading arrives for this node
+    effect(() => {
+      const reading = this.signalRService.latestReading();
+      const exp = this.expedition();
+
+      if (reading && exp) {
+        console.log('[Expedition] Reading received:', reading.nodeId, 'expedition node:', exp.nodeId);
+
+        // Check if reading is for this expedition's node
+        if (reading.nodeId === exp.nodeId) {
+          console.log('[Expedition] Matching reading! Refreshing GPS data...');
+          this.refreshGpsData();
+        }
+      }
+    }, { allowSignalWrites: true });
   }
 
   ngOnInit(): void {
@@ -275,29 +300,57 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
   }
 
   /** Start SignalR live updates for active expeditions */
-  private startLiveUpdates(): void {
+  async startLiveUpdates(): Promise<void> {
     const exp = this.expedition();
-    if (!exp) return;
+    if (!exp) {
+      console.log('[Expedition] Cannot start live updates - no expedition');
+      return;
+    }
 
-    this.signalRService.joinNodeGroup(exp.nodeId);
-    this.liveUpdatesEnabled.set(true);
+    console.log('[Expedition] Starting live updates for expedition:', exp.id, 'node:', exp.nodeId);
 
-    effect(() => {
-      const reading = this.signalRService.latestReading();
-      if (reading && this.liveUpdatesEnabled()) {
-        if (reading.nodeId === exp.nodeId) {
-          this.refreshGpsData();
-        }
+    // Ensure SignalR is connected
+    const connectionState = this.signalRService.connectionState();
+    console.log('[Expedition] SignalR connection state:', connectionState);
+
+    if (connectionState !== 'connected') {
+      try {
+        console.log('[Expedition] Starting SignalR connection...');
+        await this.signalRService.startConnection();
+        console.log('[Expedition] SignalR connection started successfully');
+      } catch (error) {
+        console.error('[Expedition] Failed to start SignalR connection:', error);
+        return;
       }
-    }, { allowSignalWrites: true });
+    }
+
+    // Join the node group to receive readings for this node
+    try {
+      console.log('[Expedition] Joining node group:', exp.nodeId);
+      await this.signalRService.joinNodeGroup(exp.nodeId);
+      this.liveUpdatesEnabled.set(true);
+      console.log('[Expedition] Successfully joined node group. Live updates enabled.');
+    } catch (error) {
+      console.error('[Expedition] Failed to join node group:', error);
+    }
   }
 
   /** Stop SignalR live updates */
-  private stopLiveUpdates(): void {
+  stopLiveUpdates(): void {
     const exp = this.expedition();
     if (exp && this.liveUpdatesEnabled()) {
       this.signalRService.leaveNodeGroup(exp.nodeId);
       this.liveUpdatesEnabled.set(false);
+      console.log('[Expedition] Live updates stopped');
+    }
+  }
+
+  /** Toggle live updates manually */
+  toggleLiveUpdates(): void {
+    if (this.liveUpdatesEnabled()) {
+      this.stopLiveUpdates();
+    } else {
+      this.startLiveUpdates();
     }
   }
 
@@ -412,9 +465,12 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
   /** Get chart data points for a sensor config (applies conversion if defined) */
   getChartDataForSensor(config: SensorConfig): ChartPoint[] {
     const points = this.gpsData()?.points;
-    if (!points?.length) return [];
+    if (!points?.length) {
+      console.log('[Expedition] getChartDataForSensor - no points');
+      return [];
+    }
 
-    return points
+    const chartData = points
       .filter(p => (p as unknown as Record<string, unknown>)[config.key] != null)
       .map(p => {
         const rawValue = (p as unknown as Record<string, unknown>)[config.key] as number;
@@ -425,6 +481,9 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
         };
       })
       .sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+    console.log('[Expedition] Chart data for', config.key, ':', chartData.length, 'points');
+    return chartData;
   }
 
   /** Get latest value for a sensor config */

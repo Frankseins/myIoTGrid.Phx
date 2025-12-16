@@ -80,6 +80,16 @@
           }
         </span>
 
+        <!-- Live Updates Toggle -->
+        @if (isLive()) {
+          <button mat-icon-button
+                  [color]="liveUpdatesEnabled() ? 'primary' : 'default'"
+                  (click)="toggleLiveUpdates()"
+                  [matTooltip]="liveUpdatesEnabled() ? 'Live-Updates aktiv' : 'Live-Updates starten'">
+            <mat-icon>{{ liveUpdatesEnabled() ? 'sensors' : 'sensors_off' }}</mat-icon>
+          </button>
+        }
+
         <!-- Export Button -->
         <button mat-icon-button (click)="exportToCsv()" matTooltip="Als CSV exportieren">
           <mat-icon>download</mat-icon>

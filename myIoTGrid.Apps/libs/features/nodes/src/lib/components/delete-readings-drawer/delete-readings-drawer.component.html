@@ -26,14 +26,20 @@
           <div class="date-range">
             <mat-form-field appearance="outline" class="date-field">
               <mat-label>Von</mat-label>
-              <input matInput [matDatepicker]="fromPicker" [(ngModel)]="fromDate" placeholder="Startdatum">
+              <input matInput [matDatepicker]="fromPicker"
+                     [ngModel]="fromDate()"
+                     (ngModelChange)="fromDate.set($event)"
+                     placeholder="Startdatum">
               <mat-datepicker-toggle matIconSuffix [for]="fromPicker"></mat-datepicker-toggle>
               <mat-datepicker #fromPicker></mat-datepicker>
             </mat-form-field>
 
             <mat-form-field appearance="outline" class="date-field">
               <mat-label>Bis</mat-label>
-              <input matInput [matDatepicker]="toPicker" [(ngModel)]="toDate" placeholder="Enddatum">
+              <input matInput [matDatepicker]="toPicker"
+                     [ngModel]="toDate()"
+                     (ngModelChange)="toDate.set($event)"
+                     placeholder="Enddatum">
               <mat-datepicker-toggle matIconSuffix [for]="toPicker"></mat-datepicker-toggle>
               <mat-datepicker #toPicker></mat-datepicker>
             </mat-form-field>
@@ -42,7 +48,8 @@
           <!-- Sensor Filter -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Sensor</mat-label>
-            <mat-select [(ngModel)]="selectedAssignmentId">
+            <mat-select [ngModel]="selectedAssignmentId()"
+                        (ngModelChange)="selectedAssignmentId.set($event)">
               <mat-option [value]="null">Alle Sensoren</mat-option>
               @for (assignment of assignments(); track assignment.id) {
                 <mat-option [value]="assignment.id">
@@ -55,7 +62,8 @@
           <!-- Messtyp Filter -->
           <mat-form-field appearance="outline" class="full-width">
             <mat-label>Messtyp</mat-label>
-            <mat-select [(ngModel)]="selectedMeasurementType">
+            <mat-select [ngModel]="selectedMeasurementType()"
+                        (ngModelChange)="selectedMeasurementType.set($event)">
               <mat-option [value]="null">Alle Messtypen</mat-option>
               @for (type of measurementTypes(); track type.value) {
                 <mat-option [value]="type.value">{{ type.label }}</mat-option>
