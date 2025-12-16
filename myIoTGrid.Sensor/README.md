@@ -198,7 +198,7 @@ constexpr SensorTypeInfo MY_SENSOR = {
 ### Adding a Hardware Sensor (ESP32)
 
 1. Create sensor class in `lib/sensor/src/` implementing `ISensor`
-2. Add creation logic in `SensorFactory::create()` for ESP32 platform
+2. Add creation logic in `SensorFactory::create()` for ESP32 platformbei den hardware 
 
 ## Testing
 

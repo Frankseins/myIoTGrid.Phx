@@ -15,7 +15,7 @@ import { NavigationDestination } from '../navigation-rail/navigation-rail.compon
  * Only visible on mobile devices (< 768px).
  *
  * Features:
- * - 3 navigation destinations: Dashboard, Nodes, Menu (opens sidebar)
+ * - 4 navigation destinations: Dashboard, Messfahrt, Nodes, Menu (opens sidebar)
  * - Touch-friendly targets (min 48x48px)
  * - Active state with primary color
  * - Safe area insets for iPhone notch/home indicator
@@ -50,11 +50,12 @@ export class BottomNavComponent implements OnInit, OnDestroy {
   private currentRoute = signal<string>('');
 
   /**
-   * Navigation destinations for mobile - reduced to 3 items
-   * Dashboard, Nodes, and Menu (opens sidebar)
+   * Navigation destinations for mobile - reduced to 4 items
+   * Dashboard, Expeditions (Messfahrt), Nodes, and Menu (opens sidebar)
    */
   readonly navItems: NavigationDestination[] = [
     { icon: 'dashboard', label: 'Dashboard', route: '/dashboard' },
+    { icon: 'explore', label: 'Messfahrt', route: '/expeditions' },
     { icon: 'router', label: 'Nodes', route: '/nodes' }
   ];
 
@@ -114,10 +115,11 @@ export class BottomNavComponent implements OnInit, OnDestroy {
 
   /**
    * Check if any menu route is active (for highlighting menu button)
+   * Note: /expeditions is now in the bottom nav directly, not in the menu
    */
   isMenuActive(): boolean {
     const current = this.currentRoute();
-    const menuRoutes = ['/expeditions', '/sensors', '/alerts', '/settings', '/hubs'];
+    const menuRoutes = ['/sensors', '/alerts', '/settings', '/hubs'];
     return menuRoutes.some(route => current === route || current.startsWith(route + '/'));
   }
 }

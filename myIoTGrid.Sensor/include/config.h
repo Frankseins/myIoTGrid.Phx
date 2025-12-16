@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.10.27"  // Fallback to API if SD card fails
+#define FIRMWARE_VERSION "1.12.1"  // Better WiFi diagnostics
 #endif
 
 // Hardware Type
@@ -13,10 +13,7 @@
 #define HARDWARE_TYPE "UNKNOWN"
 #endif
 
-// Simulate Sensors Flag
-#ifndef SIMULATE_SENSORS
-#define SIMULATE_SENSORS 1
-#endif
+// NOTE: SIMULATE_SENSORS flag removed - simulation only available on PLATFORM_NATIVE
 
 // Default Hub Configuration
 namespace config {

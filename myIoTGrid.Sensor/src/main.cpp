@@ -1,7 +1,10 @@
 /**
  * myIoTGrid.Sensor - Main Entry Point
  *
- * Self-Provisioning ESP32 Firmware with Multi-Mode Support
+ * Self-Provisioning ESP32 Firmware - HARDWARE ONLY
+ *
+ * SECURITY: This firmware runs ONLY on real ESP32 hardware with real sensors.
+ *           Simulation is NOT available on ESP32 - use the native build for simulation.
  *
  * Flow:
  * 1. Boot → Check NVS for stored configuration
@@ -12,9 +15,8 @@
  * 6. Register and enter operational mode (heartbeats + sensor readings)
  *
  * Sensor Modes:
- * - REAL: Read actual hardware sensors (DHT22, BME280, etc.)
- * - SIMULATED: Generate realistic test data with profiles
- * - AUTO: Detect hardware, fall back to simulation
+ * - ESP32: REAL mode only - reads actual hardware sensors (DHT22, BME280, etc.)
+ * - Native: SIMULATED mode - software simulator for testing (separate build)
  */
 
 #include <Arduino.h>
@@ -26,9 +28,13 @@
 #include "wifi_manager.h"
 #include "api_client.h"
 #include "discovery_client.h"
+#include "hardware_scanner.h"
+
+// SECURITY: Simulator includes ONLY for PLATFORM_NATIVE
+#ifdef PLATFORM_NATIVE
 #include "sensor_simulator.h"
 #include "gps_simulator.h"
-#include "hardware_scanner.h"
+#endif
 #include "sensor_reader.h"
 #include "led_controller.h"
 
@@ -68,11 +74,16 @@ ConfigManager configManager;
 WiFiManager wifiManager;
 ApiClient apiClient;
 DiscoveryClient discoveryClient;
-SensorSimulator sensorSimulator;
-GPSSimulator gpsSimulator;
 HardwareScanner hardwareScanner;
 SensorReader sensorReader;
 LEDController ledController;
+
+// SECURITY: Simulators ONLY exist on PLATFORM_NATIVE (Docker/Desktop)
+// They are completely excluded from ESP32 builds
+#ifdef PLATFORM_NATIVE
+SensorSimulator sensorSimulator;
+GPSSimulator gpsSimulator;
+#endif
 
 // Sprint OS-01: Offline Storage Instances
 SDManager sdManager;
@@ -114,12 +125,17 @@ static bool sht31Detected = false;
 #endif
 
 // Sensor mode configuration
+// SECURITY: On ESP32, mode is ALWAYS REAL (hardware only)
+//           On Native, mode is ALWAYS SIMULATED (software simulator)
 enum class SensorMode {
-    AUTO,       // Auto-detect hardware, fall back to simulation
-    REAL,       // Only use real hardware sensors
-    SIMULATED   // Only use simulated values
+    REAL,       // Only use real hardware sensors (ESP32)
+    SIMULATED   // Only use simulated values (Native/Docker)
 };
-static SensorMode sensorMode = SensorMode::AUTO;
+#ifdef PLATFORM_ESP32
+static SensorMode sensorMode = SensorMode::REAL;  // Hardware only!
+#else
+static SensorMode sensorMode = SensorMode::SIMULATED;  // Simulator only!
+#endif
 static bool hardwareDetected = false;
 
 // ============================================================================
@@ -395,6 +411,7 @@ void detectDHT22() {
 
 /**
  * Perform hardware auto-detection (simplified - no pin scanning)
+ * NOTE: On ESP32, mode is ALWAYS REAL - this just detects what hardware is available
  */
 void autoDetectHardware() {
     Serial.println("[HW] Auto-detecting hardware sensors...");
@@ -406,12 +423,12 @@ void autoDetectHardware() {
     hardwareDetected = dht22Detected || bme280Detected || bme680Detected || sht31Detected;
 
     if (hardwareDetected) {
-        Serial.println("[HW] Hardware sensors detected - using REAL mode");
-        sensorMode = SensorMode::REAL;
+        Serial.println("[HW] Hardware sensors detected");
     } else {
-        Serial.println("[HW] No hardware sensors detected - using SIMULATED mode");
-        sensorMode = SensorMode::SIMULATED;
+        Serial.println("[HW] WARNING: No hardware sensors detected!");
+        Serial.println("[HW] Check sensor wiring. Mode remains REAL (no simulation on ESP32)");
     }
+    // SECURITY: sensorMode is ALWAYS REAL on ESP32 - never changes to SIMULATED
 }
 #endif
 
@@ -911,6 +928,23 @@ void fetchSensorConfiguration() {
         currentConfig = response;
         configLoaded = true;
 
+        // ============================================================================
+        // SECURITY: Block simulation on real ESP32 hardware!
+        // Simulation is ONLY allowed on PLATFORM_NATIVE (Docker/Desktop)
+        // This prevents accidental or malicious simulation on production hardware
+        // ============================================================================
+#ifdef PLATFORM_ESP32
+        if (currentConfig.isSimulation) {
+            Serial.println("\n[SECURITY] ========================================");
+            Serial.println("[SECURITY] WARNING: Hub requested simulation mode!");
+            Serial.println("[SECURITY] This is BLOCKED on real ESP32 hardware!");
+            Serial.println("[SECURITY] Simulation is only allowed on native/Docker.");
+            Serial.println("[SECURITY] Forcing isSimulation = false");
+            Serial.println("[SECURITY] ========================================\n");
+            currentConfig.isSimulation = false;
+        }
+#endif
+
         // Calculate GCD-based poll interval for all active sensors
         calculatedPollIntervalSeconds = calculatePollIntervalGCD();
 
@@ -1024,9 +1058,15 @@ void checkDebugConfiguration() {
     }
 }
 
+// ============================================================================
+// SECURITY: Simulator functions ONLY exist on PLATFORM_NATIVE
+// These are completely excluded from ESP32 builds
+// ============================================================================
+#ifdef PLATFORM_NATIVE
 /**
  * Generate simulated value using the advanced SensorSimulator
  * Supports 5 profiles: NORMAL, WINTER, SUMMER, STORM, STRESS
+ * NOTE: This function ONLY exists on PLATFORM_NATIVE (Docker/Desktop)
  */
 double generateSimulatedValue(const String& sensorCode, const String& unit) {
     // Use the new SensorSimulator for realistic values
@@ -1097,6 +1137,7 @@ double generateSimulatedValue(const String& sensorCode, const String& unit) {
 
 /**
  * Set simulation profile from string
+ * NOTE: This function ONLY exists on PLATFORM_NATIVE
  */
 void setSimulationProfile(const String& profileName) {
     String name = profileName;
@@ -1117,10 +1158,12 @@ void setSimulationProfile(const String& profileName) {
 
 /**
  * Get current simulation profile name
+ * NOTE: This function ONLY exists on PLATFORM_NATIVE
  */
 const char* getCurrentProfileName() {
     return SensorSimulator::getProfileName(sensorSimulator.getProfile());
 }
+#endif // PLATFORM_NATIVE
 
 /**
  * Read sensor value - either from hardware or simulation based on Hub config
@@ -1130,11 +1173,21 @@ const char* getCurrentProfileName() {
  * @return Sensor reading value
  */
 double readSensorValueWithConfig(const String& sensorCode, const String& unit, const SensorAssignmentConfig* sensorConfig) {
-    // Use isSimulation flag from Hub configuration (not local auto-detect!)
+    // SECURITY: Double-check - simulation is NEVER allowed on ESP32 hardware
+#ifdef PLATFORM_ESP32
+    // On real hardware, ALWAYS use hardware sensors - ignore isSimulation flag
     if (currentConfig.isSimulation) {
-        // Hub says to simulate - use simulated values
+        // This should never happen due to check in refreshSensorConfiguration()
+        // But if it does, log and force hardware mode
+        Serial.println("[SECURITY] ALERT: isSimulation=true on ESP32 - BLOCKED!");
+        currentConfig.isSimulation = false;
+    }
+#else
+    // PLATFORM_NATIVE: Simulation is allowed
+    if (currentConfig.isSimulation) {
         return generateSimulatedValue(sensorCode, unit);
     }
+#endif
 
 #ifdef PLATFORM_ESP32
     // Hub says real hardware - try to read from actual sensors using SensorReader
@@ -1175,15 +1228,24 @@ double readSensorValueWithConfig(const String& sensorCode, const String& unit, c
  * @return Sensor reading value
  */
 double readSensorValue(const String& sensorCode, const String& unit) {
-    // Use isSimulation flag from Hub configuration
+    // SECURITY: Simulation only allowed on PLATFORM_NATIVE
+#ifdef PLATFORM_ESP32
+    // On ESP32, NEVER simulate - always require hardware
+    if (currentConfig.isSimulation) {
+        Serial.println("[SECURITY] ALERT: isSimulation=true on ESP32 - BLOCKED!");
+        currentConfig.isSimulation = false;
+    }
+    // Legacy call without config - can't read hardware properly
+    Serial.printf("[HW] readSensorValue called without config for %s\n", sensorCode.c_str());
+    return -999.99;  // Error indicator
+#else
+    // PLATFORM_NATIVE: Simulation is allowed
     if (currentConfig.isSimulation) {
         return generateSimulatedValue(sensorCode, unit);
     }
-
-    // When not simulating but no config, we can't read hardware
-    // This should not happen in normal operation
-    Serial.printf("[HW] readSensorValue called without config for %s\n", sensorCode.c_str());
-    return -999.99;  // Error indicator
+    // Native without simulation - still use simulation (no hardware available)
+    return generateSimulatedValue(sensorCode, unit);
+#endif
 }
 
 /**
@@ -2376,9 +2438,12 @@ void setup() {
     Serial.println("[Main] Native platform - using SIMULATED mode");
 #endif
 
-    // Initialize Sensor Simulator with default profile
-    // Check environment variable for profile (native) or use NORMAL
+    // ============================================================================
+    // SECURITY: Simulators are ONLY initialized on PLATFORM_NATIVE
+    // On ESP32 hardware, simulators are completely disabled
+    // ============================================================================
 #ifdef PLATFORM_NATIVE
+    // Native/Docker: Initialize simulators for testing
     const char* profileEnv = std::getenv("SIMULATION_PROFILE");
     if (profileEnv) {
         setSimulationProfile(String(profileEnv));
@@ -2387,17 +2452,17 @@ void setup() {
         sensorSimulator.init(SimulationProfile::NORMAL);
         gpsSimulator.init();
     }
-#else
-    sensorSimulator.init(SimulationProfile::NORMAL);
-    gpsSimulator.init();
-#endif
     Serial.printf("[Simulator] Active profile: %s\n", getCurrentProfileName());
     Serial.printf("[Simulator] Daily cycle: %s\n",
                   sensorSimulator.isDailyCycleEnabled() ? "enabled" : "disabled");
+#else
+    // ESP32: Simulators are DISABLED - real hardware only!
+    Serial.println("[SECURITY] Simulators DISABLED on ESP32 hardware");
+#endif
 
     // Print sensor mode
-    const char* modeNames[] = {"AUTO", "REAL", "SIMULATED"};
-    Serial.printf("[Main] Sensor mode: %s\n", modeNames[(int)sensorMode]);
+    Serial.printf("[Main] Sensor mode: %s\n",
+                  sensorMode == SensorMode::REAL ? "REAL (Hardware)" : "SIMULATED (Software)");
 
     // Check for existing configuration
     if (configManager.hasConfig()) {
@@ -2452,12 +2517,15 @@ void loop() {
 #endif
 
     // Update sensor simulator (generates smooth value transitions)
+    // SECURITY: Only on PLATFORM_NATIVE - simulators are disabled on ESP32
+#ifdef PLATFORM_NATIVE
     static unsigned long lastSimulatorUpdate = 0;
     if (millis() - lastSimulatorUpdate >= 1000) {  // Update every second
         lastSimulatorUpdate = millis();
         sensorSimulator.update();
         gpsSimulator.update();
     }
+#endif
 
     switch (currentState) {
         case NodeState::UNCONFIGURED:
