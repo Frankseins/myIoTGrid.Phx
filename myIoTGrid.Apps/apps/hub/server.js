@@ -21,7 +21,7 @@ function getDistFolder() {
 const distFolder = getDistFolder();
 
 // Backend API URL (kann per Environment Variable überschrieben werden)
-const apiUrl = process.env.API_URL || 'https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net';
+const apiUrl = process.env.API_URL || 'https://phx-api.myiotgrid.cloud';
 
 console.log(`[Server] Starting myIoTGrid Hub Frontend...`);
 console.log(`[Server] API URL: ${apiUrl}`);
@@ -63,16 +63,14 @@ const apiProxy = createProxyMiddleware({
 app.use('/api', apiProxy);
 
 // SignalR HTTP Proxy - für negotiate und andere HTTP-Requests
-// WICHTIG: app.use('/hubs', ...) entfernt den /hubs Prefix vom Pfad,
-// daher müssen wir ihn in pathRewrite wieder hinzufügen!
+// NUR für /hubs/sensors (SignalR), NICHT für /hubs (Angular Route!)
 const hubsHttpProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
     ws: false, // Kein WebSocket hier - wird separat gehandhabt
-    pathRewrite: (path, req) => '/hubs' + path, // Füge /hubs wieder hinzu, da Express es entfernt
     onProxyReq: (proxyReq, req, res) => {
-        console.log(`[SignalR HTTP] ${req.method} ${req.originalUrl} -> ${apiUrl}/hubs${req.url}`);
+        console.log(`[SignalR HTTP] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
     },
     onProxyRes: (proxyRes, req, res) => {
         console.log(`[SignalR HTTP] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
@@ -84,7 +82,8 @@ const hubsHttpProxy = createProxyMiddleware({
         }
     }
 });
-app.use('/hubs', hubsHttpProxy);
+// Nur /hubs/sensors proxyen, nicht /hubs (das ist eine Angular Route!)
+app.use('/hubs/sensors', hubsHttpProxy);
 
 // Separater WebSocket Proxy für SignalR
 // Bei WebSocket-Upgrades läuft der Request NICHT durch Express-Middleware,
@@ -112,12 +111,22 @@ app.get('/health', (req, res) => {
     });
 });
 
-// Static files bereitstellen
-app.use(express.static(distFolder));
+// Static files bereitstellen (nur existierende Dateien)
+app.use(express.static(distFolder, {
+    index: false // index.html nicht automatisch für Verzeichnisse
+}));
 
-// Alle anderen Routen auf index.html umleiten (für Angular Routing)
-app.get('*', (req, res) => {
-    res.sendFile(path.join(distFolder, 'index.html'));
+// SPA Fallback - ALLE anderen Routen auf index.html umleiten (Angular Routing)
+// Funktioniert für /dashboard, /hubs, /settings, etc.
+app.use('*', (req, res) => {
+    const indexPath = path.join(distFolder, 'index.html');
+    console.log(`[SPA Routing] ${req.method} ${req.originalUrl} -> index.html`);
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            console.error(`[SPA Routing Error] ${err.message}`);
+            res.status(500).send('index.html not found');
+        }
+    });
 });
 
 // Port von Azure oder default 8080
@@ -126,8 +135,8 @@ const server = app.listen(port, () => {
     console.log(`myIoTGrid Hub Frontend running on port ${port}`);
     console.log(`Serving from: ${distFolder}`);
     console.log(`API Proxy: /api/* -> ${apiUrl}/api/*`);
-    console.log(`SignalR HTTP Proxy: /hubs/* -> ${apiUrl}/hubs/*`);
-    console.log(`SignalR WebSocket Proxy: /hubs/* -> ${apiUrl}/hubs/*`);
+    console.log(`SignalR HTTP Proxy: /hubs/sensors/* -> ${apiUrl}/hubs/sensors/*`);
+    console.log(`SignalR WebSocket Proxy: /hubs/sensors/* -> ${apiUrl}/hubs/sensors/*`);
 });
 
 // WebSocket upgrade handling für SignalR
