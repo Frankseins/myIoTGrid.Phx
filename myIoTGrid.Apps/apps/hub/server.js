@@ -1,13 +1,23 @@
 const express = require('express');
 const path = require('path');
+const fs = require('fs');
 const compression = require('compression');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const app = express();
 
-// In Azure liegt alles direkt in wwwroot, lokal in dist/apps/hub/browser
-const distFolder = process.env.NODE_ENV === 'production'
-  ? __dirname  // Azure: direkt in wwwroot
-  : path.join(__dirname, '..', '..', '..', 'dist', 'apps', 'hub', 'browser'); // Lokal: dist-Ordner
+// Ermittle das richtige Verzeichnis für statische Dateien
+// In Azure liegt index.html im selben Verzeichnis wie server.js
+// Lokal liegt es in dist/apps/hub/browser
+function getDistFolder() {
+    // Prüfe ob index.html im aktuellen Verzeichnis liegt (Azure)
+    if (fs.existsSync(path.join(__dirname, 'index.html'))) {
+        return __dirname;
+    }
+    // Ansonsten lokaler Entwicklungspfad
+    return path.join(__dirname, '..', '..', '..', 'dist', 'apps', 'hub', 'browser');
+}
+
+const distFolder = getDistFolder();
 
 // Backend API URL (kann per Environment Variable überschrieben werden)
 const apiUrl = process.env.API_URL || 'https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net';

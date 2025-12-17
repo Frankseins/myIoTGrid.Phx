@@ -169,6 +169,14 @@ jobs:
           publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
           package: ./myIoTGrid.Hub/publish
 
+      - name: Configure Azure App Settings
+        run: |
+          # Azure CLI login via publish profile is not possible,
+          # so we need to set app settings manually in Azure Portal:
+          # ASPNETCORE_ENVIRONMENT = Azure
+          echo "IMPORTANT: Set ASPNETCORE_ENVIRONMENT=Azure in Azure Portal"
+          echo "Azure Portal -> phx-api -> Configuration -> Application settings"
+
       - name: Wait for Deployment
         run: |
           echo "Waiting 30 seconds for deployment to complete..."
