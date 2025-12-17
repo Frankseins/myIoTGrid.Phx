@@ -24,7 +24,7 @@ using Serilog;
 using Serilog.Events;
 
 // ===========================================
-// Serilog Bootstrap Logger
+// Serilog Bootstrap Logger1
 // ===========================================
 Log.Logger = new LoggerConfiguration()
     .MinimumLevel.Override("Microsoft", LogEventLevel.Information)
