@@ -78,6 +78,7 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
   private readonly destroy$ = new Subject<void>();
 
   @ViewChild(LeafletMapComponent) mapComponent?: LeafletMapComponent;
+  @ViewChild('maximizedChart') maximizedChartComponent?: LineChartComponent;
 
   // Expose enum to template
   readonly ExpeditionStatus = ExpeditionStatus;
@@ -385,6 +386,10 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
   /** Open maximized chart view */
   maximizeChart(sensor: SensorConfig): void {
     this.maximizedSensor.set(sensor);
+    // Trigger chart recreate after modal animation completes
+    setTimeout(() => {
+      this.maximizedChartComponent?.recreate();
+    }, 350);
   }
 
   /** Close maximized chart view */

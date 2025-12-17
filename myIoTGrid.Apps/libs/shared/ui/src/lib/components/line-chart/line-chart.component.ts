@@ -312,6 +312,31 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
     this.createChart();
   }
 
+  /**
+   * Public method to resize/recreate the chart.
+   * Call this after the container becomes visible (e.g., after modal animation).
+   */
+  public resize(): void {
+    if (this.chart) {
+      this.chart.resize();
+    } else {
+      this.createChart();
+    }
+  }
+
+  /**
+   * Public method to force recreate the chart.
+   * Useful when container dimensions change significantly.
+   */
+  public recreate(): void {
+    if (this.chart) {
+      this.chart.destroy();
+      this.chart = null;
+    }
+    // Small delay to ensure DOM has updated
+    setTimeout(() => this.createChart(), 50);
+  }
+
   private hexToRgba(hex: string, alpha: number): string {
     const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
     if (!result) return `rgba(0, 0, 0, ${alpha})`;

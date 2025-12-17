@@ -1955,6 +1955,17 @@ void handleConfiguredState() {
             int maxRetries = stateMachine.getMaxRetries();
             Serial.printf("[Main] WiFi connecting (attempt %d/%d): %s\n",
                          retryCount + 1, maxRetries, config.wifiSsid.c_str());
+
+            // Debug: Show password info (masked)
+            int pwLen = config.wifiPassword.length();
+            if (pwLen > 0) {
+                String masked = String(config.wifiPassword[0]) + "***" +
+                               (pwLen > 1 ? String(config.wifiPassword[pwLen-1]) : "");
+                Serial.printf("[Main] Password: %s (%d chars)\n", masked.c_str(), pwLen);
+            } else {
+                Serial.println("[Main] WARNING: Password is EMPTY!");
+            }
+
             wifiManager.connect(config.wifiSsid, config.wifiPassword);
             wifiConnecting = true;
             lastWiFiAttempt = millis();
