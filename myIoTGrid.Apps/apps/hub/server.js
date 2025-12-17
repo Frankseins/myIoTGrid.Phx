@@ -41,6 +41,7 @@ const apiProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
+    pathRewrite: (path, req) => path, // Behalte den Pfad unverändert (inkl. /api)
     onProxyReq: (proxyReq, req, res) => {
         console.log(`[API Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
     },
@@ -62,6 +63,7 @@ const hubsProxy = createProxyMiddleware({
     changeOrigin: true,
     secure: true,
     ws: true,
+    pathRewrite: (path, req) => path, // Behalte den Pfad unverändert (inkl. /hubs)
     onProxyReq: (proxyReq, req, res) => {
         console.log(`[SignalR Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
     },
