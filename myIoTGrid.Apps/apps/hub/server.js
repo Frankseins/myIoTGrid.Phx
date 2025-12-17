@@ -64,13 +64,15 @@ app.use('/api', apiProxy);
 
 // SignalR HTTP Proxy - für negotiate und andere HTTP-Requests
 // NUR für /hubs/sensors (SignalR), NICHT für /hubs (Angular Route!)
+// WICHTIG: app.use('/hubs/sensors', ...) entfernt den Prefix, daher pathRewrite nötig!
 const hubsHttpProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
     ws: false, // Kein WebSocket hier - wird separat gehandhabt
+    pathRewrite: (path, req) => '/hubs/sensors' + path, // Füge /hubs/sensors wieder hinzu
     onProxyReq: (proxyReq, req, res) => {
-        console.log(`[SignalR HTTP] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
+        console.log(`[SignalR HTTP] ${req.method} ${req.originalUrl} -> ${apiUrl}/hubs/sensors${req.url}`);
     },
     onProxyRes: (proxyRes, req, res) => {
         console.log(`[SignalR HTTP] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
