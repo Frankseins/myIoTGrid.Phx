@@ -37,13 +37,15 @@ app.use((req, res, next) => {
 });
 
 // API Proxy - leitet /api/* an das Backend weiter
+// WICHTIG: app.use('/api', ...) entfernt den /api Prefix vom Pfad,
+// daher müssen wir ihn in pathRewrite wieder hinzufügen!
 const apiProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
-    pathRewrite: (path, req) => path, // Behalte den Pfad unverändert (inkl. /api)
+    pathRewrite: (path, req) => '/api' + path, // Füge /api wieder hinzu, da Express es entfernt
     onProxyReq: (proxyReq, req, res) => {
-        console.log(`[API Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
+        console.log(`[API Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}/api${req.url}`);
     },
     onProxyRes: (proxyRes, req, res) => {
         console.log(`[API Proxy] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
@@ -58,14 +60,16 @@ const apiProxy = createProxyMiddleware({
 app.use('/api', apiProxy);
 
 // SignalR Proxy - leitet /hubs/* an das Backend weiter (WebSocket support)
+// WICHTIG: app.use('/hubs', ...) entfernt den /hubs Prefix vom Pfad,
+// daher müssen wir ihn in pathRewrite wieder hinzufügen!
 const hubsProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
     ws: true,
-    pathRewrite: (path, req) => path, // Behalte den Pfad unverändert (inkl. /hubs)
+    pathRewrite: (path, req) => '/hubs' + path, // Füge /hubs wieder hinzu, da Express es entfernt
     onProxyReq: (proxyReq, req, res) => {
-        console.log(`[SignalR Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}${req.originalUrl}`);
+        console.log(`[SignalR Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}/hubs${req.url}`);
     },
     onProxyRes: (proxyRes, req, res) => {
         console.log(`[SignalR Proxy] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
