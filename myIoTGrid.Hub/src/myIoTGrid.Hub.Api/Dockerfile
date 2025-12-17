@@ -81,14 +81,13 @@ RUN chown -R app:app /app
 # Switch to non-root user (built-in .NET user)
 USER app
 
-# Expose HTTPS port
-EXPOSE 5001
+# Expose ports: HTTPS (5001), HTTP for sensors (5000, 5002)
+EXPOSE 5000 5001 5002
 
-# Environment variables for HTTPS
-ENV ASPNETCORE_URLS=https://+:5001
-ENV ASPNETCORE_ENVIRONMENT=Production
-ENV ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/fullchain.pem
-ENV ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/privkey.pem
+# Environment variables
+# Default to Docker environment (loads appsettings.Docker.json with Kestrel HTTPS config)
+# Azure deployments override this to Production
+ENV ASPNETCORE_ENVIRONMENT=Docker
 ENV ConnectionStrings__HubDb="Data Source=/app/data/hub.db"
 
 # Health check (HTTPS with insecure flag for self-signed cert)
