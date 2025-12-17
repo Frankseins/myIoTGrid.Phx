@@ -2,16 +2,17 @@
 # myIoTGrid - Complete Docker Stack
 # =============================================================================
 # Services:
-# - hub-api:      Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
+# - hub-api:      Backend API (.NET 10) - Port 5000 (HTTP) + 5002 (Sensors)
 # - hub-frontend: Frontend (Angular/nginx) - Port 443 (HTTPS)
 # - sensor-sim:   Sensor Simulator (Native) - Test sensor with auto-discovery
 #
-# Note: MQTT Broker is provided by myIoTGrid.Gateway.LoRaWAN stack (Port 1883/1884)
+# Note: Internal communication uses HTTP (secure within Docker network)
+#       HTTPS is handled by nginx for external traffic
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
+  # Backend API (.NET 10) - Port 5000 (HTTP) + 5002 (Sensors)
   # ---------------------------------------------------------------------------
   hub-api:
     build:
@@ -21,37 +22,33 @@ services:
     container_name: myIoTGrid.Hub
     restart: unless-stopped
     ports:
-      - "5001:5001"
       - "5000:5000"
       - "5002:5002"
-      - "5001:5001/udp"
     environment:
-      # Docker environment loads appsettings.Docker.json with Kestrel HTTPS config
       - ASPNETCORE_ENVIRONMENT=Docker
+      - ASPNETCORE_URLS=http://+:5000;http://+:5002
       - ConnectionStrings__HubDb=Data Source=/app/data/hub.db
       - Mqtt__Host=host.docker.internal
       - Mqtt__Port=1883
-      - LoRaWAN__MqttServer=tcp://host.docker.internal:1884
       - Hub__DefaultTenantName=Default
       - Discovery__Enabled=true
-      - Discovery__Port=5001
-      - Discovery__Protocol=https
-      - Discovery__ApiPort=5001
+      - Discovery__Port=5000
+      - Discovery__Protocol=http
+      - Discovery__ApiPort=5000
     volumes:
       - hub-data:/app/data
       - hub-logs:/app/logs
-      - ./certs:/app/certs:ro
     networks:
       - myiotgrid-network
     healthcheck:
-      test: ["CMD", "curl", "-fk", "https://localhost:5001/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 10s
     labels:
       - "com.myiotgrid.service=hub-api"
-      - "com.myiotgrid.description=Backend API (HTTPS)"
+      - "com.myiotgrid.description=Backend API (HTTP)"
 
   # ---------------------------------------------------------------------------
   # Frontend (Angular + nginx with HTTPS) - Port 443
@@ -67,9 +64,9 @@ services:
       - "443:443"
       - "80:80"
     environment:
-      # Local Docker: use internal Docker network DNS
-      # Azure: default is https://phx-api.myiotgrid.cloud (set in Dockerfile)
-      - API_BACKEND_URL=https://hub-api:5001
+      # Internal Docker network uses HTTP (secure within network)
+      # nginx handles HTTPS for external traffic
+      - API_BACKEND_URL=http://hub-api:5000
     volumes:
       - ./certs:/etc/nginx/certs:ro
     networks:
@@ -100,12 +97,12 @@ services:
     environment:
       # Manual fallback config (used if discovery fails)
       - HUB_HOST=hub-api
-      - HUB_PORT=5001
-      - HUB_PROTOCOL=https
-      - HUB_INSECURE=true
+      - HUB_PORT=5002
+      - HUB_PROTOCOL=http
+      - HUB_INSECURE=false
       # Discovery configuration
       - DISCOVERY_ENABLED=true
-      - DISCOVERY_PORT=5001
+      - DISCOVERY_PORT=5000
       - SENSOR_ID=sim-sensor-01
       - DATA_DIR=/data
     volumes:
