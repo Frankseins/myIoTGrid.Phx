@@ -59,29 +59,46 @@ const apiProxy = createProxyMiddleware({
 });
 app.use('/api', apiProxy);
 
-// SignalR Proxy - leitet /hubs/* an das Backend weiter (WebSocket support)
+// SignalR HTTP Proxy - für negotiate und andere HTTP-Requests
 // WICHTIG: app.use('/hubs', ...) entfernt den /hubs Prefix vom Pfad,
 // daher müssen wir ihn in pathRewrite wieder hinzufügen!
-const hubsProxy = createProxyMiddleware({
+const hubsHttpProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
-    ws: true,
+    ws: false, // Kein WebSocket hier - wird separat gehandhabt
     pathRewrite: (path, req) => '/hubs' + path, // Füge /hubs wieder hinzu, da Express es entfernt
     onProxyReq: (proxyReq, req, res) => {
-        console.log(`[SignalR Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}/hubs${req.url}`);
+        console.log(`[SignalR HTTP] ${req.method} ${req.originalUrl} -> ${apiUrl}/hubs${req.url}`);
     },
     onProxyRes: (proxyRes, req, res) => {
-        console.log(`[SignalR Proxy] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
+        console.log(`[SignalR HTTP] Response: ${proxyRes.statusCode} for ${req.originalUrl}`);
     },
     onError: (err, req, res) => {
-        console.error(`[SignalR Proxy Error] ${err.message}`);
+        console.error(`[SignalR HTTP Error] ${err.message}`);
         if (!res.headersSent) {
             res.status(502).json({ error: 'SignalR unavailable', message: err.message });
         }
     }
 });
-app.use('/hubs', hubsProxy);
+app.use('/hubs', hubsHttpProxy);
+
+// Separater WebSocket Proxy für SignalR
+// Bei WebSocket-Upgrades läuft der Request NICHT durch Express-Middleware,
+// daher ist der Pfad noch vollständig und braucht KEINEN pathRewrite!
+const hubsWsProxy = createProxyMiddleware({
+    target: apiUrl,
+    changeOrigin: true,
+    secure: true,
+    ws: true,
+    // KEIN pathRewrite hier! WebSocket-Requests haben den vollen Pfad
+    onProxyReqWs: (proxyReq, req, socket, options, head) => {
+        console.log(`[SignalR WS] Upgrade ${req.url} -> ${apiUrl}${req.url}`);
+    },
+    onError: (err, req, res) => {
+        console.error(`[SignalR WS Error] ${err.message}`);
+    }
+});
 
 // Health endpoint for Azure
 app.get('/health', (req, res) => {
@@ -105,14 +122,20 @@ const port = process.env.PORT || 8080;
 const server = app.listen(port, () => {
     console.log(`myIoTGrid Hub Frontend running on port ${port}`);
     console.log(`Serving from: ${distFolder}`);
-    console.log(`API Proxy: /api/* -> ${apiUrl}`);
-    console.log(`SignalR Proxy: /hubs/* -> ${apiUrl}`);
+    console.log(`API Proxy: /api/* -> ${apiUrl}/api/*`);
+    console.log(`SignalR HTTP Proxy: /hubs/* -> ${apiUrl}/hubs/*`);
+    console.log(`SignalR WebSocket Proxy: /hubs/* -> ${apiUrl}/hubs/*`);
 });
 
 // WebSocket upgrade handling für SignalR
+// WICHTIG: Bei Upgrades kommt der Request direkt zum Server, nicht durch Express!
+// Der Pfad ist daher vollständig (z.B. /hubs/sensors?id=...)
 server.on('upgrade', (req, socket, head) => {
     console.log(`[WebSocket] Upgrade request for: ${req.url}`);
     if (req.url.startsWith('/hubs')) {
-        hubsProxy.upgrade(req, socket, head);
+        hubsWsProxy.upgrade(req, socket, head);
+    } else {
+        console.log(`[WebSocket] Rejected - not a SignalR path: ${req.url}`);
+        socket.destroy();
     }
 });
