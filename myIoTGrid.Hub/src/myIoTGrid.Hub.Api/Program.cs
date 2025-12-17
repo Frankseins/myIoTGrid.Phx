@@ -44,6 +44,9 @@ try
     // ===========================================
     builder.WebHost.ConfigureKestrel(serverOptions =>
     {
+        // Allow large request bodies for backup uploads (200MB)
+        serverOptions.Limits.MaxRequestBodySize = 200 * 1024 * 1024; // 200MB
+
         serverOptions.ConfigureHttpsDefaults(httpsOptions =>
         {
             // Support both TLS 1.2 (ESP32) and TLS 1.3 (Chrome/Firefox)
@@ -131,6 +134,12 @@ try
 
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();
+
+    // Form options for large file uploads (backup restore)
+    builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+    {
+        options.MultipartBodyLengthLimit = 200 * 1024 * 1024; // 200MB
+    });
 
     // FluentValidation
     builder.Services.AddValidatorsFromAssemblyContaining<CreateReadingValidator>();
