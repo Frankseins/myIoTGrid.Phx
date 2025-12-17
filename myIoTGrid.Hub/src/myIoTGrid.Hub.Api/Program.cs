@@ -186,13 +186,26 @@ try
     builder.Services.AddHealthChecks()
         .AddDbContextCheck<HubDbContext>("database");
 
-    // CORS - Allow All (für Entwicklung)
+    // CORS - Konfigurierbar via appsettings.json
+    var corsOrigins = builder.Configuration
+        .GetSection("Cors:AllowedOrigins")
+        .Get<string[]>() ?? [];
+
     builder.Services.AddCors(options =>
     {
         options.AddDefaultPolicy(policy =>
         {
-            policy.SetIsOriginAllowed(_ => true) // Erlaubt ALLE Origins
-                .AllowAnyHeader()
+            // Wenn "*" in AllowedOrigins, erlaube alle Origins (für Docker/IP-Zugriff)
+            if (corsOrigins.Contains("*"))
+            {
+                policy.SetIsOriginAllowed(_ => true);
+            }
+            else if (corsOrigins.Length > 0)
+            {
+                policy.WithOrigins(corsOrigins);
+            }
+
+            policy.AllowAnyHeader()
                 .AllowAnyMethod()
                 .AllowCredentials(); // Wichtig für SignalR!
         });

@@ -45,10 +45,15 @@ bool ConfigManager::saveConfig(const StoredConfig& config) {
     preferences.putString(KEY_TARGET_MODE, config.targetMode);
     preferences.putString(KEY_TENANT_ID, config.tenantId);
     preferences.putBool(KEY_CONFIGURED, true);
+
+    // Debug: Verify password was saved correctly
+    String savedPw = preferences.getString(KEY_WIFI_PASS, "");
+    Serial.printf("[Config] Password saved: %d chars (verify: %d chars)\n",
+                  config.wifiPassword.length(), savedPw.length());
 #endif
 
-    Serial.printf("[Config] Saved configuration: NodeID=%s, TargetMode=%s\n",
-                  config.nodeId.c_str(), config.targetMode.c_str());
+    Serial.printf("[Config] Saved configuration: NodeID=%s, SSID=%s, TargetMode=%s\n",
+                  config.nodeId.c_str(), config.wifiSsid.c_str(), config.targetMode.c_str());
     return true;
 }
 
@@ -71,6 +76,25 @@ StoredConfig ConfigManager::loadConfig() {
         config.hubApiUrl = preferences.getString(KEY_HUB_URL, "");
         config.targetMode = preferences.getString(KEY_TARGET_MODE, "local");
         config.tenantId = preferences.getString(KEY_TENANT_ID, "");
+
+        // Debug: Show loaded password info with hex dump for debugging
+        int pwLen = config.wifiPassword.length();
+        if (pwLen > 0) {
+            String masked = String(config.wifiPassword[0]) + "***" +
+                           (pwLen > 1 ? String(config.wifiPassword[pwLen-1]) : "");
+            Serial.printf("[Config] Loaded WiFi: SSID=%s, Password=%s (%d chars)\n",
+                          config.wifiSsid.c_str(), masked.c_str(), pwLen);
+
+            // Show first 4 bytes in hex to check for corruption
+            Serial.print("[Config] Password hex (first 4): ");
+            for (int i = 0; i < 4 && i < pwLen; i++) {
+                Serial.printf("%02X ", (uint8_t)config.wifiPassword[i]);
+            }
+            Serial.println();
+        } else {
+            Serial.printf("[Config] Loaded WiFi: SSID=%s, Password=EMPTY!\n",
+                          config.wifiSsid.c_str());
+        }
 
         // Validate loaded config
         // WiFi SSID is required, Hub URL is optional (will be discovered via UDP for local mode)
