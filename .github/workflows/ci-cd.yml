@@ -12,7 +12,7 @@ on:
 
 env:
   DOTNET_VERSION: '10.0.x'
-  NODE_VERSION: '20'
+  NODE_VERSION: '24'
   REGISTRY: ghcr.io
   IMAGE_OWNER: ${{ github.repository_owner }}
 
@@ -105,6 +105,230 @@ jobs:
         with:
           name: frontend-hub-build
           path: myIoTGrid.Apps/dist/apps/hub/
+
+  # =============================================================================
+  # Deploy Backend to Azure Web App (Direct - No Docker)
+  # =============================================================================
+  deploy-azure-backend:
+    name: Deploy Backend to Azure Web App
+    runs-on: ubuntu-latest
+    needs: build-and-test-backend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+      url: https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net
+
+    env:
+      AZURE_WEBAPP_NAME: phx-api
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+        working-directory: myIoTGrid.Hub
+
+      - name: Build Solution
+        run: dotnet build -c Release --no-restore
+        working-directory: myIoTGrid.Hub
+
+      - name: Publish Backend
+        run: |
+          echo "Publishing Hub API..."
+          dotnet publish src/myIoTGrid.Hub.Api/myIoTGrid.Hub.Api.csproj \
+            -c Release \
+            -o ./publish \
+            /p:UseAppHost=false
+        working-directory: myIoTGrid.Hub
+
+      - name: Create Version Info
+        run: |
+          cat > ./myIoTGrid.Hub/publish/version.json << EOF
+          {
+            "version": "${{ github.run_number }}",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "buildDate": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+          echo "Version Info:"
+          cat ./myIoTGrid.Hub/publish/version.json
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_API_PUBLISH_PROFILE }}
+          package: ./myIoTGrid.Hub/publish
+
+      - name: Wait for Deployment
+        run: |
+          echo "Waiting 30 seconds for deployment to complete..."
+          sleep 30
+
+      - name: Health Check
+        run: |
+          echo "Running health check..."
+          HEALTH_URL="https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net/health"
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Checking $HEALTH_URL"
+
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check passed! API is healthy."
+              exit 0
+            else
+              echo "Health check returned status: $HTTP_STATUS"
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Waiting 10 seconds before retry..."
+                sleep 10
+              fi
+            fi
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Deployment Success
+        if: success()
+        run: |
+          echo "Hub API successfully deployed!"
+          echo "URL: https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net"
+          echo "Version: ${{ github.run_number }}"
+          echo "Commit: ${{ github.sha }}"
+
+  # =============================================================================
+  # Deploy Frontend to Azure Web App (Node.js Server)
+  # =============================================================================
+  deploy-azure-frontend:
+    name: Deploy Frontend to Azure Web App
+    runs-on: ubuntu-latest
+    needs: build-and-test-frontend
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    environment:
+      name: production
+      url: https://phx-def3awcve9d5bbgv.germanywestcentral-01.azurewebsites.net
+
+    env:
+      AZURE_WEBAPP_NAME: phx
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download frontend build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-hub-build
+          path: ./dist/apps/hub
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Prepare Azure deployment package
+        run: |
+          echo "Preparing deployment package..."
+
+          # Erstelle publish-Ordner mit allen benötigten Dateien
+          mkdir -p ./publish
+
+          # Kopiere Angular Build
+          cp -r ./dist/apps/hub/browser/* ./publish/
+
+          # Kopiere server.js
+          cp ./myIoTGrid.Apps/apps/hub/server.js ./publish/
+
+          # Kopiere package.json (Azure Version)
+          cp ./myIoTGrid.Apps/apps/hub/package.azure.json ./publish/package.json
+
+          # Installiere Node dependencies
+          cd ./publish
+          npm install --production
+
+          echo "Package contents:"
+          ls -la
+
+      - name: Create Version Info
+        run: |
+          cat > ./publish/version.json << EOF
+          {
+            "version": "${{ github.run_number }}",
+            "commit": "${{ github.sha }}",
+            "branch": "${{ github.ref_name }}",
+            "buildDate": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+            "buildUrl": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          }
+          EOF
+          echo "Version Info:"
+          cat ./publish/version.json
+
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ env.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_FRONTEND_PUBLISH_PROFILE }}
+          package: ./publish
+
+      - name: Wait for Deployment
+        run: |
+          echo "Waiting 30 seconds for deployment to complete..."
+          sleep 30
+
+      - name: Health Check
+        run: |
+          echo "Running health check..."
+          HEALTH_URL="https://phx-def3awcve9d5bbgv.germanywestcentral-01.azurewebsites.net/health"
+
+          MAX_RETRIES=10
+          RETRY_COUNT=0
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            echo "Attempt $((RETRY_COUNT + 1))/$MAX_RETRIES: Checking $HEALTH_URL"
+
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$HEALTH_URL" || echo "000")
+
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Health check passed! Frontend is healthy."
+              exit 0
+            else
+              echo "Health check returned status: $HTTP_STATUS"
+              RETRY_COUNT=$((RETRY_COUNT + 1))
+
+              if [ $RETRY_COUNT -lt $MAX_RETRIES ]; then
+                echo "Waiting 10 seconds before retry..."
+                sleep 10
+              fi
+            fi
+          done
+
+          echo "Health check failed after $MAX_RETRIES attempts"
+          exit 1
+
+      - name: Deployment Success
+        if: success()
+        run: |
+          echo "Hub Frontend successfully deployed!"
+          echo "URL: https://phx-def3awcve9d5bbgv.germanywestcentral-01.azurewebsites.net"
+          echo "Version: ${{ github.run_number }}"
+          echo "Commit: ${{ github.sha }}"
 
   # =============================================================================
   # Docker Image: Hub API
@@ -382,15 +606,22 @@ jobs:
   summary:
     name: Build Summary
     runs-on: ubuntu-latest
-    needs: [docker-hub-api, docker-hub-frontend, docker-hub-frontend-azure, docker-sensor-sim]
+    needs: [deploy-azure-backend, deploy-azure-frontend, docker-hub-api, docker-hub-frontend, docker-hub-frontend-azure, docker-sensor-sim]
     if: always() && github.event_name == 'push'
 
     steps:
       - name: Generate build summary
         run: |
-          echo "## Docker Images Build Summary :whale:" >> $GITHUB_STEP_SUMMARY
+          echo "## CI/CD Pipeline Summary :rocket:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Images Built:" >> $GITHUB_STEP_SUMMARY
+          echo "### Azure Deployment:" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Service | Status | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|---------|--------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub Backend (API) | ${{ needs.deploy-azure-backend.result == 'success' && ':white_check_mark:' || (needs.deploy-azure-backend.result == 'skipped' && ':fast_forward: Skipped' || ':x:') }} | [phx-api](https://phx-api-fze5h4b6gbchg4dv.germanywestcentral-01.azurewebsites.net) |" >> $GITHUB_STEP_SUMMARY
+          echo "| Hub Frontend | ${{ needs.deploy-azure-frontend.result == 'success' && ':white_check_mark:' || (needs.deploy-azure-frontend.result == 'skipped' && ':fast_forward: Skipped' || ':x:') }} | [phx](https://phx-def3awcve9d5bbgv.germanywestcentral-01.azurewebsites.net) |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Images:" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "| Image | Status |" >> $GITHUB_STEP_SUMMARY
           echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
@@ -399,7 +630,7 @@ jobs:
           echo "| Hub Frontend (Azure) | ${{ needs.docker-hub-frontend-azure.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Sensor Simulator | ${{ needs.docker-sensor-sim.result == 'success' && ':white_check_mark:' || ':x:' }} |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Pull Commands:" >> $GITHUB_STEP_SUMMARY
+          echo "### Docker Pull Commands:" >> $GITHUB_STEP_SUMMARY
           echo '```bash' >> $GITHUB_STEP_SUMMARY
           echo "# Hub API" >> $GITHUB_STEP_SUMMARY
           echo "docker pull ghcr.io/${{ env.IMAGE_OWNER }}/myiotgrid-hub-phx-api:latest" >> $GITHUB_STEP_SUMMARY
