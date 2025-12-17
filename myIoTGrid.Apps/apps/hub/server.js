@@ -43,6 +43,9 @@ const apiProxy = createProxyMiddleware({
     target: apiUrl,
     changeOrigin: true,
     secure: true,
+    limit: '200mb', // Für Backup-Uploads
+    timeout: 300000, // 5 Minuten Timeout für große Uploads
+    proxyTimeout: 300000,
     pathRewrite: (path, req) => '/api' + path, // Füge /api wieder hinzu, da Express es entfernt
     onProxyReq: (proxyReq, req, res) => {
         console.log(`[API Proxy] ${req.method} ${req.originalUrl} -> ${apiUrl}/api${req.url}`);
