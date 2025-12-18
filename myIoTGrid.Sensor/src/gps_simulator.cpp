@@ -3,7 +3,7 @@
 
 GPSSimulator::GPSSimulator()
     : _satellites(0), _fixType(0), _hdop(1.5),
-      _lat(51.0910), _lon(6.5820), _alt(34.0),
+      _lat(51.091234), _lon(6.582567), _alt(34.0),
       _headingRad(0.7), _speedKmh(15.0),
       _lastSatUpdate(0), _lastFixUpdate(0), _lastHdopUpdate(0),
       _lastPosUpdate(0), _lastSpeedTweak(0) {}
@@ -12,8 +12,8 @@ void GPSSimulator::init() {
     _satellites = 0;
     _fixType = 0;
     _hdop = 1.5;
-    _lat = 51.0910;
-    _lon = 6.5820;
+    _lat = 51.091234;
+    _lon = 6.582567;
     _alt = 34.0;
     _headingRad = 0.7; // ~40°
     _speedKmh = 15.0;  // km/h
@@ -88,9 +88,10 @@ void GPSSimulator::update() {
     double denom = 111111.0 * max(0.2, cos(latRad));
     double dLon = (distM * sin(_headingRad)) / denom;    // avoid /0 near poles
 
-    // Small noise to avoid perfect smooth line
-    dLat += (random(-5, 6)) / 1e6;
-    dLon += (random(-5, 6)) / 1e6;
+    // GPS noise simulation (realistic ~3-5m accuracy variation)
+    // 1 degree latitude ≈ 111km, so 0.00001° ≈ 1.1m
+    dLat += (random(-50, 51)) / 1e6;  // +/- 5m noise
+    dLon += (random(-50, 51)) / 1e6;  // +/- 5m noise
 
     _lat += dLat;
     _lon += dLon;

@@ -215,11 +215,7 @@ bool ApiClient::sendReading(const String& sensorType, double value, const String
     JsonDocument doc;
     doc["deviceId"] = _nodeId;    // SerialNumber (e.g., SIM-8F470D6C-0001)
     doc["type"] = sensorType;     // Measurement type (e.g., temperature, humidity)
-    if (sensorType.indexOf("lat") >= 0 || sensorType.indexOf("lon") >= 0) {
-      doc["value"] = String(value, 6);  // as string with 6 decimals
-    } else {
-      doc["value"] = value;
-    }
+    doc["value"] = value;         // Always send as double (full precision for GPS coordinates)
     if (unit.length() > 0) {
         doc["unit"] = unit;
     }
@@ -233,8 +229,14 @@ bool ApiClient::sendReading(const String& sensorType, double value, const String
     ApiResponse response = httpPost("/api/readings", body);
 
     if (response.success && response.statusCode == 201) {
-        Serial.printf("[API] Reading sent: %s = %.2f %s\n",
-                      sensorType.c_str(), value, unit.c_str());
+        // Use higher precision for GPS coordinates
+        if (sensorType.indexOf("lat") >= 0 || sensorType.indexOf("lon") >= 0) {
+            Serial.printf("[API] Reading sent: %s = %.8f %s\n",
+                          sensorType.c_str(), value, unit.c_str());
+        } else {
+            Serial.printf("[API] Reading sent: %s = %.2f %s\n",
+                          sensorType.c_str(), value, unit.c_str());
+        }
         return true;
     } else {
         Serial.printf("[API] Failed to send reading: %d - %s\n",

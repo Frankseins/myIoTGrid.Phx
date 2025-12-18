@@ -870,12 +870,12 @@ export class ExpeditionDetailComponent implements OnInit, OnDestroy {
       'HDOP'
     ];
 
-    // Build CSV rows
+    // Build CSV rows (GPS coordinates with 6 decimal places)
     const rows = points.map(p => [
       p.timestamp,
-      p.latitude?.toString() ?? '',
-      p.longitude?.toString() ?? '',
-      p.altitude?.toString() ?? '',
+      p.latitude != null ? p.latitude.toFixed(6) : '',
+      p.longitude != null ? p.longitude.toFixed(6) : '',
+      p.altitude != null ? p.altitude.toFixed(1) : '',
       p.speed != null ? (p.speed * 3.6).toFixed(2) : '',
       p.temperature?.toString() ?? '',
       p.humidity?.toString() ?? '',

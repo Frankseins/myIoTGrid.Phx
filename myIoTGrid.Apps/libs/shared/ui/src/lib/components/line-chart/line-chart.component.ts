@@ -69,7 +69,7 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
 
   /**
    * Format sensor value based on measurement type:
-   * - GPS (latitude/longitude): 4 decimal places
+   * - GPS (latitude/longitude): 6 decimal places (~0.1m precision)
    * - Integer types (co2, pm25, pm10, rssi): no decimals
    * - Default: 1 decimal place
    */
@@ -77,7 +77,7 @@ export class LineChartComponent implements OnInit, AfterViewInit, OnChanges, OnD
     const type = this.measurementType.toLowerCase();
 
     if (type === 'latitude' || type === 'longitude') {
-      return value.toFixed(4);
+      return value.toFixed(6);
     }
 
     if (['co2', 'pm25', 'pm10', 'rssi'].includes(type)) {

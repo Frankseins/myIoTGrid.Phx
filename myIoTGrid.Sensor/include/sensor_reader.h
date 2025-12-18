@@ -176,6 +176,23 @@ public:
     SensorReading readGpsHdop(const SensorAssignmentConfig& config);
 
     /**
+     * Update GPS data from serial buffer
+     * Call this frequently (e.g., every loop iteration) to keep GPS data current.
+     * NEO-6M sends data at 1Hz, so call at least every 100ms for best results.
+     */
+    void updateGPS();
+
+    /**
+     * Check if GPS has a valid fix
+     */
+    bool hasValidGpsFix() const;
+
+    /**
+     * Get time since last valid GPS fix in milliseconds
+     */
+    unsigned long getTimeSinceLastGpsFix() const;
+
+    /**
      * Check if a sensor is available/detected
      */
     bool isSensorAvailable(const SensorAssignmentConfig& config);
@@ -270,6 +287,20 @@ private:
     int _gps_rx_pin;
     int _gps_tx_pin;
     bool _gps_debug_ran;  // Track if GPS debug diagnostics have been run once
+
+    // Cached GPS values (updated by updateGPS())
+    double _gps_latitude;
+    double _gps_longitude;
+    double _gps_altitude;
+    double _gps_speed;
+    int _gps_satellites;
+    int _gps_fix_type;
+    double _gps_hdop;
+    bool _gps_location_valid;
+    bool _gps_altitude_valid;
+    bool _gps_speed_valid;
+    unsigned long _gps_last_update;
+    unsigned long _gps_last_valid_fix;
 
     // SR04M-2 Ultrasonic UART mode
     HardwareSerial* _sr04m2Serial;

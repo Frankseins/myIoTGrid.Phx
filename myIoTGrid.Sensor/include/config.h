@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.12.1"  // Better WiFi diagnostics
+#define FIRMWARE_VERSION "1.13.2"  // Fix: GPS coordinates sent as double (full precision)
 #endif
 
 // Hardware Type

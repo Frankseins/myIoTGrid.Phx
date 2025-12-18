@@ -796,61 +796,37 @@ void onReProvisioningConfigReceived(const BLEConfig& config) {
 // ============================================================================
 
 /**
- * Sync time - tries Hub first, then NTP as fallback
- * Hub time works in local networks without internet
+ * Sync time from Hub API only (no NTP fallback)
+ * Hub provides /api/time endpoint for local time sync without internet
  */
 void syncTime() {
 #ifdef PLATFORM_ESP32
-    bool timeSynced = false;
-
-    // Method 1: Try to get time from Hub (works without internet)
-    if (apiClient.isConfigured()) {
-        Serial.println("[Time] Trying to sync from Hub...");
-        TimeResponse timeResp = apiClient.fetchTime();
-        if (timeResp.success && timeResp.unixTimestamp > 1000000000) {
-            // Set system time from Hub
-            struct timeval tv;
-            tv.tv_sec = timeResp.unixTimestamp;
-            tv.tv_usec = 0;
-            settimeofday(&tv, nullptr);
-
-            time_t now = time(nullptr);
-            struct tm* timeinfo = localtime(&now);
-            Serial.printf("[Time] Synced from Hub: %04d-%02d-%02d %02d:%02d:%02d\n",
-                          timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
-                          timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-            timeSynced = true;
-        } else {
-            Serial.println("[Time] Hub time sync failed, trying NTP...");
-        }
+    if (!apiClient.isConfigured()) {
+        Serial.println("[Time] API client not configured, skipping time sync");
+        return;
     }
 
-    // Method 2: NTP fallback (requires internet)
-    if (!timeSynced) {
-        Serial.println("[Time] Trying NTP servers...");
-        configTime(3600, 3600, "pool.ntp.org", "time.google.com", "time.cloudflare.com");
+    Serial.println("[Time] Syncing from Hub API...");
+    TimeResponse timeResp = apiClient.fetchTime();
 
-        // Wait for time to be set (max 5 seconds)
-        int ntpRetries = 0;
-        while (time(nullptr) < 1000000000 && ntpRetries < 10) {
-            delay(500);
-            ntpRetries++;
-            Serial.print(".");
-        }
-        Serial.println();
+    if (timeResp.success && timeResp.unixTimestamp > 1000000000) {
+        // Set system time from Hub
+        struct timeval tv;
+        tv.tv_sec = timeResp.unixTimestamp;
+        tv.tv_usec = 0;
+        settimeofday(&tv, nullptr);
 
-        if (time(nullptr) > 1000000000) {
-            time_t now = time(nullptr);
-            struct tm* timeinfo = localtime(&now);
-            Serial.printf("[Time] Synced from NTP: %04d-%02d-%02d %02d:%02d:%02d\n",
-                          timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
-                          timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
-            timeSynced = true;
-        }
-    }
+        // Set timezone to Europe/Berlin (CET/CEST)
+        setenv("TZ", "CET-1CEST,M3.5.0,M10.5.0/3", 1);
+        tzset();
 
-    if (!timeSynced) {
-        Serial.println("[Time] WARNING: Time sync failed! Timestamps may be incorrect.");
+        time_t now = time(nullptr);
+        struct tm* timeinfo = localtime(&now);
+        Serial.printf("[Time] Synced from Hub: %04d-%02d-%02d %02d:%02d:%02d (Europe/Berlin)\n",
+                      timeinfo->tm_year + 1900, timeinfo->tm_mon + 1, timeinfo->tm_mday,
+                      timeinfo->tm_hour, timeinfo->tm_min, timeinfo->tm_sec);
+    } else {
+        Serial.printf("[Time] Hub time sync failed: %s\n", timeResp.error.c_str());
     }
 #endif
 }
@@ -859,7 +835,7 @@ void onWiFiConnected(const String& ip) {
     Serial.printf("[Main] WiFi connected! IP: %s\n", ip.c_str());
 
 #ifdef PLATFORM_ESP32
-    // Sync time (Hub first, then NTP fallback)
+    // Sync time from Hub API
     syncTime();
 #endif
 
@@ -2536,6 +2512,13 @@ void loop() {
         sensorSimulator.update();
         gpsSimulator.update();
     }
+#endif
+
+#ifdef PLATFORM_ESP32
+    // Continuously update GPS data from serial buffer
+    // NEO-6M sends NMEA data at 1Hz - frequent calls ensure no data is lost
+    // This enables accurate position and speed readings
+    sensorReader.updateGPS();
 #endif
 
     switch (currentState) {

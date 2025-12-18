@@ -39,6 +39,10 @@ SensorReader::SensorReader()
     , _dht22(nullptr), _dht22_ready(false), _dht22_pin(-1)
     , _ultrasonic_trigger_pin(-1), _ultrasonic_echo_pin(-1), _ultrasonic_ready(false)
     , _gps(nullptr), _gpsSerial(nullptr), _gps_ready(false), _gps_rx_pin(-1), _gps_tx_pin(-1), _gps_debug_ran(false)
+    , _gps_latitude(0.0), _gps_longitude(0.0), _gps_altitude(0.0), _gps_speed(0.0)
+    , _gps_satellites(0), _gps_fix_type(0), _gps_hdop(99.99)
+    , _gps_location_valid(false), _gps_altitude_valid(false), _gps_speed_valid(false)
+    , _gps_last_update(0), _gps_last_valid_fix(0)
     , _sr04m2Serial(nullptr), _sr04m2_ready(false), _sr04m2_rx_pin(-1), _sr04m2_tx_pin(-1)
     , _currentSdaPin(-1), _currentSclPin(-1)
 #endif
@@ -1391,7 +1395,7 @@ SensorReading SensorReader::readWaterLevel(const SensorAssignmentConfig& config)
 }
 
 // ============================================================================
-// GPS Latitude Reading (NEO-6M)
+// GPS Latitude Reading (NEO-6M) - Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readLatitude(const SensorAssignmentConfig& config) {
@@ -1409,18 +1413,14 @@ SensorReading SensorReader::readLatitude(const SensorAssignmentConfig& config) {
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->location.isValid()) {
-            double lat = _gps->location.lat();
-            Serial.printf("[SensorReader] GPS Latitude: %.6f°\n", lat);
-            return SensorReading(lat);
+        // Return cached latitude if we have a valid fix
+        if (_gps_location_valid) {
+            Serial.printf("[SensorReader] GPS Latitude: %.6f° (Satellites: %d, HDOP: %.1f)\n",
+                         _gps_latitude, _gps_satellites, _gps_hdop);
+            return SensorReading(_gps_latitude);
         }
 
         // Auto-start GPS debug diagnostics once when no fix (only in DEBUG mode, not PRODUCTION/NORMAL)
@@ -1445,6 +1445,7 @@ SensorReading SensorReader::readLatitude(const SensorAssignmentConfig& config) {
             _gps_debug_ran = true;  // Skip diagnostics in PRODUCTION/NORMAL mode
         }
 
+        Serial.printf("[SensorReader] GPS no fix (Satellites: %d, waiting for fix...)\n", _gps_satellites);
         return SensorReading("GPS no fix");
     }
 
@@ -1455,7 +1456,7 @@ SensorReading SensorReader::readLatitude(const SensorAssignmentConfig& config) {
 }
 
 // ============================================================================
-// GPS Longitude Reading (NEO-6M)
+// GPS Longitude Reading (NEO-6M) - Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readLongitude(const SensorAssignmentConfig& config) {
@@ -1473,18 +1474,13 @@ SensorReading SensorReader::readLongitude(const SensorAssignmentConfig& config) 
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->location.isValid()) {
-            double lng = _gps->location.lng();
-            Serial.printf("[SensorReader] GPS Longitude: %.6f°\n", lng);
-            return SensorReading(lng);
+        // Return cached longitude if we have a valid fix
+        if (_gps_location_valid) {
+            Serial.printf("[SensorReader] GPS Longitude: %.6f°\n", _gps_longitude);
+            return SensorReading(_gps_longitude);
         }
         return SensorReading("GPS no fix");
     }
@@ -1496,7 +1492,7 @@ SensorReading SensorReader::readLongitude(const SensorAssignmentConfig& config) 
 }
 
 // ============================================================================
-// GPS Altitude Reading (NEO-6M)
+// GPS Altitude Reading (NEO-6M) - Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readAltitude(const SensorAssignmentConfig& config) {
@@ -1514,18 +1510,13 @@ SensorReading SensorReader::readAltitude(const SensorAssignmentConfig& config) {
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->altitude.isValid()) {
-            double alt = _gps->altitude.meters();
-            Serial.printf("[SensorReader] GPS Altitude: %.2f m\n", alt);
-            return SensorReading(alt);
+        // Return cached altitude if valid
+        if (_gps_altitude_valid) {
+            Serial.printf("[SensorReader] GPS Altitude: %.2f m\n", _gps_altitude);
+            return SensorReading(_gps_altitude);
         }
         return SensorReading("GPS altitude not available");
     }
@@ -1537,7 +1528,7 @@ SensorReading SensorReader::readAltitude(const SensorAssignmentConfig& config) {
 }
 
 // ============================================================================
-// GPS Speed Reading (NEO-6M)
+// GPS Speed Reading (NEO-6M) - Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readSpeed(const SensorAssignmentConfig& config) {
@@ -1555,18 +1546,13 @@ SensorReading SensorReader::readSpeed(const SensorAssignmentConfig& config) {
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->speed.isValid()) {
-            double speed = _gps->speed.kmph();
-            Serial.printf("[SensorReader] GPS Speed: %.2f km/h\n", speed);
-            return SensorReading(speed);
+        // Return cached speed if valid (works even at standstill with good fix)
+        if (_gps_speed_valid || _gps_location_valid) {
+            Serial.printf("[SensorReader] GPS Speed: %.2f km/h\n", _gps_speed);
+            return SensorReading(_gps_speed);
         }
         return SensorReading("GPS speed not available");
     }
@@ -1578,7 +1564,7 @@ SensorReading SensorReader::readSpeed(const SensorAssignmentConfig& config) {
 }
 
 // ============================================================================
-// GPS Satellites Reading (NEO-6M)
+// GPS Satellites Reading (NEO-6M) - Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readGpsSatellites(const SensorAssignmentConfig& config) {
@@ -1596,22 +1582,12 @@ SensorReading SensorReader::readGpsSatellites(const SensorAssignmentConfig& conf
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->satellites.isValid()) {
-            int satellites = _gps->satellites.value();
-            Serial.printf("[SensorReader] GPS Satellites: %d\n", satellites);
-            return SensorReading((double)satellites);
-        }
-        // Return 0 satellites if not valid (cold start)
-        Serial.println("[SensorReader] GPS Satellites: 0 (no valid data)");
-        return SensorReading(0.0);
+        // Return cached satellite count (always available, even during cold start)
+        Serial.printf("[SensorReader] GPS Satellites: %d\n", _gps_satellites);
+        return SensorReading((double)_gps_satellites);
     }
 
     return SensorReading("No GPS sensor: " + config.sensorCode);
@@ -1621,8 +1597,8 @@ SensorReading SensorReader::readGpsSatellites(const SensorAssignmentConfig& conf
 }
 
 // ============================================================================
-// GPS Fix Type Reading (NEO-6M)
-// Returns: 0 = no fix, 1 = GPS fix, 2 = DGPS fix
+// GPS Fix Type Reading (NEO-6M) - Uses cached values from updateGPS()
+// Returns: 0 = no fix, 1 = poor fix, 2 = 2D fix, 3 = 3D fix
 // ============================================================================
 
 SensorReading SensorReader::readGpsFix(const SensorAssignmentConfig& config) {
@@ -1640,28 +1616,13 @@ SensorReading SensorReader::readGpsFix(const SensorAssignmentConfig& config) {
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        // Determine fix type based on location validity and satellite count
-        // TinyGPS++ doesn't expose fix quality directly, so we infer it
-        int fixType = 0;
-        if (_gps->location.isValid()) {
-            // Has valid fix
-            if (_gps->satellites.isValid() && _gps->satellites.value() >= 4) {
-                fixType = 3; // 3D fix (4+ satellites)
-            } else {
-                fixType = 2; // 2D fix (less than 4 satellites)
-            }
-        }
-
-        Serial.printf("[SensorReader] GPS Fix Type: %d\n", fixType);
-        return SensorReading((double)fixType);
+        // Return cached fix type (updated by updateGPS based on satellites and HDOP)
+        Serial.printf("[SensorReader] GPS Fix Type: %d (Satellites: %d, HDOP: %.1f)\n",
+                     _gps_fix_type, _gps_satellites, _gps_hdop);
+        return SensorReading((double)_gps_fix_type);
     }
 
     return SensorReading("No GPS sensor: " + config.sensorCode);
@@ -1673,6 +1634,7 @@ SensorReading SensorReader::readGpsFix(const SensorAssignmentConfig& config) {
 // ============================================================================
 // GPS HDOP (Horizontal Dilution of Precision) Reading (NEO-6M)
 // Lower is better: <1 = Ideal, 1-2 = Excellent, 2-5 = Good, 5-10 = Moderate
+// Uses cached values from updateGPS()
 // ============================================================================
 
 SensorReading SensorReader::readGpsHdop(const SensorAssignmentConfig& config) {
@@ -1690,27 +1652,121 @@ SensorReading SensorReader::readGpsHdop(const SensorAssignmentConfig& config) {
             return SensorReading("GPS not available");
         }
 
-        // Read GPS data (up to 100ms)
-        unsigned long start = millis();
-        while (millis() - start < 100) {
-            while (_gpsSerial->available() > 0) {
-                _gps->encode(_gpsSerial->read());
-            }
-        }
+        // Update GPS data from buffer (non-blocking, uses cached values)
+        updateGPS();
 
-        if (_gps->hdop.isValid()) {
-            double hdop = _gps->hdop.hdop();
-            Serial.printf("[SensorReader] GPS HDOP: %.2f\n", hdop);
-            return SensorReading(hdop);
-        }
-        // Return 99.99 as invalid/unknown HDOP
-        Serial.println("[SensorReader] GPS HDOP: 99.99 (no valid data)");
-        return SensorReading(99.99);
+        // Return cached HDOP
+        Serial.printf("[SensorReader] GPS HDOP: %.2f\n", _gps_hdop);
+        return SensorReading(_gps_hdop);
     }
 
     return SensorReading("No GPS sensor: " + config.sensorCode);
 #else
     return SensorReading("Hardware not available on native");
+#endif
+}
+
+// ============================================================================
+// GPS Continuous Update (Call frequently for accurate data)
+// ============================================================================
+
+void SensorReader::updateGPS() {
+#ifdef PLATFORM_ESP32
+    if (!_gps_ready || !_gpsSerial || !_gps) {
+        return;
+    }
+
+    // Read all available GPS data from serial buffer
+    // This should be called frequently (every loop iteration)
+    unsigned long startTime = millis();
+    int bytesRead = 0;
+
+    while (_gpsSerial->available() > 0 && (millis() - startTime) < 50) {
+        char c = _gpsSerial->read();
+        _gps->encode(c);
+        bytesRead++;
+    }
+
+    // Update cached values if we have new data
+    if (bytesRead > 0) {
+        _gps_last_update = millis();
+
+        // Update satellite count (always available)
+        if (_gps->satellites.isValid()) {
+            _gps_satellites = _gps->satellites.value();
+        }
+
+        // Update HDOP
+        if (_gps->hdop.isValid()) {
+            _gps_hdop = _gps->hdop.hdop();
+        }
+
+        // Update location (latitude/longitude)
+        // isValid() is sufficient - isUpdated() only true when NEW data received
+        if (_gps->location.isValid()) {
+            _gps_latitude = _gps->location.lat();
+            _gps_longitude = _gps->location.lng();
+            _gps_location_valid = true;
+
+            // Only update timestamp when we receive fresh data
+            if (_gps->location.isUpdated()) {
+                _gps_last_valid_fix = millis();
+            }
+
+            // Determine fix type based on satellite count and HDOP
+            if (_gps_satellites >= 4 && _gps_hdop < 5.0) {
+                _gps_fix_type = 3;  // 3D Fix
+            } else if (_gps_satellites >= 3) {
+                _gps_fix_type = 2;  // 2D Fix
+            } else {
+                _gps_fix_type = 1;  // Poor fix
+            }
+        }
+
+        // Update altitude (isValid is sufficient, isUpdated too strict for fast loops)
+        if (_gps->altitude.isValid()) {
+            _gps_altitude = _gps->altitude.meters();
+            _gps_altitude_valid = true;
+        }
+
+        // Update speed from RMC/VTG NMEA sentences
+        // NEO-6M reports speed in knots (RMC) which TinyGPSPlus converts to km/h
+        // At standstill, speed is 0.0 which is a valid value!
+        if (_gps->speed.isValid()) {
+            _gps_speed = _gps->speed.kmph();
+            _gps_speed_valid = true;
+        } else if (_gps_location_valid) {
+            // If we have a valid location fix but no speed data yet,
+            // assume stationary (speed = 0) - this is common at startup
+            _gps_speed = 0.0;
+            _gps_speed_valid = true;
+        }
+    }
+
+    // Mark data as stale if no valid fix for 10 seconds
+    if (_gps_location_valid && (millis() - _gps_last_valid_fix) > 10000) {
+        _gps_location_valid = false;
+        _gps_fix_type = 0;
+    }
+#endif
+}
+
+bool SensorReader::hasValidGpsFix() const {
+#ifdef PLATFORM_ESP32
+    return _gps_location_valid && _gps_fix_type >= 2;
+#else
+    return false;
+#endif
+}
+
+unsigned long SensorReader::getTimeSinceLastGpsFix() const {
+#ifdef PLATFORM_ESP32
+    if (_gps_last_valid_fix == 0) {
+        return ULONG_MAX;  // Never had a fix
+    }
+    return millis() - _gps_last_valid_fix;
+#else
+    return ULONG_MAX;
 #endif
 }
 
