@@ -62,6 +62,7 @@ Beim Hackathon am Pascal-Gymnasium entstand die Idee, Wasserqualität direkt am 
 - Angular Frontend für Visualisierung
 - Docker-Container für einfache Bereitstellung
 - SSL-verschlüsselte Kommunikation
+- **Dual-Mode Kommunikation:** ESP32 sendet Daten wahlweise per WLAN oder Bluetooth an den Raspberry Pi Hub
 
 <br>
 
@@ -83,7 +84,7 @@ flowchart TB
         CLOUD["phx.myiotgrid.cloud"]
     end
     
-    NODE -->|"MQTT"| API
+    NODE -->|"WLAN/Bluetooth"| API
     API --> DB
     API --> FE
     RPI -.->|"Replikation"| DEMO
