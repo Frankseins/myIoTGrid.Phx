@@ -458,8 +458,47 @@ void BLEProvisioningService::checkConfiguration() {
     // 3. WiFi + API config (local mode without hub_url) -> Complete, will discover Hub
     // 4. WiFi only (API not yet received) -> Wait for API config
     // 5. API config received but no WiFi -> Wait for WiFi config
+    // 6. Bluetooth mode -> Complete WITHOUT WiFi, ESP32 enters BLE sensor mode
 
-    // Check if we have WiFi credentials (minimum required)
+    // BLUETOOTH MODE: No WiFi required!
+    // ESP32 will enter BLE sensor mode and transmit data via BLE to BluetoothHub
+    if (_pendingConfig.isBluetoothMode()) {
+        Serial.println("[BLE] ========================================");
+        Serial.println("[BLE] BLUETOOTH SENSOR MODE DETECTED");
+        Serial.println("[BLE] ========================================");
+        Serial.println("[BLE] No WiFi credentials required - ESP32 will transmit via BLE");
+
+        // Generate nodeId from WiFi MAC address if not provided
+        if (_pendingConfig.nodeId.length() == 0) {
+            _pendingConfig.nodeId = "ESP32-" + _macAddress;
+            Serial.printf("[BLE] Generated NodeID from WiFi MAC: %s\n", _pendingConfig.nodeId.c_str());
+        }
+
+        _pendingConfig.isValid = true;
+
+        if (_onPairingCompleted) {
+            Serial.println("[BLE] Calling onPairingCompleted callback");
+            _onPairingCompleted();
+        }
+
+        // Call config callback - main.cpp will handle Bluetooth sensor mode
+        if (_isReProvisioning && _onReProvisioningConfig) {
+            Serial.println("[BLE] RE_PAIRING: Calling onReProvisioningConfig callback");
+            _onReProvisioningConfig(_pendingConfig);
+            _isReProvisioning = false;
+        } else if (_onConfigReceived) {
+            Serial.println("[BLE] Calling onConfigReceived callback for Bluetooth mode");
+            _onConfigReceived(_pendingConfig);
+        } else {
+            Serial.println("[BLE] WARNING: No config callback set!");
+        }
+
+        // Reset pending config
+        _pendingConfig = BLEConfig();
+        return;
+    }
+
+    // Check if we have WiFi credentials (minimum required for non-Bluetooth modes)
     if (_pendingConfig.wifiSsid.length() > 0 &&
         _pendingConfig.wifiPassword.length() > 0) {
 

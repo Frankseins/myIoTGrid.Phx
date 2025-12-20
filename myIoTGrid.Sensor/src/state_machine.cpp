@@ -7,7 +7,7 @@
 StateMachine::StateMachine()
     : _currentState(NodeState::UNCONFIGURED)
     , _retryCount(0) {
-    for (int i = 0; i < 6; i++) {
+    for (int i = 0; i < 7; i++) {
         _enterCallbacks[i] = nullptr;
         _exitCallbacks[i] = nullptr;
     }
@@ -30,6 +30,12 @@ void StateMachine::processEvent(StateEvent event) {
                 case StateEvent::BLE_PAIR_START:
                     transitionTo(NodeState::PAIRING);
                     break;
+                case StateEvent::BLE_SENSOR_MODE_START:
+                    // Bluetooth sensor mode - no WiFi, data sent via BLE
+                    // Can be triggered on boot if stored config is in Bluetooth mode
+                    Serial.println("[StateMachine] Entering BLE_SENSOR_MODE from UNCONFIGURED");
+                    transitionTo(NodeState::BLE_SENSOR_MODE);
+                    break;
                 case StateEvent::ERROR_OCCURRED:
                     transitionTo(NodeState::ERROR);
                     break;
@@ -43,6 +49,11 @@ void StateMachine::processEvent(StateEvent event) {
                 case StateEvent::BLE_CONFIG_RECEIVED:
                     // BLE config received - transition to CONFIGURED to start WiFi connection
                     transitionTo(NodeState::CONFIGURED);
+                    break;
+                case StateEvent::BLE_SENSOR_MODE_START:
+                    // Bluetooth sensor mode - no WiFi, data sent via BLE
+                    Serial.println("[StateMachine] Entering BLE_SENSOR_MODE (no WiFi)");
+                    transitionTo(NodeState::BLE_SENSOR_MODE);
                     break;
                 case StateEvent::WIFI_CONNECTED:
                     transitionTo(NodeState::CONFIGURED);
@@ -190,6 +201,24 @@ void StateMachine::processEvent(StateEvent event) {
                     break;
             }
             break;
+
+        case NodeState::BLE_SENSOR_MODE:
+            // BLE_SENSOR_MODE: Sending sensor data via BLE to BluetoothHub
+            // No WiFi connection, ESP32 acts as BLE peripheral
+            switch (event) {
+                case StateEvent::RESET_REQUESTED:
+                    // Factory reset requested
+                    Serial.println("[StateMachine] Factory reset in BLE_SENSOR_MODE");
+                    transitionTo(NodeState::UNCONFIGURED);
+                    break;
+                case StateEvent::ERROR_OCCURRED:
+                    transitionTo(NodeState::ERROR);
+                    break;
+                default:
+                    // Stay in BLE_SENSOR_MODE for most events
+                    break;
+            }
+            break;
     }
 }
 
@@ -243,6 +272,7 @@ const char* StateMachine::getStateName(NodeState state) {
         case NodeState::OPERATIONAL: return "OPERATIONAL";
         case NodeState::ERROR: return "ERROR";
         case NodeState::RE_PAIRING: return "RE_PAIRING";
+        case NodeState::BLE_SENSOR_MODE: return "BLE_SENSOR_MODE";
         default: return "UNKNOWN";
     }
 }
@@ -266,6 +296,8 @@ const char* StateMachine::getEventName(StateEvent event) {
         case StateEvent::NEW_WIFI_RECEIVED: return "NEW_WIFI_RECEIVED";
         case StateEvent::OLD_WIFI_FOUND: return "OLD_WIFI_FOUND";
         case StateEvent::WIFI_RETRY_TIMER: return "WIFI_RETRY_TIMER";
+        // BLE Sensor Mode Events
+        case StateEvent::BLE_SENSOR_MODE_START: return "BLE_SENSOR_MODE_START";
         default: return "UNKNOWN";
     }
 }

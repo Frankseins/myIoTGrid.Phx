@@ -1077,10 +1077,11 @@ public class EnumDtoTests
     public void ProtocolDto_ShouldHaveExpectedValues()
     {
         // Assert
-        Enum.GetValues<ProtocolDto>().Should().HaveCount(3);
+        Enum.GetValues<ProtocolDto>().Should().HaveCount(4);
         ProtocolDto.Unknown.Should().Be((ProtocolDto)0);
         ProtocolDto.WLAN.Should().Be((ProtocolDto)1);
         ProtocolDto.LoRaWAN.Should().Be((ProtocolDto)2);
+        ProtocolDto.Bluetooth.Should().Be((ProtocolDto)3);
     }
 }
 

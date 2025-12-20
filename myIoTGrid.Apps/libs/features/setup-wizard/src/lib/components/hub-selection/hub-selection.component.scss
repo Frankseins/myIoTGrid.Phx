@@ -281,6 +281,149 @@ mat-divider {
       color: var(--mat-sys-on-surface-variant, #888);
     }
   }
+
+  // Connection Type Selection (WiFi / Bluetooth)
+  .connection-type-section {
+    margin-top: 16px;
+    padding: 16px;
+    background: var(--mat-sys-surface, #fff);
+    border-radius: 8px;
+
+    .connection-type-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      font-size: 0.95rem;
+      font-weight: 500;
+      color: var(--mat-sys-on-surface, #1a1a1a);
+
+      mat-icon {
+        font-size: 20px;
+        width: 20px;
+        height: 20px;
+        color: var(--mat-primary-color, #1976d2);
+      }
+    }
+
+    .connection-type-options {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+  }
+
+  .connection-type-card {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border: 2px solid var(--mat-sys-outline-variant, #e0e0e0);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      border-color: var(--mat-primary-color, #1976d2);
+      background: var(--mat-sys-surface-container-low, #fafafa);
+    }
+
+    &:focus {
+      outline: 2px solid var(--mat-primary-color, #1976d2);
+      outline-offset: 2px;
+    }
+
+    &.selected {
+      border-color: var(--mat-primary-color, #1976d2);
+      background: var(--mat-sys-primary-container, #e3f2fd);
+
+      .conn-icon {
+        &.wifi {
+          color: var(--mat-primary-color, #1976d2);
+        }
+        &.bluetooth {
+          color: #1565c0;
+        }
+      }
+    }
+
+    .conn-icon {
+      font-size: 28px;
+      width: 28px;
+      height: 28px;
+
+      &.wifi {
+        color: var(--mat-sys-on-surface-variant, #666);
+      }
+
+      &.bluetooth {
+        color: var(--mat-sys-on-surface-variant, #666);
+      }
+    }
+
+    .conn-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+
+      .conn-title {
+        font-weight: 500;
+        font-size: 0.95rem;
+        color: var(--mat-sys-on-surface, #1a1a1a);
+      }
+
+      .conn-desc {
+        font-size: 0.75rem;
+        color: var(--mat-sys-on-surface-variant, #666);
+      }
+    }
+
+    .check-icon {
+      font-size: 20px;
+      width: 20px;
+      height: 20px;
+      color: var(--mat-success-color, #4caf50);
+    }
+  }
+
+  // Bluetooth Info Box
+  .bluetooth-info {
+    margin-top: 16px;
+    padding: 12px 16px;
+    background: #e3f2fd;
+    border-radius: 8px;
+    border-left: 4px solid #1565c0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+
+    > mat-icon {
+      color: #1565c0;
+      font-size: 24px;
+      width: 24px;
+      height: 24px;
+    }
+
+    .bluetooth-info-text {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+
+      .info-title {
+        font-weight: 500;
+        color: #1565c0;
+      }
+
+      .info-desc {
+        font-size: 0.875rem;
+        color: var(--mat-sys-on-surface-variant, #555);
+        line-height: 1.4;
+      }
+    }
+  }
 }
 
 .summary-section {

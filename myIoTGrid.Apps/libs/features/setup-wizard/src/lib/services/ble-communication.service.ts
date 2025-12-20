@@ -26,7 +26,7 @@ export interface ApiConfig {
   nodeId: string;
   apiKey: string;
   hubUrl: string;
-  targetMode: 'local' | 'cloud';  // Target mode: local (Hub) or cloud
+  targetMode: 'local' | 'cloud' | 'bluetooth';  // Target mode: local (Hub), cloud, or bluetooth (BLE sensor mode)
 }
 
 /**

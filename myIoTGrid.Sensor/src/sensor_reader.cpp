@@ -1802,3 +1802,436 @@ String SensorReader::getSensorType(const String& sensorCode) {
 
     return "UNKNOWN";
 }
+
+// ============================================================================
+// BLE Sensor Mode: Read detected sensors without Hub configuration
+// Sprint BT-01: For Bluetooth-only devices that don't have API access
+// ============================================================================
+
+int SensorReader::initializeDetectedSensors() {
+#ifdef PLATFORM_ESP32
+    int count = 0;
+    _bleSensors.clear();
+    Serial.println("[SensorReader] Initializing detected sensors for BLE mode...");
+
+    // Default intervals per measurement type (in seconds)
+    // These match typical requirements: temperature/humidity every 60s,
+    // pressure every 5min (changes slowly), light every 30s (responsive)
+    const int INTERVAL_TEMPERATURE = 60;
+    const int INTERVAL_HUMIDITY = 60;
+    const int INTERVAL_PRESSURE = 300;
+    const int INTERVAL_LIGHT = 30;
+    const int INTERVAL_CO2 = 60;
+
+    // Initialize I2C bus with default pins
+    initI2C(21, 22);
+
+    // Scan I2C bus for common sensors
+    Wire.beginTransmission(0x76);
+    if (Wire.endTransmission() == 0) {
+        // Device at 0x76 - could be BME280 or BME680
+        if (initBME280(0x76)) {
+            Serial.println("[SensorReader] BME280 initialized at 0x76");
+            _bleSensors.push_back(BleSensorInfo("temperature", "BME280@0x76", "°C", INTERVAL_TEMPERATURE));
+            _bleSensors.push_back(BleSensorInfo("humidity", "BME280@0x76", "%", INTERVAL_HUMIDITY));
+            _bleSensors.push_back(BleSensorInfo("pressure", "BME280@0x76", "hPa", INTERVAL_PRESSURE));
+            count += 3;
+        }
+    }
+
+    Wire.beginTransmission(0x77);
+    if (Wire.endTransmission() == 0) {
+        if (initBME280(0x77)) {
+            Serial.println("[SensorReader] BME280 initialized at 0x77");
+            _bleSensors.push_back(BleSensorInfo("temperature", "BME280@0x77", "°C", INTERVAL_TEMPERATURE));
+            _bleSensors.push_back(BleSensorInfo("humidity", "BME280@0x77", "%", INTERVAL_HUMIDITY));
+            _bleSensors.push_back(BleSensorInfo("pressure", "BME280@0x77", "hPa", INTERVAL_PRESSURE));
+            count += 3;
+        }
+    }
+
+    Wire.beginTransmission(0x23);
+    if (Wire.endTransmission() == 0) {
+        if (initBH1750(0x23)) {
+            Serial.println("[SensorReader] BH1750 initialized at 0x23");
+            _bleSensors.push_back(BleSensorInfo("light", "BH1750@0x23", "lux", INTERVAL_LIGHT));
+            count++;
+        }
+    }
+
+    Wire.beginTransmission(0x5C);
+    if (Wire.endTransmission() == 0) {
+        if (initBH1750(0x5C)) {
+            Serial.println("[SensorReader] BH1750 initialized at 0x5C");
+            _bleSensors.push_back(BleSensorInfo("light", "BH1750@0x5C", "lux", INTERVAL_LIGHT));
+            count++;
+        }
+    }
+
+    Wire.beginTransmission(0x44);
+    if (Wire.endTransmission() == 0) {
+        if (initSHT31(0x44)) {
+            Serial.println("[SensorReader] SHT31 initialized at 0x44");
+            _bleSensors.push_back(BleSensorInfo("temperature", "SHT31@0x44", "°C", INTERVAL_TEMPERATURE));
+            _bleSensors.push_back(BleSensorInfo("humidity", "SHT31@0x44", "%", INTERVAL_HUMIDITY));
+            count += 2;
+        }
+    }
+
+    Wire.beginTransmission(0x61);
+    if (Wire.endTransmission() == 0) {
+        if (initSCD30()) {
+            Serial.println("[SensorReader] SCD30 initialized");
+            _bleSensors.push_back(BleSensorInfo("co2", "SCD30", "ppm", INTERVAL_CO2));
+            _bleSensors.push_back(BleSensorInfo("temperature", "SCD30", "°C", INTERVAL_TEMPERATURE));
+            _bleSensors.push_back(BleSensorInfo("humidity", "SCD30", "%", INTERVAL_HUMIDITY));
+            count += 3;
+        }
+    }
+
+    Wire.beginTransmission(0x62);
+    if (Wire.endTransmission() == 0) {
+        if (initSCD4x()) {
+            Serial.println("[SensorReader] SCD4x initialized");
+            _bleSensors.push_back(BleSensorInfo("co2", "SCD4x", "ppm", INTERVAL_CO2));
+            _bleSensors.push_back(BleSensorInfo("temperature", "SCD4x", "°C", INTERVAL_TEMPERATURE));
+            _bleSensors.push_back(BleSensorInfo("humidity", "SCD4x", "%", INTERVAL_HUMIDITY));
+            count += 3;
+        }
+    }
+
+    Serial.printf("[SensorReader] Initialized %d sensor readings for BLE mode\n", count);
+    Serial.println("[SensorReader] Sensor intervals:");
+    for (const auto& sensor : _bleSensors) {
+        Serial.printf("  - %s (%s): every %ds\n",
+                      sensor.type.c_str(), sensor.sensorHardware.c_str(), sensor.intervalSeconds);
+    }
+    return count;
+#else
+    return 0;
+#endif
+}
+
+std::vector<SensorReader::SimpleSensorReading> SensorReader::readAllDetectedSensors() {
+    std::vector<SimpleSensorReading> readings;
+
+#ifdef PLATFORM_ESP32
+    // Read from BME280 at 0x76
+    if (_bme280_0x76_ready && _bme280_0x76) {
+        float temp = _bme280_0x76->readTemperature();
+        float hum = _bme280_0x76->readHumidity();
+        float pressure = _bme280_0x76->readPressure() / 100.0F;
+
+        if (!isnan(temp) && temp > -40 && temp < 85) {
+            readings.push_back(SimpleSensorReading("temperature", temp, "°C"));
+        }
+        if (!isnan(hum) && hum >= 0 && hum <= 100) {
+            readings.push_back(SimpleSensorReading("humidity", hum, "%"));
+        }
+        if (!isnan(pressure) && pressure > 300 && pressure < 1200) {
+            readings.push_back(SimpleSensorReading("pressure", pressure, "hPa"));
+        }
+    }
+
+    // Read from BME280 at 0x77
+    if (_bme280_0x77_ready && _bme280_0x77) {
+        float temp = _bme280_0x77->readTemperature();
+        float hum = _bme280_0x77->readHumidity();
+        float pressure = _bme280_0x77->readPressure() / 100.0F;
+
+        if (!isnan(temp) && temp > -40 && temp < 85) {
+            readings.push_back(SimpleSensorReading("temperature", temp, "°C"));
+        }
+        if (!isnan(hum) && hum >= 0 && hum <= 100) {
+            readings.push_back(SimpleSensorReading("humidity", hum, "%"));
+        }
+        if (!isnan(pressure) && pressure > 300 && pressure < 1200) {
+            readings.push_back(SimpleSensorReading("pressure", pressure, "hPa"));
+        }
+    }
+
+    // Read from BME680 at 0x76
+    if (_bme680_0x76_ready && _bme680_0x76) {
+        if (_bme680_0x76->performReading()) {
+            readings.push_back(SimpleSensorReading("temperature", _bme680_0x76->temperature, "°C"));
+            readings.push_back(SimpleSensorReading("humidity", _bme680_0x76->humidity, "%"));
+            readings.push_back(SimpleSensorReading("pressure", _bme680_0x76->pressure / 100.0F, "hPa"));
+            readings.push_back(SimpleSensorReading("gas_resistance", _bme680_0x76->gas_resistance / 1000.0F, "kOhm"));
+        }
+    }
+
+    // Read from SHT31 at 0x44
+    if (_sht31_0x44_ready && _sht31_0x44) {
+        SHT31D result = _sht31_0x44->readTempAndHumidity(SHT3XD_REPEATABILITY_HIGH, SHT3XD_MODE_POLLING, 50);
+        if (result.error == SHT3XD_NO_ERROR) {
+            readings.push_back(SimpleSensorReading("temperature", result.t, "°C"));
+            readings.push_back(SimpleSensorReading("humidity", result.rh, "%"));
+        }
+    }
+
+    // Read from BH1750 at 0x23
+    if (_bh1750_0x23_ready && _bh1750_0x23) {
+        float lux = _bh1750_0x23->readLightLevel();
+        if (lux >= 0) {
+            readings.push_back(SimpleSensorReading("light", lux, "lux"));
+        }
+    }
+
+    // Read from BH1750 at 0x5C
+    if (_bh1750_0x5C_ready && _bh1750_0x5C) {
+        float lux = _bh1750_0x5C->readLightLevel();
+        if (lux >= 0) {
+            readings.push_back(SimpleSensorReading("light", lux, "lux"));
+        }
+    }
+
+    // Read from SCD30 (CO2)
+    if (_scd30_ready && _scd30) {
+        if (_scd30->dataAvailable()) {
+            readings.push_back(SimpleSensorReading("co2", _scd30->getCO2(), "ppm"));
+            readings.push_back(SimpleSensorReading("temperature", _scd30->getTemperature(), "°C"));
+            readings.push_back(SimpleSensorReading("humidity", _scd30->getHumidity(), "%"));
+        }
+    }
+
+    // Read from SCD4x (CO2)
+    if (_scd4x_ready && _scd4x) {
+        uint16_t co2;
+        float temperature, humidity;
+        if (_scd4x->readMeasurement(co2, temperature, humidity) == 0) {
+            readings.push_back(SimpleSensorReading("co2", (float)co2, "ppm"));
+            readings.push_back(SimpleSensorReading("temperature", temperature, "°C"));
+            readings.push_back(SimpleSensorReading("humidity", humidity, "%"));
+        }
+    }
+
+    // Read from DHT22
+    if (_dht22_ready && _dht22) {
+        float temp = _dht22->readTemperature();
+        float hum = _dht22->readHumidity();
+        if (!isnan(temp)) {
+            readings.push_back(SimpleSensorReading("temperature", temp, "°C"));
+        }
+        if (!isnan(hum)) {
+            readings.push_back(SimpleSensorReading("humidity", hum, "%"));
+        }
+    }
+
+    // Read from DS18B20
+    if (_ds18b20_ready && _ds18b20) {
+        _ds18b20->requestTemperatures();
+        float temp = _ds18b20->getTempCByIndex(0);
+        if (temp != DEVICE_DISCONNECTED_C && temp > -55 && temp < 125) {
+            readings.push_back(SimpleSensorReading("temperature", temp, "°C"));
+        }
+    }
+
+    Serial.printf("[SensorReader] Read %d sensor values for BLE mode\n", readings.size());
+#endif
+
+    return readings;
+}
+
+// ============================================================================
+// BLE Sensor Mode: Interval-based sensor reading (like HTTP mode)
+// ============================================================================
+
+const std::vector<SensorReader::BleSensorInfo>& SensorReader::getDetectedSensors() const {
+    return _bleSensors;
+}
+
+/**
+ * Calculate GCD (Greatest Common Divisor) using Euclidean algorithm
+ */
+static int gcdHelper(int a, int b) {
+    while (b != 0) {
+        int t = b;
+        b = a % b;
+        a = t;
+    }
+    return a;
+}
+
+int SensorReader::calculateBleIntervalGCD() const {
+    if (_bleSensors.empty()) {
+        return 60;  // Default 60 seconds
+    }
+
+    int result = 0;
+    for (const auto& sensor : _bleSensors) {
+        if (sensor.isActive && sensor.intervalSeconds > 0) {
+            if (result == 0) {
+                result = sensor.intervalSeconds;
+            } else {
+                result = gcdHelper(result, sensor.intervalSeconds);
+            }
+        }
+    }
+
+    // Ensure minimum 1 second
+    return result > 0 ? result : 60;
+}
+
+bool SensorReader::isBleSensorDue(size_t sensorIndex, unsigned long nowMs) {
+    if (sensorIndex >= _bleSensors.size()) {
+        return false;
+    }
+
+    BleSensorInfo& sensor = _bleSensors[sensorIndex];
+    if (!sensor.isActive || sensor.intervalSeconds <= 0) {
+        return false;
+    }
+
+    // First reading - sensor is due
+    if (sensor.lastReadMs == 0) {
+        return true;
+    }
+
+    unsigned long elapsedMs = nowMs - sensor.lastReadMs;
+    unsigned long intervalMs = (unsigned long)sensor.intervalSeconds * 1000UL;
+    return elapsedMs >= intervalMs;
+}
+
+SensorReader::SimpleSensorReading SensorReader::readBleSensor(size_t sensorIndex, unsigned long nowMs) {
+    SimpleSensorReading result;
+    if (sensorIndex >= _bleSensors.size()) {
+        return result;
+    }
+
+    BleSensorInfo& sensor = _bleSensors[sensorIndex];
+
+#ifdef PLATFORM_ESP32
+    // Read based on sensor hardware and type
+    const String& hw = sensor.sensorHardware;
+    const String& type = sensor.type;
+
+    // BME280 at 0x76
+    if (hw == "BME280@0x76" && _bme280_0x76_ready && _bme280_0x76) {
+        if (type == "temperature") {
+            float val = _bme280_0x76->readTemperature();
+            if (!isnan(val) && val > -40 && val < 85) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        } else if (type == "humidity") {
+            float val = _bme280_0x76->readHumidity();
+            if (!isnan(val) && val >= 0 && val <= 100) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        } else if (type == "pressure") {
+            float val = _bme280_0x76->readPressure() / 100.0F;
+            if (!isnan(val) && val > 300 && val < 1200) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        }
+    }
+    // BME280 at 0x77
+    else if (hw == "BME280@0x77" && _bme280_0x77_ready && _bme280_0x77) {
+        if (type == "temperature") {
+            float val = _bme280_0x77->readTemperature();
+            if (!isnan(val) && val > -40 && val < 85) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        } else if (type == "humidity") {
+            float val = _bme280_0x77->readHumidity();
+            if (!isnan(val) && val >= 0 && val <= 100) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        } else if (type == "pressure") {
+            float val = _bme280_0x77->readPressure() / 100.0F;
+            if (!isnan(val) && val > 300 && val < 1200) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        }
+    }
+    // BH1750 at 0x23
+    else if (hw == "BH1750@0x23" && _bh1750_0x23_ready && _bh1750_0x23) {
+        if (type == "light") {
+            float val = _bh1750_0x23->readLightLevel();
+            if (val >= 0) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        }
+    }
+    // BH1750 at 0x5C
+    else if (hw == "BH1750@0x5C" && _bh1750_0x5C_ready && _bh1750_0x5C) {
+        if (type == "light") {
+            float val = _bh1750_0x5C->readLightLevel();
+            if (val >= 0) {
+                result = SimpleSensorReading(type, val, sensor.unit);
+            }
+        }
+    }
+    // SHT31 at 0x44
+    else if (hw == "SHT31@0x44" && _sht31_0x44_ready && _sht31_0x44) {
+        SHT31D result31 = _sht31_0x44->readTempAndHumidity(SHT3XD_REPEATABILITY_HIGH,
+                                                           SHT3XD_MODE_CLOCK_STRETCH,
+                                                           50);
+        if (result31.error == SHT3XD_NO_ERROR) {
+            if (type == "temperature") {
+                result = SimpleSensorReading(type, result31.t, sensor.unit);
+            } else if (type == "humidity") {
+                result = SimpleSensorReading(type, result31.rh, sensor.unit);
+            }
+        }
+    }
+    // SCD30
+    else if (hw == "SCD30" && _scd30_ready && _scd30) {
+        if (_scd30->dataAvailable()) {
+            if (type == "co2") {
+                float val = _scd30->getCO2();
+                if (val > 0 && val < 40000) {
+                    result = SimpleSensorReading(type, val, sensor.unit);
+                }
+            } else if (type == "temperature") {
+                float val = _scd30->getTemperature();
+                if (val > -40 && val < 85) {
+                    result = SimpleSensorReading(type, val, sensor.unit);
+                }
+            } else if (type == "humidity") {
+                float val = _scd30->getHumidity();
+                if (val >= 0 && val <= 100) {
+                    result = SimpleSensorReading(type, val, sensor.unit);
+                }
+            }
+        }
+    }
+    // SCD4x
+    else if (hw == "SCD4x" && _scd4x_ready && _scd4x) {
+        uint16_t co2Raw;
+        float tempRaw, humRaw;
+        if (_scd4x->readMeasurement(co2Raw, tempRaw, humRaw) == 0) {
+            if (type == "co2" && co2Raw > 0) {
+                result = SimpleSensorReading(type, (float)co2Raw, sensor.unit);
+            } else if (type == "temperature") {
+                result = SimpleSensorReading(type, tempRaw, sensor.unit);
+            } else if (type == "humidity") {
+                result = SimpleSensorReading(type, humRaw, sensor.unit);
+            }
+        }
+    }
+#endif
+
+    // Mark sensor as read
+    if (result.valid) {
+        sensor.lastReadMs = nowMs;
+    }
+
+    return result;
+}
+
+std::vector<SensorReader::SimpleSensorReading> SensorReader::readDueSensors(unsigned long nowMs) {
+    std::vector<SimpleSensorReading> readings;
+
+    for (size_t i = 0; i < _bleSensors.size(); i++) {
+        if (isBleSensorDue(i, nowMs)) {
+            SimpleSensorReading reading = readBleSensor(i, nowMs);
+            if (reading.valid) {
+                readings.push_back(reading);
+                Serial.printf("[SensorReader] Due sensor read: %s = %.2f %s\n",
+                              reading.type.c_str(), reading.value, reading.unit.c_str());
+            }
+        }
+    }
+
+    return readings;
+}

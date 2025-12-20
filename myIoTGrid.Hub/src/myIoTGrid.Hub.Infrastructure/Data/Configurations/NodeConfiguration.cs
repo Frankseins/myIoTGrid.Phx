@@ -103,6 +103,15 @@ public class NodeConfiguration : IEntityTypeConfiguration<Node>
             .IsRequired()
             .HasDefaultValue(false);
 
+        // Bluetooth Connection (Sprint BT-01)
+        builder.Property(n => n.BluetoothHubId)
+            .IsRequired(false);
+
+        builder.HasOne(n => n.BluetoothHub)
+            .WithMany(b => b.Nodes)
+            .HasForeignKey(n => n.BluetoothHubId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         // Indexes
         builder.HasIndex(n => n.HubId);
         builder.HasIndex(n => n.NodeId);
@@ -111,5 +120,6 @@ public class NodeConfiguration : IEntityTypeConfiguration<Node>
         builder.HasIndex(n => n.LastSeen);
         builder.HasIndex(n => n.MacAddress).IsUnique();
         builder.HasIndex(n => n.Status);
+        builder.HasIndex(n => n.BluetoothHubId);
     }
 }

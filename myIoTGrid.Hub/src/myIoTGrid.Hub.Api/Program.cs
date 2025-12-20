@@ -131,6 +131,7 @@ try
     builder.Services.AddScoped<INodeHardwareStatusService, NodeHardwareStatusService>();
     builder.Services.AddScoped<IBackupService, BackupService>();
     builder.Services.AddScoped<IExpeditionService, ExpeditionService>();
+    builder.Services.AddScoped<IBluetoothHubService, BluetoothHubService>();
 
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();
@@ -174,6 +175,10 @@ try
     builder.Services.AddHostedService<MatterBridgeService>();
     builder.Services.AddHostedService<DiscoveryService>();
     builder.Services.AddHostedService<DebugLogCleanupService>();
+
+    // BLE Scanner for direct Bluetooth communication (Sprint BT-01)
+    // Enabled/Disabled via appsettings.json Ble:Enabled
+    builder.Services.AddHostedService<BleScannerHostedService>();
 
     // Controllers (aus Interface-Projekt)
     builder.Services.AddControllers()

@@ -32,6 +32,8 @@
     <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
     <PackageReference Include="Serilog.Enrichers.Environment" Version="3.0.1" />
     <PackageReference Include="Serilog.Enrichers.Thread" Version="4.0.0" />
+    <!-- BLE Support for Raspberry Pi -->
+    <PackageReference Include="InTheHand.BluetoothLE" Version="4.0.37" />
   </ItemGroup>
 
 </Project>

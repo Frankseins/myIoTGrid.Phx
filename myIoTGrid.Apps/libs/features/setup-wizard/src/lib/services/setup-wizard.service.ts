@@ -133,21 +133,43 @@ export class SetupWizardService {
 
   /**
    * Go to next step
+   * Skips wifi-setup step when connectionType is 'bluetooth' (BLE sensors don't need WiFi config)
    */
   nextStep(): void {
     const currentIndex = this.currentStepIndex();
     if (currentIndex < STEP_ORDER.length - 1) {
-      this.goToStep(STEP_ORDER[currentIndex + 1]);
+      let nextStepIndex = currentIndex + 1;
+      const nextStep = STEP_ORDER[nextStepIndex];
+
+      // Skip wifi-setup when using Bluetooth connection
+      if (nextStep === 'wifi-setup' && this._state().targetConfig?.connectionType === 'bluetooth') {
+        nextStepIndex++;
+      }
+
+      if (nextStepIndex < STEP_ORDER.length) {
+        this.goToStep(STEP_ORDER[nextStepIndex]);
+      }
     }
   }
 
   /**
    * Go to previous step
+   * Skips wifi-setup step when connectionType is 'bluetooth' (BLE sensors don't need WiFi config)
    */
   previousStep(): void {
     const currentIndex = this.currentStepIndex();
     if (currentIndex > 0) {
-      this.goToStep(STEP_ORDER[currentIndex - 1]);
+      let prevStepIndex = currentIndex - 1;
+      const prevStep = STEP_ORDER[prevStepIndex];
+
+      // Skip wifi-setup when using Bluetooth connection
+      if (prevStep === 'wifi-setup' && this._state().targetConfig?.connectionType === 'bluetooth') {
+        prevStepIndex--;
+      }
+
+      if (prevStepIndex >= 0) {
+        this.goToStep(STEP_ORDER[prevStepIndex]);
+      }
     }
   }
 
@@ -259,11 +281,16 @@ export class SetupWizardService {
       return null;
     }
 
+    // Determine protocol based on connection type
+    const protocol = state.targetConfig?.connectionType === 'bluetooth'
+      ? Protocol.Bluetooth
+      : Protocol.WLAN;
+
     return {
       nodeId: state.bleDevice.nodeId,  // Use ESP32-generated nodeId (format: ESP32-<WiFi-MAC>)
       name: state.nodeInfo.name,
       hubIdentifier: 'my-iot-hub', // Default hub identifier
-      protocol: Protocol.WLAN,
+      protocol: protocol,
       location: state.nodeInfo.location ? { name: state.nodeInfo.location } : undefined
     };
   }

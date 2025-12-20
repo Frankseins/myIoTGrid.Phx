@@ -1,10 +1,7 @@
 /**
  * myIoTGrid.Sensor - Main Entry Point
  *
- * Self-Provisioning ESP32 Firmware - HARDWARE ONLY
- *
- * SECURITY: This firmware runs ONLY on real ESP32 hardware with real sensors.
- *           Simulation is NOT available on ESP32 - use the native build for simulation.
+ * Self-Provisioning ESP32 Firmware for real hardware sensors
  *
  * Flow:
  * 1. Boot → Check NVS for stored configuration
@@ -14,9 +11,7 @@
  * 5. Discover Hub via UDP broadcast
  * 6. Register and enter operational mode (heartbeats + sensor readings)
  *
- * Sensor Modes:
- * - ESP32: REAL mode only - reads actual hardware sensors (DHT22, BME280, etc.)
- * - Native: SIMULATED mode - software simulator for testing (separate build)
+ * Supported sensors: DHT22, BME280, BME680, SHT31, BH1750, SCD30, SCD40, and more
  */
 
 #include <Arduino.h>
@@ -30,11 +25,6 @@
 #include "discovery_client.h"
 #include "hardware_scanner.h"
 
-// SECURITY: Simulator includes ONLY for PLATFORM_NATIVE
-#ifdef PLATFORM_NATIVE
-#include "sensor_simulator.h"
-#include "gps_simulator.h"
-#endif
 #include "sensor_reader.h"
 #include "led_controller.h"
 
@@ -54,15 +44,12 @@
 
 #ifdef PLATFORM_ESP32
 #include "ble_service.h"
+#include "bluetooth_sensor_mode.h"
 #include "wps_manager.h"
 #include <esp_mac.h>
 #include <WiFi.h>
 #include <Wire.h>
 #include <esp_task_wdt.h>
-#endif
-
-#ifdef PLATFORM_NATIVE
-#include "hal/hal.h"
 #endif
 
 // ============================================================================
@@ -78,13 +65,6 @@ HardwareScanner hardwareScanner;
 SensorReader sensorReader;
 LEDController ledController;
 
-// SECURITY: Simulators ONLY exist on PLATFORM_NATIVE (Docker/Desktop)
-// They are completely excluded from ESP32 builds
-#ifdef PLATFORM_NATIVE
-SensorSimulator sensorSimulator;
-GPSSimulator gpsSimulator;
-#endif
-
 // Sprint OS-01: Offline Storage Instances
 SDManager sdManager;
 StorageConfigManager storageConfigManager;
@@ -96,6 +76,7 @@ bool offlineStorageEnabled = false;
 
 #ifdef PLATFORM_ESP32
 BLEProvisioningService bleService;
+BluetoothSensorMode bluetoothSensorMode;  // BLE Sensor Mode for transmitting data via BLE
 WPSManager wpsManager;
 
 // RE_PAIRING Configuration (Story 4)
@@ -124,18 +105,7 @@ static bool bme680Detected = false;
 static bool sht31Detected = false;
 #endif
 
-// Sensor mode configuration
-// SECURITY: On ESP32, mode is ALWAYS REAL (hardware only)
-//           On Native, mode is ALWAYS SIMULATED (software simulator)
-enum class SensorMode {
-    REAL,       // Only use real hardware sensors (ESP32)
-    SIMULATED   // Only use simulated values (Native/Docker)
-};
-#ifdef PLATFORM_ESP32
-static SensorMode sensorMode = SensorMode::REAL;  // Hardware only!
-#else
-static SensorMode sensorMode = SensorMode::SIMULATED;  // Simulator only!
-#endif
+// Hardware detection flag
 static bool hardwareDetected = false;
 
 // ============================================================================
@@ -688,6 +658,40 @@ void onBLEConfigReceived(const BLEConfig& config) {
     Serial.printf("[Main] WiFi SSID: %s\n", config.wifiSsid.c_str());
     Serial.printf("[Main] Target Mode: %s\n", config.targetMode.c_str());
 
+    // BLUETOOTH SENSOR MODE: No WiFi, data sent via BLE to BluetoothHub
+    if (config.isBluetoothMode()) {
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] BLUETOOTH SENSOR MODE ACTIVATED");
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] No WiFi connection - data will be sent via BLE");
+        Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
+
+        // Save minimal configuration to NVS (no WiFi credentials needed)
+        StoredConfig storedConfig;
+        storedConfig.nodeId = config.nodeId;
+        storedConfig.apiKey = "";  // Not used in BLE mode
+        storedConfig.wifiSsid = "";  // Not used in BLE mode
+        storedConfig.wifiPassword = "";  // Not used in BLE mode
+        storedConfig.hubApiUrl = config.hubApiUrl;  // Store for reference
+        storedConfig.targetMode = config.targetMode;  // "bluetooth"
+        storedConfig.tenantId = config.tenantId;
+        storedConfig.isValid = true;
+
+        if (configManager.saveConfig(storedConfig)) {
+            Serial.println("[Main] Bluetooth mode configuration saved to NVS");
+
+            // Stop BLE provisioning service
+            bleService.stop();
+
+            // Transition to BLE_SENSOR_MODE state
+            stateMachine.processEvent(StateEvent::BLE_SENSOR_MODE_START);
+        } else {
+            Serial.println("[Main] Failed to save Bluetooth mode configuration!");
+            stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
+        }
+        return;
+    }
+
     // Determine the effective Hub URL based on target mode
     String effectiveHubUrl = config.hubApiUrl;
 
@@ -861,12 +865,10 @@ void sendHeartbeat() {
         return;
     }
 
-#ifndef PLATFORM_NATIVE
-    // ESP32: Check WiFi connection
+    // Check WiFi connection
     if (!wifiManager.isConnected()) {
         return;
     }
-#endif
 
     HeartbeatResponse response = apiClient.sendHeartbeat(FIRMWARE_VERSION);
     if (response.success) {
@@ -876,9 +878,6 @@ void sendHeartbeat() {
         Serial.println("[Main] Heartbeat failed!");
     }
 }
-
-// Flag to track if simulation mode has been logged (reset on config change)
-static bool simulationModeLogged = false;
 
 /**
  * Fetch or refresh sensor configuration from Hub
@@ -895,31 +894,11 @@ void fetchSensorConfiguration() {
 
     Serial.println("[Main] Fetching sensor configuration from Hub...");
 
-    // Remember previous simulation state to detect changes
-    bool wasSimulation = configLoaded ? currentConfig.isSimulation : false;
-
     NodeConfigurationResponse response = apiClient.fetchConfiguration(currentSerial);
 
     if (response.success) {
         currentConfig = response;
         configLoaded = true;
-
-        // ============================================================================
-        // SECURITY: Block simulation on real ESP32 hardware!
-        // Simulation is ONLY allowed on PLATFORM_NATIVE (Docker/Desktop)
-        // This prevents accidental or malicious simulation on production hardware
-        // ============================================================================
-#ifdef PLATFORM_ESP32
-        if (currentConfig.isSimulation) {
-            Serial.println("\n[SECURITY] ========================================");
-            Serial.println("[SECURITY] WARNING: Hub requested simulation mode!");
-            Serial.println("[SECURITY] This is BLOCKED on real ESP32 hardware!");
-            Serial.println("[SECURITY] Simulation is only allowed on native/Docker.");
-            Serial.println("[SECURITY] Forcing isSimulation = false");
-            Serial.println("[SECURITY] ========================================\n");
-            currentConfig.isSimulation = false;
-        }
-#endif
 
         // Calculate GCD-based poll interval for all active sensors
         calculatedPollIntervalSeconds = calculatePollIntervalGCD();
@@ -934,21 +913,8 @@ void fetchSensorConfiguration() {
             }
         }
 
-        // Log simulation mode change
-        if (currentConfig.isSimulation != wasSimulation || !simulationModeLogged) {
-            simulationModeLogged = false;  // Reset to log new mode in readAndSendSensors()
-            if (currentConfig.isSimulation) {
-                Serial.println("[Main] Node is in SIMULATION mode (isSimulation=true)");
-            } else {
-                Serial.println("[Main] Node is in REAL HARDWARE mode (isSimulation=false)");
-            }
-        }
-
-        // Validate hardware configuration only when:
-        // 1. Not in simulation mode
-        // 2. Sensors are configured
-        // 3. Configuration has changed (different timestamp) or first time validation
-        if (!currentConfig.isSimulation && currentConfig.sensors.size() > 0) {
+        // Validate hardware configuration when sensors are configured
+        if (currentConfig.sensors.size() > 0) {
             if (currentConfig.configurationTimestamp != lastValidatedConfigTimestamp) {
                 Serial.println("[Main] Configuration changed - validating hardware...");
                 ValidationSummary validationResult = hardwareScanner.validateConfiguration(currentConfig.sensors);
@@ -1034,139 +1000,14 @@ void checkDebugConfiguration() {
     }
 }
 
-// ============================================================================
-// SECURITY: Simulator functions ONLY exist on PLATFORM_NATIVE
-// These are completely excluded from ESP32 builds
-// ============================================================================
-#ifdef PLATFORM_NATIVE
 /**
- * Generate simulated value using the advanced SensorSimulator
- * Supports 5 profiles: NORMAL, WINTER, SUMMER, STORM, STRESS
- * NOTE: This function ONLY exists on PLATFORM_NATIVE (Docker/Desktop)
- */
-double generateSimulatedValue(const String& sensorCode, const String& unit) {
-    // Use the new SensorSimulator for realistic values
-    String code = sensorCode;
-    code.toLowerCase();
-
-    // Temperature sensors
-    if (code.indexOf("temp") >= 0 || unit == "°C" || unit == "C") {
-        return sensorSimulator.getTemperature();
-    }
-
-    // Humidity sensors
-    if (code.indexOf("humid") >= 0 || code.indexOf("hum") >= 0 || unit == "%" || unit == "% RH") {
-        // Check if it's specifically humidity (not soil moisture)
-        if (code.indexOf("soil") < 0 && code.indexOf("moisture") < 0) {
-            return sensorSimulator.getHumidity();
-        }
-    }
-
-    // Pressure sensors
-    if (code.indexOf("pressure") >= 0 || code.indexOf("bmp") >= 0 ||
-        unit == "hPa" || unit == "mbar") {
-        return sensorSimulator.getPressure();
-    }
-
-    // CO2 sensors
-    if (code.indexOf("co2") >= 0 || unit == "ppm") {
-        return sensorSimulator.getCO2();
-    }
-
-    // Light sensors
-    if (code.indexOf("light") >= 0 || unit == "lux" || unit == "lx") {
-        return sensorSimulator.getLight();
-    }
-
-    // Soil moisture sensors
-    if (code.indexOf("soil") >= 0 || code.indexOf("moisture") >= 0) {
-        return sensorSimulator.getSoilMoisture();
-    }
-
-    // GPS simulated values via GPSSimulator
-    if (code.indexOf("gps_satellite") >= 0 || code.indexOf("satellite") >= 0) {
-        return (double)gpsSimulator.getSatellites();
-    }
-    if (code.indexOf("gps_fix") >= 0 || code.indexOf("fix_type") >= 0) {
-        return (double)gpsSimulator.getFixType();
-    }
-    if (code.indexOf("gps_hdop") >= 0 || code.indexOf("hdop") >= 0) {
-        return gpsSimulator.getHdop();
-    }
-    if (code.indexOf("latitude") >= 0 || code.indexOf("lat") >= 0) {
-        return gpsSimulator.getLatitude();
-    }
-    if (code.indexOf("longitude") >= 0 || code.indexOf("lng") >= 0 || code.indexOf("lon") >= 0) {
-        return gpsSimulator.getLongitude();
-    }
-    if (code.indexOf("altitude") >= 0 || code.indexOf("alt") >= 0) {
-        return gpsSimulator.getAltitude();
-    }
-    if (code.indexOf("speed") >= 0) {
-        // Small reporting jitter around current speed for realism
-        return gpsSimulator.getSpeedKmh() + (random(-10, 11) / 20.0); // +/- 0.5 km/h
-    }
-
-    // Default: Use temperature as fallback
-    return sensorSimulator.getTemperature();
-}
-
-/**
- * Set simulation profile from string
- * NOTE: This function ONLY exists on PLATFORM_NATIVE
- */
-void setSimulationProfile(const String& profileName) {
-    String name = profileName;
-    name.toLowerCase();
-
-    if (name == "winter") {
-        sensorSimulator.setProfile(SimulationProfile::WINTER);
-    } else if (name == "summer") {
-        sensorSimulator.setProfile(SimulationProfile::SUMMER);
-    } else if (name == "storm") {
-        sensorSimulator.setProfile(SimulationProfile::STORM);
-    } else if (name == "stress") {
-        sensorSimulator.setProfile(SimulationProfile::STRESS);
-    } else {
-        sensorSimulator.setProfile(SimulationProfile::NORMAL);
-    }
-}
-
-/**
- * Get current simulation profile name
- * NOTE: This function ONLY exists on PLATFORM_NATIVE
- */
-const char* getCurrentProfileName() {
-    return SensorSimulator::getProfileName(sensorSimulator.getProfile());
-}
-#endif // PLATFORM_NATIVE
-
-/**
- * Read sensor value - either from hardware or simulation based on Hub config
+ * Read sensor value from hardware
  * @param sensorCode Sensor code/measurement type
  * @param unit Unit of measurement
  * @param sensorConfig Sensor configuration from Hub (optional, for hardware reading)
  * @return Sensor reading value
  */
 double readSensorValueWithConfig(const String& sensorCode, const String& unit, const SensorAssignmentConfig* sensorConfig) {
-    // SECURITY: Double-check - simulation is NEVER allowed on ESP32 hardware
-#ifdef PLATFORM_ESP32
-    // On real hardware, ALWAYS use hardware sensors - ignore isSimulation flag
-    if (currentConfig.isSimulation) {
-        // This should never happen due to check in refreshSensorConfiguration()
-        // But if it does, log and force hardware mode
-        Serial.println("[SECURITY] ALERT: isSimulation=true on ESP32 - BLOCKED!");
-        currentConfig.isSimulation = false;
-    }
-#else
-    // PLATFORM_NATIVE: Simulation is allowed
-    if (currentConfig.isSimulation) {
-        return generateSimulatedValue(sensorCode, unit);
-    }
-#endif
-
-#ifdef PLATFORM_ESP32
-    // Hub says real hardware - try to read from actual sensors using SensorReader
     if (sensorConfig != nullptr) {
         // Use the sensor configuration to read hardware
         SensorReading reading = sensorReader.readValue(sensorCode, *sensorConfig);
@@ -1175,53 +1016,30 @@ double readSensorValueWithConfig(const String& sensorCode, const String& unit, c
             return reading.value;
         }
 
-        // Hardware reading failed - log error and fall back to simulation with warning
+        // Hardware reading failed - log error
         Serial.printf("[HW] Hardware read failed for %s: %s\n",
                       sensorCode.c_str(), reading.error.c_str());
-        Serial.println("[HW] CRITICAL: isSimulation=false but hardware unavailable!");
         Serial.println("[HW] Check sensor wiring and configuration in Hub");
 
-        // Return NaN or 0 to indicate error (don't silently simulate)
-        // Actually, return a distinctive error value that Hub can recognize
         return -999.99;  // Error indicator value
     }
 
     // No sensor config provided - can't read hardware
     Serial.printf("[HW] No sensor config for %s - cannot read hardware\n", sensorCode.c_str());
     return -999.99;  // Error indicator value
-#else
-    // Native platform - no hardware available
-    Serial.println("[HW] Native platform has no hardware sensors");
-    return generateSimulatedValue(sensorCode, unit);
-#endif
 }
 
 /**
- * Read sensor value - either from hardware or simulation based on Hub config
+ * Read sensor value from hardware
  * Legacy wrapper for backward compatibility
  * @param sensorCode Sensor code/measurement type
  * @param unit Unit of measurement
  * @return Sensor reading value
  */
 double readSensorValue(const String& sensorCode, const String& unit) {
-    // SECURITY: Simulation only allowed on PLATFORM_NATIVE
-#ifdef PLATFORM_ESP32
-    // On ESP32, NEVER simulate - always require hardware
-    if (currentConfig.isSimulation) {
-        Serial.println("[SECURITY] ALERT: isSimulation=true on ESP32 - BLOCKED!");
-        currentConfig.isSimulation = false;
-    }
     // Legacy call without config - can't read hardware properly
     Serial.printf("[HW] readSensorValue called without config for %s\n", sensorCode.c_str());
     return -999.99;  // Error indicator
-#else
-    // PLATFORM_NATIVE: Simulation is allowed
-    if (currentConfig.isSimulation) {
-        return generateSimulatedValue(sensorCode, unit);
-    }
-    // Native without simulation - still use simulation (no hardware available)
-    return generateSimulatedValue(sensorCode, unit);
-#endif
 }
 
 /**
@@ -1248,28 +1066,10 @@ void readAndSendDueSensors(unsigned long now) {
         return;
     }
 
-#ifndef PLATFORM_NATIVE
     // ESP32: Check WiFi connection
     if (!wifiManager.isConnected()) {
         Serial.println("[Main] WiFi not connected - skipping sensor readings");
         return;
-    }
-#endif
-
-    // Log simulation mode from Hub (uses global simulationModeLogged flag)
-    if (!simulationModeLogged) {
-        if (currentConfig.isSimulation) {
-            Serial.println("[Main] ========================================");
-            Serial.println("[Main] SIMULATION MODE (from Hub configuration)");
-            Serial.println("[Main] Node.isSimulation = true");
-            Serial.println("[Main] ========================================");
-        } else {
-            Serial.println("[Main] ========================================");
-            Serial.println("[Main] REAL HARDWARE MODE (from Hub configuration)");
-            Serial.println("[Main] Node.isSimulation = false");
-            Serial.println("[Main] ========================================");
-        }
-        simulationModeLogged = true;
     }
 
     // Count how many sensors are due this tick
@@ -1301,18 +1101,13 @@ void readAndSendDueSensors(unsigned long now) {
         // Mark sensor as read at current time
         markSensorRead(sensor.endpointId, now);
 
-        // Initialize sensor if not simulating (first reading will init)
-#ifdef PLATFORM_ESP32
-        if (!currentConfig.isSimulation) {
-            // Ensure sensor is initialized with Hub configuration
-            sensorReader.initializeSensor(sensor);
-        }
-#endif
+        // Ensure sensor is initialized with Hub configuration
+        sensorReader.initializeSensor(sensor);
 
         // If sensor has capabilities, send one reading per capability
         if (sensor.capabilities.size() > 0) {
             for (const auto& cap : sensor.capabilities) {
-                // Read value based on Hub's isSimulation flag, with sensor config
+                // Read value from hardware sensor
                 double value = readSensorValueWithConfig(cap.measurementType, cap.unit, &sensor);
 
                 // Check for error indicator
@@ -1343,22 +1138,19 @@ void readAndSendDueSensors(unsigned long now) {
                 sentToHub = apiClient.sendReading(cap.measurementType, value, cap.unit, sensor.endpointId);
 #endif
 
-                // Log result with mode info
+                // Log result
                 if (sentToHub && storedLocally) {
-                    Serial.printf("[Main] Sent+Stored %s/%s: %.2f %s (Endpoint %d) [LOCAL_AND_REMOTE]%s\n",
+                    Serial.printf("[Main] Sent+Stored %s/%s: %.2f %s (Endpoint %d) [LOCAL_AND_REMOTE]\n",
                                   sensor.sensorName.c_str(), cap.displayName.c_str(),
-                                  value, cap.unit.c_str(), sensor.endpointId,
-                                  currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                                  value, cap.unit.c_str(), sensor.endpointId);
                 } else if (sentToHub) {
-                    Serial.printf("[Main] Sent %s/%s: %.2f %s (Endpoint %d) [REMOTE]%s\n",
+                    Serial.printf("[Main] Sent %s/%s: %.2f %s (Endpoint %d) [REMOTE]\n",
                                   sensor.sensorName.c_str(), cap.displayName.c_str(),
-                                  value, cap.unit.c_str(), sensor.endpointId,
-                                  currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                                  value, cap.unit.c_str(), sensor.endpointId);
                 } else if (storedLocally) {
-                    Serial.printf("[Main] Stored %s/%s: %.2f %s (Endpoint %d) [LOCAL]%s\n",
+                    Serial.printf("[Main] Stored %s/%s: %.2f %s (Endpoint %d) [LOCAL]\n",
                                   sensor.sensorName.c_str(), cap.displayName.c_str(),
-                                  value, cap.unit.c_str(), sensor.endpointId,
-                                  currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                                  value, cap.unit.c_str(), sensor.endpointId);
                 } else {
                     Serial.printf("[Main] Failed to send/store %s/%s reading\n",
                                   sensor.sensorName.c_str(), cap.measurementType.c_str());
@@ -1397,17 +1189,14 @@ void readAndSendDueSensors(unsigned long now) {
 #endif
 
             if (sentToHub && storedLocally) {
-                Serial.printf("[Main] Sent+Stored %s: %.2f (Endpoint %d) [LOCAL_AND_REMOTE]%s\n",
-                              sensor.sensorName.c_str(), value, sensor.endpointId,
-                              currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                Serial.printf("[Main] Sent+Stored %s: %.2f (Endpoint %d) [LOCAL_AND_REMOTE]\n",
+                              sensor.sensorName.c_str(), value, sensor.endpointId);
             } else if (sentToHub) {
-                Serial.printf("[Main] Sent %s: %.2f (Endpoint %d) [REMOTE]%s\n",
-                              sensor.sensorName.c_str(), value, sensor.endpointId,
-                              currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                Serial.printf("[Main] Sent %s: %.2f (Endpoint %d) [REMOTE]\n",
+                              sensor.sensorName.c_str(), value, sensor.endpointId);
             } else if (storedLocally) {
-                Serial.printf("[Main] Stored %s: %.2f (Endpoint %d) [LOCAL]%s\n",
-                              sensor.sensorName.c_str(), value, sensor.endpointId,
-                              currentConfig.isSimulation ? " [SIM]" : " [HW]");
+                Serial.printf("[Main] Stored %s: %.2f (Endpoint %d) [LOCAL]\n",
+                              sensor.sensorName.c_str(), value, sensor.endpointId);
             } else {
                 Serial.printf("[Main] Failed to send/store %s reading\n", sensor.sensorName.c_str());
             }
@@ -1573,11 +1362,7 @@ bool registerWithHub() {
     Serial.println("[Main] Registering with Hub...");
 
     // Get serial number
-#ifdef PLATFORM_NATIVE
-    String serial = hal::get_device_serial().c_str();
-#else
     String serial = configManager.getSerial();
-#endif
 
     // Store serial for later configuration fetches
     currentSerial = serial;
@@ -1700,26 +1485,13 @@ bool attemptHubDiscovery() {
     // Configure discovery client
     int discoveryPort = config::DISCOVERY_PORT;
 
-#ifdef PLATFORM_NATIVE
-    const char* portEnv = std::getenv(config::ENV_DISCOVERY_PORT);
-    if (portEnv) {
-        discoveryPort = atoi(portEnv);
-    }
-    // Get sensor serial from HAL (native only)
-    String serial = hal::get_device_serial().c_str();
-#else
-    // ESP32: Generate serial from full 6-byte WiFi MAC address
-    String serial = "ESP32-UNKNOWN";
-#ifdef PLATFORM_ESP32
+    // Generate serial from full 6-byte WiFi MAC address
     uint8_t mac[6];
     WiFi.macAddress(mac);
     char serialBuf[24];
-    // Use full 6-byte WiFi MAC address for unique sensor ID
     snprintf(serialBuf, sizeof(serialBuf), "ESP32-%02X%02X%02X%02X%02X%02X",
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
-    serial = String(serialBuf);
-#endif
-#endif
+    String serial = String(serialBuf);
 
     discoveryClient.configure(discoveryPort, config::DISCOVERY_TIMEOUT_MS);
 
@@ -1882,25 +1654,6 @@ void handleConfiguredState() {
     static bool nodeRegistered = false;
     static unsigned long lastWiFiAttempt = 0;
     static bool waitingForRetry = false;
-
-#ifdef PLATFORM_NATIVE
-    // Native mode: Already "connected" via network, register with Hub
-    if (!nodeRegistered) {
-        if (apiClient.getBaseUrl().length() > 0) {
-            if (registerWithHub()) {
-                nodeRegistered = true;
-                stateMachine.processEvent(StateEvent::API_VALIDATED);
-            } else {
-                // Registration failed - go to error state
-                stateMachine.processEvent(StateEvent::API_FAILED);
-            }
-        } else {
-            Serial.println("[Main] API base URL not set!");
-            stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
-        }
-    }
-#else
-    // ESP32 mode: Need WiFi connection
     static bool wifiConnecting = false;
     static bool apiConfigured = false;
     static bool discoveryAttempted = false;
@@ -2056,14 +1809,12 @@ void handleConfiguredState() {
             }
         }
     }
-#endif
 }
 
 void handleOperationalState() {
     unsigned long now = millis();
 
-#ifndef PLATFORM_NATIVE
-    // ESP32: Check WiFi connection periodically
+    // Check WiFi connection periodically
     if (now - lastWiFiCheck >= WIFI_CHECK_INTERVAL_MS) {
         lastWiFiCheck = now;
         wifiManager.loop();
@@ -2074,7 +1825,6 @@ void handleOperationalState() {
             return;
         }
     }
-#endif
 
     // Check for configuration updates periodically
     if (now - lastConfigCheck >= CONFIG_CHECK_INTERVAL_MS) {
@@ -2233,6 +1983,128 @@ void handleRePairingState() {
 #else
     // Native platform - just wait
     Serial.println("[Main] RE_PAIRING not fully supported on native platform");
+    delay(5000);
+#endif
+}
+
+// ============================================================================
+// BLE Sensor Mode State Handler (Sprint BT-01)
+// ============================================================================
+
+// Static variables for BLE Sensor Mode
+static bool bleSensorModeActive = false;
+static unsigned long lastBleSensorPoll = 0;
+static unsigned long bleSensorPollIntervalMs = 60000;  // Will be set to GCD of sensor intervals
+
+/**
+ * Handle BLE_SENSOR_MODE state
+ * In this state, the ESP32 transmits sensor data via BLE to the BluetoothHub.
+ * No WiFi connection is needed - all communication is via Bluetooth.
+ *
+ * Events that can exit this state:
+ * - RESET_REQUESTED: Factory reset
+ * - ERROR_OCCURRED: Error
+ */
+void handleBleSensorModeState() {
+#ifdef PLATFORM_ESP32
+    unsigned long now = millis();
+
+    // Initialize BLE Sensor Mode if not already active
+    if (!bleSensorModeActive) {
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] ENTERING BLE_SENSOR_MODE");
+        Serial.println("[Main] ========================================");
+        Serial.println("[Main] - Transmitting sensor data via BLE");
+        Serial.println("[Main] - No WiFi connection (Bluetooth only)");
+        Serial.println("[Main] - LED: Fast blink pattern");
+
+        // Load stored config to get nodeId
+        StoredConfig config = configManager.loadConfig();
+
+        // Initialize BluetoothSensorMode with nodeId
+        if (bluetoothSensorMode.init(config.nodeId)) {
+            Serial.println("[Main] BluetoothSensorMode initialized");
+
+            // Set up callbacks
+            bluetoothSensorMode.setConnectedCallback([]() {
+                Serial.println("[Main] BluetoothHub connected!");
+                ledController.setPattern(LEDPattern::SLOW_BLINK);
+            });
+
+            bluetoothSensorMode.setDisconnectedCallback([]() {
+                Serial.println("[Main] BluetoothHub disconnected - advertising...");
+                ledController.setPattern(LEDPattern::FAST_BLINK);
+            });
+
+            bluetoothSensorMode.setTransmitCallback([](bool success) {
+                if (success) {
+                    Serial.println("[Main] Sensor data transmitted via BLE");
+                } else {
+                    Serial.println("[Main] BLE transmission failed");
+                }
+            });
+
+            // Initialize sensors for BLE mode (auto-detect without Hub config)
+            int sensorCount = sensorReader.initializeDetectedSensors();
+            Serial.printf("[Main] Initialized %d sensor readings for BLE mode\n", sensorCount);
+
+            // Calculate GCD-based poll interval (like HTTP mode)
+            int gcdSeconds = sensorReader.calculateBleIntervalGCD();
+            bleSensorPollIntervalMs = (unsigned long)gcdSeconds * 1000UL;
+            Serial.printf("[Main] BLE poll interval: %d seconds (GCD of all sensor intervals)\n", gcdSeconds);
+
+            // Start advertising
+            bluetoothSensorMode.startAdvertising();
+            Serial.println("[Main] BLE advertising started - waiting for BluetoothHub");
+
+        } else {
+            Serial.println("[Main] Failed to initialize BluetoothSensorMode!");
+            stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
+            return;
+        }
+
+        // Set LED pattern for BLE Sensor Mode (advertising)
+        ledController.setPattern(LEDPattern::FAST_BLINK);
+
+        bleSensorModeActive = true;
+        lastBleSensorPoll = now;
+    }
+
+    // Process BLE events
+    bluetoothSensorMode.loop();
+
+    // Poll sensors at GCD interval (only read sensors that are due)
+    if (bluetoothSensorMode.isConnected() &&
+        (now - lastBleSensorPoll >= bleSensorPollIntervalMs)) {
+        lastBleSensorPoll = now;
+
+        // Read only sensors that are due based on their individual intervals
+        // This works exactly like HTTP mode - each sensor has its own interval
+        #ifdef PLATFORM_ESP32
+        std::vector<SensorReader::SimpleSensorReading> dueReadings = sensorReader.readDueSensors(now);
+
+        // Convert to BLE format and send if we have any readings
+        if (!dueReadings.empty()) {
+            std::vector<BleSensorReading> bleReadings;
+            for (const auto& sr : dueReadings) {
+                bleReadings.push_back(BleSensorReading(sr.type, sr.value, sr.unit));
+            }
+
+            if (bluetoothSensorMode.sendSensorData(bleReadings, nullptr)) {
+                Serial.printf("[Main] Sent %d readings via BLE\n", bleReadings.size());
+            } else {
+                Serial.println("[Main] Failed to send sensor data via BLE");
+            }
+        }
+        #endif
+    }
+
+    // Update LED pattern
+    ledController.update();
+
+#else
+    // Native platform - BLE Sensor Mode not supported
+    Serial.println("[Main] BLE_SENSOR_MODE not supported on native platform");
     delay(5000);
 #endif
 }
@@ -2419,37 +2291,9 @@ void setup() {
 
     // Auto-detect hardware sensors (Story 6)
     autoDetectHardware();
-#else
-    // Native mode: Always use simulation
-    sensorMode = SensorMode::SIMULATED;
-    Serial.println("[Main] Native platform - using SIMULATED mode");
 #endif
 
-    // ============================================================================
-    // SECURITY: Simulators are ONLY initialized on PLATFORM_NATIVE
-    // On ESP32 hardware, simulators are completely disabled
-    // ============================================================================
-#ifdef PLATFORM_NATIVE
-    // Native/Docker: Initialize simulators for testing
-    const char* profileEnv = std::getenv("SIMULATION_PROFILE");
-    if (profileEnv) {
-        setSimulationProfile(String(profileEnv));
-        Serial.printf("[Simulator] Profile from env: %s\n", getCurrentProfileName());
-    } else {
-        sensorSimulator.init(SimulationProfile::NORMAL);
-        gpsSimulator.init();
-    }
-    Serial.printf("[Simulator] Active profile: %s\n", getCurrentProfileName());
-    Serial.printf("[Simulator] Daily cycle: %s\n",
-                  sensorSimulator.isDailyCycleEnabled() ? "enabled" : "disabled");
-#else
-    // ESP32: Simulators are DISABLED - real hardware only!
-    Serial.println("[SECURITY] Simulators DISABLED on ESP32 hardware");
-#endif
-
-    // Print sensor mode
-    Serial.printf("[Main] Sensor mode: %s\n",
-                  sensorMode == SensorMode::REAL ? "REAL (Hardware)" : "SIMULATED (Software)");
+    Serial.println("[Main] Sensor mode: REAL (Hardware)");
 
     // Check for existing configuration
     if (configManager.hasConfig()) {
@@ -2457,15 +2301,22 @@ void setup() {
         StoredConfig config = configManager.loadConfig();
         if (config.isValid) {
             Serial.printf("[Main] NodeID: %s\n", config.nodeId.c_str());
-            // For Cloud mode: show the firmware constant URL (not stored URL)
-            if (config.isCloudMode()) {
-                Serial.printf("[Main] Target: CLOUD (%s)\n", config::CLOUD_API_URL);
-            } else {
-                Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
-            }
+            Serial.printf("[Main] Target Mode: %s\n", config.targetMode.c_str());
 
-            // We have config - go directly to CONFIGURED state
-            stateMachine.processEvent(StateEvent::CONFIG_FOUND);
+            // Check target mode and transition appropriately
+            if (config.isBluetoothMode()) {
+                // Bluetooth sensor mode - no WiFi, data sent via BLE
+                Serial.println("[Main] Target: BLUETOOTH SENSOR MODE (BLE only, no WiFi)");
+                stateMachine.processEvent(StateEvent::BLE_SENSOR_MODE_START);
+            } else if (config.isCloudMode()) {
+                // Cloud mode - show the firmware constant URL
+                Serial.printf("[Main] Target: CLOUD (%s)\n", config::CLOUD_API_URL);
+                stateMachine.processEvent(StateEvent::CONFIG_FOUND);
+            } else {
+                // Local mode - show Hub URL
+                Serial.printf("[Main] Hub URL: %s\n", config.hubApiUrl.c_str());
+                stateMachine.processEvent(StateEvent::CONFIG_FOUND);
+            }
         } else {
             Serial.println("[Main] Stored config invalid - need pairing");
             stateMachine.processEvent(StateEvent::NO_CONFIG);
@@ -2501,20 +2352,7 @@ void loop() {
     if (wpsManager.isActive()) {
         wpsManager.loop();
     }
-#endif
 
-    // Update sensor simulator (generates smooth value transitions)
-    // SECURITY: Only on PLATFORM_NATIVE - simulators are disabled on ESP32
-#ifdef PLATFORM_NATIVE
-    static unsigned long lastSimulatorUpdate = 0;
-    if (millis() - lastSimulatorUpdate >= 1000) {  // Update every second
-        lastSimulatorUpdate = millis();
-        sensorSimulator.update();
-        gpsSimulator.update();
-    }
-#endif
-
-#ifdef PLATFORM_ESP32
     // Continuously update GPS data from serial buffer
     // NEO-6M sends NMEA data at 1Hz - frequent calls ensure no data is lost
     // This enables accurate position and speed readings
@@ -2544,6 +2382,10 @@ void loop() {
 
         case NodeState::RE_PAIRING:
             handleRePairingState();
+            break;
+
+        case NodeState::BLE_SENSOR_MODE:
+            handleBleSensorModeState();
             break;
     }
 
@@ -2594,16 +2436,3 @@ void loop() {
     delay(10);
 }
 
-// ============================================================================
-// Native Platform Entry Point
-// ============================================================================
-
-#ifdef PLATFORM_NATIVE
-int main() {
-    setup();
-    while (true) {
-        loop();
-    }
-    return 0;
-}
-#endif

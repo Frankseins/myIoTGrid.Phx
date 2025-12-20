@@ -202,6 +202,92 @@ public:
      */
     String getSensorType(const String& sensorCode);
 
+    // =========================================================================
+    // BLE Sensor Mode: Read detected sensors without Hub configuration
+    // Sprint BT-01: For Bluetooth-only devices that don't have API access
+    // =========================================================================
+
+    /**
+     * Simple sensor reading for BLE mode (no Hub config required)
+     */
+    struct SimpleSensorReading {
+        String type;      // e.g., "temperature", "humidity", "pressure", "light"
+        float value;
+        String unit;
+        bool valid;
+
+        SimpleSensorReading() : value(0), valid(false) {}
+        SimpleSensorReading(const String& t, float v, const String& u)
+            : type(t), value(v), unit(u), valid(true) {}
+    };
+
+    /**
+     * BLE sensor info with interval tracking
+     * Each detected sensor has a default interval for periodic reading
+     */
+    struct BleSensorInfo {
+        String type;              // e.g., "temperature", "humidity"
+        String sensorHardware;    // e.g., "BME280", "BH1750"
+        String unit;              // e.g., "°C", "%", "hPa"
+        int intervalSeconds;      // Reading interval (default based on sensor type)
+        unsigned long lastReadMs; // Last reading timestamp
+        bool isActive;
+
+        BleSensorInfo() : intervalSeconds(60), lastReadMs(0), isActive(false) {}
+        BleSensorInfo(const String& t, const String& hw, const String& u, int interval)
+            : type(t), sensorHardware(hw), unit(u), intervalSeconds(interval),
+              lastReadMs(0), isActive(true) {}
+    };
+
+    /**
+     * Initialize all detected I2C sensors automatically
+     * Call this once after hardware scanning to prepare sensors for reading
+     * @return Number of sensors successfully initialized
+     */
+    int initializeDetectedSensors();
+
+    /**
+     * Get list of detected BLE sensors with their intervals
+     * @return Vector of BleSensorInfo for all detected sensors
+     */
+    const std::vector<BleSensorInfo>& getDetectedSensors() const;
+
+    /**
+     * Calculate GCD of all sensor intervals for optimal polling
+     * @return GCD in seconds (minimum 1)
+     */
+    int calculateBleIntervalGCD() const;
+
+    /**
+     * Check if a specific sensor is due for reading
+     * @param sensorIndex Index in the detected sensors vector
+     * @param nowMs Current time in milliseconds
+     * @return true if sensor should be read now
+     */
+    bool isBleSensorDue(size_t sensorIndex, unsigned long nowMs);
+
+    /**
+     * Read a specific sensor by index and mark as read
+     * @param sensorIndex Index in the detected sensors vector
+     * @param nowMs Current time in milliseconds
+     * @return SimpleSensorReading with value or invalid if error
+     */
+    SimpleSensorReading readBleSensor(size_t sensorIndex, unsigned long nowMs);
+
+    /**
+     * Read all sensors that are due based on their intervals
+     * @param nowMs Current time in milliseconds
+     * @return Vector of sensor readings for sensors that were due
+     */
+    std::vector<SimpleSensorReading> readDueSensors(unsigned long nowMs);
+
+    /**
+     * Read all initialized sensors without Hub configuration
+     * For BLE Sensor Mode where no API/WiFi connection is available
+     * @return Vector of sensor readings from all detected hardware
+     */
+    std::vector<SimpleSensorReading> readAllDetectedSensors();
+
 private:
 #ifdef PLATFORM_ESP32
     // BME280 sensor instances (indexed by I2C address for multi-sensor support)
@@ -351,6 +437,9 @@ private:
 #endif
 
     bool _initialized;
+
+    // BLE Sensor Mode: detected sensors with interval tracking
+    std::vector<BleSensorInfo> _bleSensors;
 };
 
 #endif // SENSOR_READER_H

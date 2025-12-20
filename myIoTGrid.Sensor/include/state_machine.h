@@ -19,12 +19,13 @@
  * Node provisioning states
  */
 enum class NodeState {
-    UNCONFIGURED,  // No configuration, ready for BLE pairing
-    PAIRING,       // BLE pairing mode active
-    CONFIGURED,    // Configured, connecting to WiFi
-    OPERATIONAL,   // Fully operational, sending data
-    ERROR,         // Error state (temporary, will retry)
-    RE_PAIRING     // Re-provisioning mode: BLE active + WiFi retry parallel
+    UNCONFIGURED,      // No configuration, ready for BLE pairing
+    PAIRING,           // BLE pairing mode active
+    CONFIGURED,        // Configured, connecting to WiFi
+    OPERATIONAL,       // Fully operational, sending data via WiFi
+    ERROR,             // Error state (temporary, will retry)
+    RE_PAIRING,        // Re-provisioning mode: BLE active + WiFi retry parallel
+    BLE_SENSOR_MODE    // Bluetooth sensor mode: sending data via BLE to BluetoothHub
 };
 
 /**
@@ -48,7 +49,10 @@ enum class StateEvent {
     MAX_RETRIES_REACHED,   // Maximum retry count exceeded → enter RE_PAIRING
     NEW_WIFI_RECEIVED,     // New WiFi credentials received via BLE
     OLD_WIFI_FOUND,        // Old WiFi credentials worked during retry
-    WIFI_RETRY_TIMER       // Timer tick for parallel WiFi retry (every 30s)
+    WIFI_RETRY_TIMER,      // Timer tick for parallel WiFi retry (every 30s)
+
+    // Bluetooth Sensor Mode Events (Sprint BT-01)
+    BLE_SENSOR_MODE_START  // Enter BLE sensor mode (no WiFi, data via BLE)
 };
 
 /**
@@ -129,9 +133,9 @@ private:
     NodeState _currentState;
     int _retryCount;
 
-    // Callbacks (6 states including RE_PAIRING)
-    StateEnterCallback _enterCallbacks[6];
-    StateExitCallback _exitCallbacks[6];
+    // Callbacks (7 states including RE_PAIRING and BLE_SENSOR_MODE)
+    StateEnterCallback _enterCallbacks[7];
+    StateExitCallback _exitCallbacks[7];
 
     /**
      * Transition to a new state
