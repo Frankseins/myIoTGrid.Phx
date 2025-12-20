@@ -49,4 +49,5 @@ public class Hub : ITenantEntity
     public Tenant? Tenant { get; set; }
     public ICollection<Node> Nodes { get; set; } = new List<Node>();
     public ICollection<Alert> Alerts { get; set; } = new List<Alert>();
+    public ICollection<BluetoothHub> BluetoothHubs { get; set; } = new List<BluetoothHub>();
 }

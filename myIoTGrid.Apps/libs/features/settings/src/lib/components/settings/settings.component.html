@@ -39,6 +39,99 @@
         </mat-card-content>
       </mat-card>
 
+      <!-- BluetoothHubs Card -->
+      <mat-card class="settings-card bluetooth-hubs-card">
+        <mat-card-header>
+          <mat-icon mat-card-avatar class="bluetooth-icon">bluetooth</mat-icon>
+          <mat-card-title>Bluetooth Hubs</mat-card-title>
+          <mat-card-subtitle>Bluetooth-Gateways für ESP32-Sensoren</mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (isBluetoothHubsLoading()) {
+            <div class="loading-inline">
+              <mat-icon class="spin">sync</mat-icon>
+              <span>Lade BluetoothHubs...</span>
+            </div>
+          } @else {
+            @if (bluetoothHubs().length === 0) {
+              <div class="empty-state">
+                <mat-icon>bluetooth_disabled</mat-icon>
+                <p>Keine BluetoothHubs konfiguriert.</p>
+                <p class="hint">BluetoothHubs empfangen Daten von ESP32-Sensoren via Bluetooth Low Energy.</p>
+              </div>
+            } @else {
+              <div class="bluetooth-hub-list">
+                @for (hub of bluetoothHubs(); track hub.id) {
+                  <div class="bluetooth-hub-item">
+                    <div class="hub-info">
+                      <mat-icon class="hub-icon">bluetooth_connected</mat-icon>
+                      <div class="hub-details">
+                        <span class="hub-name">{{ hub.name }}</span>
+                        <span class="hub-meta">
+                          @if (hub.macAddress) {
+                            MAC: {{ hub.macAddress }}
+                          }
+                          @if (hub.nodeCount > 0) {
+                            · {{ hub.nodeCount }} Sensor(en)
+                          }
+                        </span>
+                      </div>
+                    </div>
+                    <div class="hub-status">
+                      <span class="status-chip" [ngClass]="getStatusClass(hub.status)">
+                        {{ getStatusLabel(hub.status) }}
+                      </span>
+                    </div>
+                    <div class="hub-actions">
+                      <button mat-icon-button color="warn" (click)="deleteBluetoothHub(hub)" matTooltip="Löschen">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+
+            <!-- Add Form -->
+            @if (showAddForm()) {
+              <div class="add-hub-form">
+                <mat-divider></mat-divider>
+                <h4>Neuen BluetoothHub hinzufügen</h4>
+                <div class="form-row">
+                  <mat-form-field appearance="outline" class="name-field">
+                    <mat-label>Name</mat-label>
+                    <input matInput [ngModel]="newHubName()" (ngModelChange)="newHubName.set($event)" placeholder="z.B. Wohnzimmer-Gateway">
+                  </mat-form-field>
+                  <mat-form-field appearance="outline" class="mac-field">
+                    <mat-label>MAC-Adresse (optional)</mat-label>
+                    <input matInput [ngModel]="newHubMacAddress()" (ngModelChange)="newHubMacAddress.set($event)" placeholder="z.B. AA:BB:CC:DD:EE:FF">
+                  </mat-form-field>
+                </div>
+                <div class="form-actions">
+                  <button mat-button (click)="toggleAddForm()">Abbrechen</button>
+                  <button mat-flat-button color="primary" (click)="addBluetoothHub()" [disabled]="isAddingHub()">
+                    @if (isAddingHub()) {
+                      <mat-icon class="spin">sync</mat-icon>
+                    } @else {
+                      <mat-icon>add</mat-icon>
+                    }
+                    Erstellen
+                  </button>
+                </div>
+              </div>
+            } @else {
+              <mat-divider></mat-divider>
+              <div class="add-button-container">
+                <button mat-stroked-button color="primary" (click)="toggleAddForm()">
+                  <mat-icon>add</mat-icon>
+                  BluetoothHub hinzufügen
+                </button>
+              </div>
+            }
+          }
+        </mat-card-content>
+      </mat-card>
+
       <!-- Smart Home Card -->
       <mat-card class="settings-card">
         <mat-card-header>

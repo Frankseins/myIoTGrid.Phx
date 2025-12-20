@@ -17,6 +17,9 @@ public class HubDbContext : DbContext
     /// <summary>Hubs (Raspberry Pi Gateways)</summary>
     public DbSet<myIoTGrid.Shared.Common.Entities.Hub> Hubs => Set<myIoTGrid.Shared.Common.Entities.Hub>();
 
+    /// <summary>BluetoothHubs (Bluetooth Gateways for ESP32 BLE sensors)</summary>
+    public DbSet<BluetoothHub> BluetoothHubs => Set<BluetoothHub>();
+
     /// <summary>Nodes (ESP32/LoRa32 Devices) - Matter Nodes</summary>
     public DbSet<Node> Nodes => Set<Node>();
 

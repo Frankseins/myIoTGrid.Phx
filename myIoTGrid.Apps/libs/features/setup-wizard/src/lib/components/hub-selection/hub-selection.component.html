@@ -80,29 +80,97 @@
               </div>
 
               @if (selectedMode() === 'local') {
-                <div class="address-config">
-                  <mat-form-field appearance="outline" class="address-field">
-                    <mat-label>Hub-Adresse</mat-label>
-                    <input
-                      matInput
-                      [ngModel]="localAddress()"
-                      (ngModelChange)="onAddressChange($event)"
-                      placeholder="https://192.168.1.100"
+                <!-- Connection Type Selection (WiFi or Bluetooth) -->
+                <div class="connection-type-section">
+                  <h4 class="connection-type-title">
+                    <mat-icon>settings_input_antenna</mat-icon>
+                    Verbindungsart:
+                  </h4>
+                  <div class="connection-type-options">
+                    <!-- WiFi Option -->
+                    <div
+                      class="connection-type-card"
+                      [class.selected]="selectedConnectionType() === 'wifi'"
+                      (click)="selectConnectionType('wifi')"
+                      (keydown.enter)="selectConnectionType('wifi')"
+                      (keydown.space)="selectConnectionType('wifi')"
+                      tabindex="0"
+                      role="radio"
+                      [attr.aria-checked]="selectedConnectionType() === 'wifi'"
                     >
-                    <mat-hint>z.B. https://192.168.1.100</mat-hint>
-                  </mat-form-field>
+                      <mat-icon class="conn-icon wifi">wifi</mat-icon>
+                      <div class="conn-info">
+                        <span class="conn-title">WLAN</span>
+                        <span class="conn-desc">Sensor verbindet sich per WiFi mit dem Hub</span>
+                      </div>
+                      @if (selectedConnectionType() === 'wifi') {
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                      }
+                    </div>
 
-                  <mat-form-field appearance="outline" class="port-field">
-                    <mat-label>Port</mat-label>
-                    <input
-                      matInput
-                      type="number"
-                      [ngModel]="localPort()"
-                      (ngModelChange)="onPortChange($event)"
-                      placeholder="5001"
+                    <!-- Bluetooth Option -->
+                    <div
+                      class="connection-type-card"
+                      [class.selected]="selectedConnectionType() === 'bluetooth'"
+                      (click)="selectConnectionType('bluetooth')"
+                      (keydown.enter)="selectConnectionType('bluetooth')"
+                      (keydown.space)="selectConnectionType('bluetooth')"
+                      tabindex="0"
+                      role="radio"
+                      [attr.aria-checked]="selectedConnectionType() === 'bluetooth'"
                     >
-                  </mat-form-field>
+                      <mat-icon class="conn-icon bluetooth">bluetooth</mat-icon>
+                      <div class="conn-info">
+                        <span class="conn-title">Bluetooth</span>
+                        <span class="conn-desc">Sensor verbindet sich per BLE mit BluetoothHub</span>
+                      </div>
+                      @if (selectedConnectionType() === 'bluetooth') {
+                        <mat-icon class="check-icon">check_circle</mat-icon>
+                      }
+                    </div>
+                  </div>
                 </div>
+
+                <!-- WiFi Address/Port Configuration (only for WiFi mode) -->
+                @if (selectedConnectionType() === 'wifi') {
+                  <div class="address-config">
+                    <mat-form-field appearance="outline" class="address-field">
+                      <mat-label>Hub-Adresse</mat-label>
+                      <input
+                        matInput
+                        [ngModel]="localAddress()"
+                        (ngModelChange)="onAddressChange($event)"
+                        placeholder="https://192.168.1.100"
+                      >
+                      <mat-hint>z.B. https://192.168.1.100</mat-hint>
+                    </mat-form-field>
+
+                    <mat-form-field appearance="outline" class="port-field">
+                      <mat-label>Port</mat-label>
+                      <input
+                        matInput
+                        type="number"
+                        [ngModel]="localPort()"
+                        (ngModelChange)="onPortChange($event)"
+                        placeholder="5001"
+                      >
+                    </mat-form-field>
+                  </div>
+                }
+
+                <!-- Bluetooth Info (only for Bluetooth mode) -->
+                @if (selectedConnectionType() === 'bluetooth') {
+                  <div class="bluetooth-info">
+                    <mat-icon>info</mat-icon>
+                    <div class="bluetooth-info-text">
+                      <span class="info-title">Bluetooth-Modus</span>
+                      <span class="info-desc">
+                        Der Sensor sendet Daten per Bluetooth Low Energy (BLE) an einen BluetoothHub.
+                        Die WiFi-Konfiguration entfällt. Der BluetoothHub leitet die Daten an den lokalen Hub weiter.
+                      </span>
+                    </div>
+                  </div>
+                }
               }
             </div>
 
@@ -159,10 +227,18 @@
               <div class="summary-text">
                 <span class="summary-title">Gewählte Konfiguration:</span>
                 <span class="summary-details">
-                  {{ config.mode === 'local' ? 'Lokaler Hub' : 'Cloud' }} -
-                  {{ config.address }}:{{ config.port }}
-                  @if (config.useSsl) {
+                  {{ config.mode === 'local' ? 'Lokaler Hub' : 'Cloud' }}
+                  @if (config.mode === 'local') {
+                    ({{ config.connectionType === 'wifi' ? 'WLAN' : 'Bluetooth' }})
+                  }
+                  @if (config.connectionType === 'wifi') {
+                    - {{ config.address }}:{{ config.port }}
+                  }
+                  @if (config.useSsl && config.connectionType === 'wifi') {
                     <mat-icon class="inline-icon">lock</mat-icon>
+                  }
+                  @if (config.connectionType === 'bluetooth') {
+                    <mat-icon class="inline-icon">bluetooth</mat-icon>
                   }
                 </span>
               </div>

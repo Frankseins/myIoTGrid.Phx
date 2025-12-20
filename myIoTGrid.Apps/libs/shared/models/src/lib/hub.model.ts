@@ -107,6 +107,12 @@ export interface HubProperties {
 export type SensorTargetMode = 'local' | 'cloud';
 
 /**
+ * Sensor connection type - how the sensor connects (WiFi or Bluetooth)
+ * Only applicable when mode is 'local'
+ */
+export type SensorConnectionType = 'wifi' | 'bluetooth';
+
+/**
  * Sensor target configuration for setup wizard
  */
 export interface SensorTargetConfig {
@@ -116,4 +122,39 @@ export interface SensorTargetConfig {
   tenantId: string;
   tenantName: string;
   useSsl: boolean;
+  connectionType: SensorConnectionType;  // WiFi or Bluetooth connection
+}
+
+/**
+ * BluetoothHub - Bluetooth Gateway for ESP32 BLE sensors
+ * Corresponds to Backend BluetoothHubDto
+ */
+export interface BluetoothHub {
+  id: string;
+  hubId: string;
+  name: string;
+  macAddress?: string;
+  status: string;  // Active, Inactive, Error
+  lastSeen?: string;
+  createdAt: string;
+  updatedAt: string;
+  nodeCount: number;
+}
+
+/**
+ * Create BluetoothHub DTO
+ */
+export interface CreateBluetoothHubDto {
+  name: string;
+  macAddress?: string;
+  hubId?: string;
+}
+
+/**
+ * Update BluetoothHub DTO
+ */
+export interface UpdateBluetoothHubDto {
+  name?: string;
+  macAddress?: string;
+  status?: string;
 }

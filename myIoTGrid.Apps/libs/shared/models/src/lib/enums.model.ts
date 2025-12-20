@@ -6,7 +6,8 @@
 export enum Protocol {
   Unknown = 0,
   WLAN = 1,
-  LoRaWAN = 2
+  LoRaWAN = 2,
+  Bluetooth = 3
 }
 
 export enum AlertLevel {

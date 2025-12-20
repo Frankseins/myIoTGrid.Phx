@@ -92,10 +92,27 @@ public class Node : IEntity
     /// <summary>When hardware status was last reported</summary>
     public DateTime? HardwareStatusReportedAt { get; set; }
 
+    // === Bluetooth Connection (Sprint BT-01) ===
+
+    /// <summary>FK to BluetoothHub (if connected via Bluetooth)</summary>
+    public Guid? BluetoothHubId { get; set; }
+
+    /// <summary>BLE MAC address from Web Bluetooth pairing (for device identification)</summary>
+    public string? BleMacAddress { get; set; }
+
+    /// <summary>BLE device name from pairing (e.g., "myIoTGrid-A1B2" or "ESP32-AABBCC")</summary>
+    public string? BleDeviceName { get; set; }
+
+    /// <summary>Last update timestamp</summary>
+    public DateTime UpdatedAt { get; set; }
+
     // === Navigation Properties ===
 
     /// <summary>Hub managing this node</summary>
     public Hub? Hub { get; set; }
+
+    /// <summary>BluetoothHub gateway (if Protocol is Bluetooth)</summary>
+    public BluetoothHub? BluetoothHub { get; set; }
 
     /// <summary>Sensor assignments on this node</summary>
     public ICollection<NodeSensorAssignment> SensorAssignments { get; set; } = new List<NodeSensorAssignment>();

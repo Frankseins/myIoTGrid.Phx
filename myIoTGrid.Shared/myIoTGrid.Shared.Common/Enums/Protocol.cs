@@ -12,5 +12,8 @@ public enum Protocol
     WLAN = 1,
 
     /// <summary>LoRaWAN (LoRa32, RAK, Dragino)</summary>
-    LoRaWAN = 2
+    LoRaWAN = 2,
+
+    /// <summary>Bluetooth Low Energy (ESP32 via BluetoothHub)</summary>
+    Bluetooth = 3
 }

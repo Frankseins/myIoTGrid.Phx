@@ -36,6 +36,9 @@ struct BLEConfig {
 
     // Helper to check if cloud mode is enabled
     bool isCloudMode() const { return targetMode == "cloud"; }
+
+    // Helper to check if Bluetooth sensor mode is enabled (no WiFi, BLE data only)
+    bool isBluetoothMode() const { return targetMode == "bluetooth"; }
 };
 
 /**

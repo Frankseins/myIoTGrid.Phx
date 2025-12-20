@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.13.2"  // Fix: GPS coordinates sent as double (full precision)
+#define FIRMWARE_VERSION "1.16.0"  // BLE Sensor Mode: interval-based reading like HTTP mode
 #endif
 
 // Hardware Type
@@ -31,6 +31,7 @@ constexpr const char* CLOUD_API_PROTOCOL = "https";
 // Target Modes
 constexpr const char* TARGET_MODE_LOCAL = "local";
 constexpr const char* TARGET_MODE_CLOUD = "cloud";
+constexpr const char* TARGET_MODE_BLUETOOTH = "bluetooth";  // BLE Sensor Mode (Sprint BT-01)
 
 // WiFi Configuration (ESP32 only)
 constexpr const char* DEFAULT_WIFI_SSID = "";
@@ -89,6 +90,30 @@ constexpr const char* ENV_WIFI_SSID = "WIFI_SSID";
 constexpr const char* ENV_WIFI_PASSWORD = "WIFI_PASSWORD";
 constexpr const char* ENV_DISCOVERY_ENABLED = "DISCOVERY_ENABLED";
 constexpr const char* ENV_DISCOVERY_PORT = "DISCOVERY_PORT";
+
+// ============================================================================
+// Bluetooth Sensor Mode Configuration (Sprint BT-01)
+// UUIDs for BLE GATT sensor data transmission to BluetoothHub
+// ============================================================================
+namespace ble_sensor {
+
+// BLE Sensor Data Service UUID (different from provisioning service!)
+constexpr const char* SERVICE_UUID = "12345678-1234-5678-1234-56789abcdef0";
+
+// Characteristic UUIDs for sensor data transmission
+constexpr const char* CHAR_SENSOR_DATA_UUID = "12345678-1234-5678-1234-56789abcdef1";   // NOTIFY
+constexpr const char* CHAR_DEVICE_INFO_UUID = "12345678-1234-5678-1234-56789abcdef2";   // READ
+
+// Timing for BLE Sensor Mode
+constexpr uint32_t BLE_SENSOR_TRANSMIT_INTERVAL_MS = 60000;  // Send data every 60 seconds
+constexpr uint32_t BLE_RECONNECT_DELAY_MS = 5000;            // Wait 5s before reconnect attempt
+constexpr int BLE_MAX_RECONNECT_ATTEMPTS = 10;               // Max reconnect attempts before error
+
+// BLE Advertising Configuration
+constexpr const char* BLE_DEVICE_NAME_PREFIX = "myIoTGrid-";
+constexpr uint32_t BLE_ADVERTISING_INTERVAL_MS = 100;        // Fast advertising for discovery
+
+} // namespace ble_sensor
 
 } // namespace config
 

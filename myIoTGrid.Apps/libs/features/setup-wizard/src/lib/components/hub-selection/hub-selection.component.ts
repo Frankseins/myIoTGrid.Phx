@@ -10,7 +10,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { HubApiService } from '@myiotgrid/shared/data-access';
-import { HubProperties, SensorTargetMode, SensorTargetConfig } from '@myiotgrid/shared/models';
+import { HubProperties, SensorTargetMode, SensorTargetConfig, SensorConnectionType } from '@myiotgrid/shared/models';
 import { SetupWizardService } from '../../services/setup-wizard.service';
 
 @Component({
@@ -42,6 +42,7 @@ export class HubSelectionComponent implements OnInit {
 
   // Selection state
   readonly selectedMode = signal<SensorTargetMode | null>(null);
+  readonly selectedConnectionType = signal<SensorConnectionType>('wifi');
 
   // Local mode overrides - default to HTTP port 5002
   readonly localAddress = signal('http://localhost');
@@ -63,7 +64,13 @@ export class HubSelectionComponent implements OnInit {
     const mode = this.selectedMode();
     if (!mode) return false;
     if (mode === 'local') {
-      return this.localAddress().trim().length > 0 && this.localPort() > 0;
+      // For WiFi mode, need valid address and port
+      // For Bluetooth mode, address/port are optional (sensor connects via BLE to BluetoothHub)
+      const connType = this.selectedConnectionType();
+      if (connType === 'wifi') {
+        return this.localAddress().trim().length > 0 && this.localPort() > 0;
+      }
+      return true; // Bluetooth mode doesn't require WiFi address/port for the sensor
     }
     return true;
   });
@@ -76,16 +83,19 @@ export class HubSelectionComponent implements OnInit {
     if (mode === 'local') {
       const address = this.localAddress();
       const useSsl = address.startsWith('https://');
+      const connType = this.selectedConnectionType();
       return {
         mode: 'local',
         address: address,
         port: this.localPort(),
         tenantId: props.tenantId,
         tenantName: props.tenantName,
-        useSsl
+        useSsl,
+        connectionType: connType
       };
     } else {
       // Cloud mode: use cloudAddress/cloudPort with correct SSL detection
+      // Cloud mode always uses WiFi (sensor sends data directly to cloud via HTTPS)
       const cloudAddr = this.cloudAddress();
       const useSsl = cloudAddr.startsWith('https://');
       return {
@@ -94,7 +104,8 @@ export class HubSelectionComponent implements OnInit {
         port: this.cloudPort(),
         tenantId: props.tenantId,
         tenantName: props.tenantName,
-        useSsl
+        useSsl,
+        connectionType: 'wifi'
       };
     }
   });
@@ -126,6 +137,14 @@ export class HubSelectionComponent implements OnInit {
 
   selectMode(mode: SensorTargetMode): void {
     this.selectedMode.set(mode);
+    // Reset connection type to wifi when changing mode
+    if (mode === 'cloud') {
+      this.selectedConnectionType.set('wifi');
+    }
+  }
+
+  selectConnectionType(type: SensorConnectionType): void {
+    this.selectedConnectionType.set(type);
   }
 
   onAddressChange(address: string): void {

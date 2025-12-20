@@ -24,6 +24,8 @@
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.0-*" />
     <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.0-*" />
     <PackageReference Include="MQTTnet" Version="4.3.7.1207" />
+    <!-- BLE Support for direct Bluetooth scanning -->
+    <PackageReference Include="InTheHand.BluetoothLE" Version="4.0.37" />
   </ItemGroup>
 
 </Project>

@@ -134,6 +134,54 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.ToTable("AlertTypes", (string)null);
                 });
 
+            modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.BluetoothHub", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid>("HubId")
+                        .HasColumnType("TEXT");
+
+                    b.Property<DateTime?>("LastSeen")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("MacAddress")
+                        .HasMaxLength(17)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("TEXT")
+                        .HasDefaultValue("Inactive");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("HubId");
+
+                    b.HasIndex("LastSeen");
+
+                    b.HasIndex("MacAddress")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("BluetoothHubs", (string)null);
+                });
+
             modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.Expedition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -289,6 +337,15 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Property<int?>("BatteryLevel")
                         .HasColumnType("INTEGER");
 
+                    b.Property<string>("BleDeviceName")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("BleMacAddress")
+                        .HasColumnType("TEXT");
+
+                    b.Property<Guid?>("BluetoothHubId")
+                        .HasColumnType("TEXT");
+
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("TEXT");
 
@@ -368,7 +425,12 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Property<int>("StorageMode")
                         .HasColumnType("INTEGER");
 
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("TEXT");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("BluetoothHubId");
 
                     b.HasIndex("HubId");
 
@@ -990,6 +1052,17 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Navigation("Tenant");
                 });
 
+            modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.BluetoothHub", b =>
+                {
+                    b.HasOne("myIoTGrid.Shared.Common.Entities.Hub", "Hub")
+                        .WithMany("BluetoothHubs")
+                        .HasForeignKey("HubId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Hub");
+                });
+
             modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.Expedition", b =>
                 {
                     b.HasOne("myIoTGrid.Shared.Common.Entities.Node", "Node")
@@ -1014,6 +1087,11 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
 
             modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.Node", b =>
                 {
+                    b.HasOne("myIoTGrid.Shared.Common.Entities.BluetoothHub", "BluetoothHub")
+                        .WithMany("Nodes")
+                        .HasForeignKey("BluetoothHubId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("myIoTGrid.Shared.Common.Entities.Hub", "Hub")
                         .WithMany("Nodes")
                         .HasForeignKey("HubId")
@@ -1045,6 +1123,8 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                             b1.WithOwner()
                                 .HasForeignKey("NodeId");
                         });
+
+                    b.Navigation("BluetoothHub");
 
                     b.Navigation("Hub");
 
@@ -1168,9 +1248,16 @@ namespace myIoTGrid.Hub.Infrastructure.Migrations
                     b.Navigation("Alerts");
                 });
 
+            modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.BluetoothHub", b =>
+                {
+                    b.Navigation("Nodes");
+                });
+
             modelBuilder.Entity("myIoTGrid.Shared.Common.Entities.Hub", b =>
                 {
                     b.Navigation("Alerts");
+
+                    b.Navigation("BluetoothHubs");
 
                     b.Navigation("Nodes");
                 });

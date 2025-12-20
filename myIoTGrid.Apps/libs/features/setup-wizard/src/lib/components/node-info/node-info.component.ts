@@ -12,8 +12,10 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
 import { SetupWizardService, NodeInfo } from '../../services/setup-wizard.service';
-import { NodeApiService } from '@myiotgrid/shared/data-access';
+import { BleCommunicationService } from '../../services/ble-communication.service';
+import { NodeApiService, BluetoothHubApiService } from '@myiotgrid/shared/data-access';
 import { Protocol } from '@myiotgrid/shared/models';
+import { firstValueFrom } from 'rxjs';
 
 interface IconOption {
   value: string;
@@ -48,12 +50,15 @@ interface LocationSuggestion {
 export class NodeInfoComponent implements OnInit {
   private readonly wizardService = inject(SetupWizardService);
   private readonly nodeApiService = inject(NodeApiService);
+  private readonly bluetoothHubApiService = inject(BluetoothHubApiService);
+  private readonly bleService = inject(BleCommunicationService);
   private readonly snackBar = inject(MatSnackBar);
   private readonly fb = inject(FormBuilder);
 
   form!: FormGroup;
 
   readonly bleDevice = this.wizardService.bleDevice;
+  readonly targetConfig = this.wizardService.targetConfig;
   readonly selectedIcon = signal<string>('sensors');
   readonly isCreating = signal(false);
 
@@ -154,6 +159,12 @@ export class NodeInfoComponent implements OnInit {
         throw new Error('No BLE device found');
       }
 
+      const config = this.targetConfig();
+
+      // Determine protocol based on connection type from hub-selection
+      const isBluetoothConnection = config?.connectionType === 'bluetooth';
+      const protocol = isBluetoothConnection ? Protocol.Bluetooth : Protocol.WLAN;
+
       // Use the ESP32-generated nodeId from BLE registration (format: ESP32-<WiFi-MAC>)
       const nodeId = bleDevice.nodeId;
 
@@ -161,19 +172,25 @@ export class NodeInfoComponent implements OnInit {
         nodeId: nodeId,
         name: nodeInfo.name,
         hubIdentifier: 'my-iot-hub',
-        protocol: Protocol.WLAN,
+        protocol: protocol,
         location: nodeInfo.location ? { name: nodeInfo.location } : undefined
       };
 
       console.log('[NodeInfo] Creating node via API:', createNodeDto);
+      console.log('[NodeInfo] Connection type:', config?.connectionType, '-> Protocol:', protocol);
 
-      const createdNode = await this.nodeApiService.create(createNodeDto).toPromise();
+      const createdNode = await firstValueFrom(this.nodeApiService.create(createNodeDto));
 
       if (!createdNode) {
         throw new Error('Failed to create node');
       }
 
       console.log('[NodeInfo] Node created successfully:', createdNode.id);
+
+      // If Bluetooth connection, associate node with BluetoothHub
+      if (isBluetoothConnection) {
+        await this.associateNodeWithBluetoothHub(createdNode.id);
+      }
 
       // Store the created node in wizard state so it can be used later
       // Note: We don't call complete() here, just store a reference
@@ -184,6 +201,95 @@ export class NodeInfoComponent implements OnInit {
       console.error('[NodeInfo] Error creating node:', error);
       this.snackBar.open('Fehler beim Erstellen des Nodes', 'Schließen', { duration: 5000 });
       this.isCreating.set(false);
+    }
+  }
+
+  /**
+   * Register BLE device with the Hub's BluetoothHub gateway and configure ESP32 for BLE mode.
+   * This:
+   * 1. Stores BLE device info (name, MAC) for the BLE scanner
+   * 2. Associates the node with the Hub's default BluetoothHub
+   * 3. Sends API config to ESP32 with targetMode='bluetooth' to enable BLE sensor mode
+   */
+  private async associateNodeWithBluetoothHub(nodeId: string): Promise<void> {
+    try {
+      const bleDevice = this.bleDevice();
+      if (!bleDevice) {
+        console.warn('[NodeInfo] No BLE device info available for registration');
+        return;
+      }
+
+      console.log('[NodeInfo] Registering BLE device:', {
+        nodeId: bleDevice.nodeId,
+        deviceName: bleDevice.name,
+        macAddress: bleDevice.macAddress
+      });
+
+      // Use the new registration endpoint that:
+      // 1. Creates or gets the default BluetoothHub
+      // 2. Associates the node with it
+      // 3. Stores BLE device info (name, MAC) for the scanner
+      const result = await firstValueFrom(this.bluetoothHubApiService.registerBleDevice({
+        nodeId: bleDevice.nodeId,
+        deviceName: bleDevice.name,
+        macAddress: bleDevice.macAddress,
+        bluetoothDeviceId: bleDevice.id
+      }));
+
+      if (result.success) {
+        console.log('[NodeInfo] BLE device registered successfully:', result);
+      } else {
+        console.warn('[NodeInfo] BLE device registration failed:', result.message);
+        this.snackBar.open(`BLE-Registrierung: ${result.message}`, 'OK', { duration: 5000 });
+      }
+
+      // Send API config to ESP32 to switch to BLE sensor mode
+      // This tells the firmware to NOT connect to WiFi and instead send data via BLE
+      await this.sendBleModeConfigToEsp32(bleDevice.nodeId);
+
+    } catch (error) {
+      console.error('[NodeInfo] Error registering BLE device:', error);
+      // Don't fail the whole flow, just warn the user
+      this.snackBar.open('Node erstellt, aber BLE-Registrierung fehlgeschlagen', 'Schließen', { duration: 5000 });
+    }
+  }
+
+  /**
+   * Send API configuration to ESP32 with targetMode='bluetooth'.
+   * This tells the ESP32 firmware to operate in BLE sensor mode
+   * instead of connecting to WiFi.
+   */
+  private async sendBleModeConfigToEsp32(nodeId: string): Promise<void> {
+    try {
+      // Check if BLE is still connected
+      if (this.bleService.connectionState() !== 'connected') {
+        console.warn('[NodeInfo] BLE not connected, cannot send BLE mode config');
+        return;
+      }
+
+      console.log('[NodeInfo] Sending BLE mode config to ESP32...');
+
+      // Send API config with targetMode='bluetooth'
+      // The Hub URL is not used in BLE mode, but we send it anyway for consistency
+      const targetConfig = this.targetConfig();
+      const hubUrl = targetConfig
+        ? `${targetConfig.address}:${targetConfig.port}`
+        : 'https://localhost:5001';
+
+      const success = await this.bleService.sendApiConfig({
+        nodeId: nodeId,
+        apiKey: '', // Not needed for BLE mode
+        hubUrl: hubUrl,
+        targetMode: 'bluetooth' // ESP32 will enter BLE sensor mode
+      });
+
+      if (success) {
+        console.log('[NodeInfo] BLE mode config sent successfully - ESP32 will enter BLE sensor mode');
+      } else {
+        console.warn('[NodeInfo] Failed to send BLE mode config:', this.bleService.lastError());
+      }
+    } catch (error) {
+      console.error('[NodeInfo] Error sending BLE mode config:', error);
     }
   }
 
