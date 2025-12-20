@@ -19,11 +19,14 @@ services:
     image: ghcr.io/frankseins/myiotgrid-hub-phx-api:latest
     container_name: myIoTGrid.Hub
     restart: unless-stopped
+    privileged: true  # Required for Bluetooth access
     ports:
       - "5001:5001"
       - "5001:5001/udp"
       - "5002:5002"
       - "5000:5000"
+    devices:
+      - /dev:/dev  # Bluetooth adapter access
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://+:5001;http://+:5000;http://+:5002
@@ -48,12 +51,15 @@ services:
       - Discovery__Port=5001
       - Discovery__Protocol=https
       - Discovery__ApiPort=5001
+      # Bluetooth Low Energy (BLE) Scanner
+      - Ble__Enabled=true
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
       - hub-data:/app/data
       - hub-logs:/app/logs
       - ./certs:/app/certs:ro
+      - /var/run/dbus:/var/run/dbus:ro  # D-Bus for BlueZ communication
     networks:
       - myiotgrid-network
     healthcheck:

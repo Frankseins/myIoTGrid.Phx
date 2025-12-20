@@ -50,10 +50,16 @@ RUN dotnet publish "myIoTGrid.Hub.Api.csproj" -c Release -o /app/publish /p:UseA
 FROM mcr.microsoft.com/dotnet/aspnet:10.0-noble AS runtime
 WORKDIR /app
 
-# Install curl and openssl for health checks and certificate generation
+# Install curl, openssl for health checks and certificate generation
+# Install dbus and bluez for Bluetooth Low Energy (BLE) support on Raspberry Pi
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends curl openssl && \
-    rm -rf /var/lib/apt/lists/*
+    apt-get install -y --no-install-recommends \
+        curl \
+        openssl \
+        dbus \
+        libdbus-1-3 \
+        bluez \
+    && rm -rf /var/lib/apt/lists/*
 
 # Create data, logs, and certs directories
 # Note: .NET images already have an 'app' user (UID 1654)
@@ -89,6 +95,8 @@ EXPOSE 5000 5001 5002
 # Azure deployments override this to Production
 ENV ASPNETCORE_ENVIRONMENT=Docker
 ENV ConnectionStrings__HubDb="Data Source=/app/data/hub.db"
+# D-Bus socket path for Bluetooth/BlueZ communication
+ENV DBUS_SYSTEM_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
 
 # Health check (HTTPS with insecure flag for self-signed cert)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
