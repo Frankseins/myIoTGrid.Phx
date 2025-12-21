@@ -2,49 +2,45 @@
 # myIoTGrid - Raspberry Pi Docker Stack
 # =============================================================================
 # Services:
-# - hub-api:      Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
+# - hub-api:      Backend API (.NET 10) - Port 5000/5001/5002 (host network)
 # - hub-frontend: Frontend (Angular/nginx) - Port 443 (HTTPS)
 # - sensor-sim:   Sensor Simulator (Native) - Test sensor with auto-discovery
 #
-# LoRaWAN Stack (separate docker-compose):
-# - Start mit: docker compose -f docker-compose.lorawan.yml up -d
-# - MQTT Broker läuft im LoRaWAN Stack auf Port 1883/1884
+# Note: hub-api uses network_mode: host for Bluetooth/D-Bus access
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
-  # Backend API (.NET 10) - Port 5001 (HTTPS + UDP Discovery)
+  # Backend API (.NET 10) - Host Network Mode for Bluetooth
   # ---------------------------------------------------------------------------
   hub-api:
     image: ghcr.io/frankseins/myiotgrid-hub-phx-api:latest
     container_name: myIoTGrid.Hub
     restart: unless-stopped
-    privileged: true  # Required for Bluetooth access
-    ports:
-      - "5001:5001"
-      - "5001:5001/udp"
-      - "5002:5002"
-      - "5000:5000"
+    # Bluetooth requirements
+    privileged: true
+    network_mode: host
+    user: root
     devices:
-      - /dev:/dev  # Bluetooth adapter access
+      - /dev:/dev
     environment:
       - ASPNETCORE_ENVIRONMENT=Production
       - ASPNETCORE_URLS=https://+:5001;http://+:5000;http://+:5002
       - ASPNETCORE_Kestrel__Certificates__Default__Path=/app/certs/fullchain.pem
       - ASPNETCORE_Kestrel__Certificates__Default__KeyPath=/app/certs/privkey.pem
-      # Explizite Kestrel Endpoints (überschreiben ASPNETCORE_URLS)
+      # Explizite Kestrel Endpoints
       - Kestrel__Endpoints__Https__Url=https://+:5001
       - Kestrel__Endpoints__Https__Certificate__Path=/app/certs/fullchain.pem
       - Kestrel__Endpoints__Https__Certificate__KeyPath=/app/certs/privkey.pem
       - Kestrel__Endpoints__Http__Url=http://+:5000
       - Kestrel__Endpoints__Http2__Url=http://+:5002
       - ConnectionStrings__HubDb=Data Source=/app/data/hub.db
-      # MQTT vom LoRaWAN Stack (host.docker.internal zeigt auf den Host)
-      - Mqtt__Host=host.docker.internal
+      # MQTT - localhost weil host network
+      - Mqtt__Host=localhost
       - Mqtt__Port=1883
       # LoRaWAN Integration
       - LoRaWAN__Enabled=true
-      - LoRaWAN__MqttServer=tcp://host.docker.internal:1884
+      - LoRaWAN__MqttServer=tcp://localhost:1884
       - LoRaWAN__ClientId=myiotgrid-hub-lorawan
       - Hub__DefaultTenantName=Default
       - Discovery__Enabled=true
@@ -53,15 +49,13 @@ services:
       - Discovery__ApiPort=5001
       # Bluetooth Low Energy (BLE) Scanner
       - Ble__Enabled=true
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - DBUS_SYSTEM_BUS_ADDRESS=unix:path=/var/run/dbus/system_bus_socket
     volumes:
       - hub-data:/app/data
       - hub-logs:/app/logs
       - ./certs:/app/certs:ro
-      - /var/run/dbus:/var/run/dbus:ro  # D-Bus for BlueZ communication
-    networks:
-      - myiotgrid-network
+      - /var/run/dbus:/var/run/dbus  # D-Bus for BlueZ (no :ro for write access)
+    # Note: no ports/networks needed with network_mode: host
     healthcheck:
       test: ["CMD", "curl", "-fk", "https://localhost:5001/health"]
       interval: 30s
@@ -70,7 +64,7 @@ services:
       start_period: 10s
     labels:
       - "com.myiotgrid.service=hub-api"
-      - "com.myiotgrid.description=Backend API (HTTPS)"
+      - "com.myiotgrid.description=Backend API (Bluetooth enabled)"
 
   # ---------------------------------------------------------------------------
   # Frontend (Angular + nginx with HTTPS) - Port 443
@@ -83,16 +77,13 @@ services:
       - "443:443"
       - "80:80"
     environment:
-      # Local Docker: use internal Docker network DNS
-      # Azure: default is https://phx-api.myiotgrid.cloud (set in Dockerfile)
-      - API_BACKEND_URL=https://hub-api:5001
+      - API_BACKEND_URL=http://hub-api:5000
+    extra_hosts:
+      - "hub-api:host-gateway"  # Maps hub-api to host IP (for network_mode: host)
     volumes:
       - ./certs:/etc/nginx/certs:ro
     networks:
       - myiotgrid-network
-    depends_on:
-      hub-api:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "--no-check-certificate", "https://localhost/health"]
       interval: 30s
@@ -119,13 +110,12 @@ services:
       - DISCOVERY_PORT=5001
       - SENSOR_ID=sim-sensor-01
       - DATA_DIR=/data
+    extra_hosts:
+      - "hub-api:host-gateway"  # Maps hub-api to host IP
     volumes:
       - sensor-data:/data
     networks:
       - myiotgrid-network
-    depends_on:
-      hub-api:
-        condition: service_healthy
     healthcheck:
       test: ["CMD", "pgrep", "-x", "sensor"]
       interval: 30s

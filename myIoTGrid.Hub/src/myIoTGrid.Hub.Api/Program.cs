@@ -132,6 +132,7 @@ try
     builder.Services.AddScoped<IBackupService, BackupService>();
     builder.Services.AddScoped<IExpeditionService, ExpeditionService>();
     builder.Services.AddScoped<IBluetoothHubService, BluetoothHubService>();
+    builder.Services.AddScoped<IBluetoothPairingService, BluetoothPairingService>();
 
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();

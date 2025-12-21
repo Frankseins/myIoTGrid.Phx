@@ -97,12 +97,16 @@ StoredConfig ConfigManager::loadConfig() {
         }
 
         // Validate loaded config
-        // WiFi SSID is required, Hub URL is optional (will be discovered via UDP for local mode)
-        // apiKey is also optional - assigned after registration
-        config.isValid = config.wifiSsid.length() > 0;
+        // WiFi SSID is required for WiFi modes, but NOT for Bluetooth mode
+        // apiKey is optional - assigned after registration
+        bool isBluetoothMode = config.targetMode == "bluetooth";
+        config.isValid = isBluetoothMode || config.wifiSsid.length() > 0;
 
         if (config.isValid) {
-            if (config.isCloudMode()) {
+            if (isBluetoothMode) {
+                Serial.printf("[Config] Loaded BLUETOOTH mode: NodeID=%s\n",
+                              config.nodeId.c_str());
+            } else if (config.isCloudMode()) {
                 Serial.printf("[Config] Loaded CLOUD mode: NodeID=%s, TenantID=%s\n",
                               config.nodeId.c_str(), config.tenantId.c_str());
             } else if (config.hubApiUrl.length() > 0) {
@@ -113,7 +117,7 @@ StoredConfig ConfigManager::loadConfig() {
                               config.nodeId.c_str(), config.wifiSsid.c_str());
             }
         } else {
-            Serial.println("[Config] Invalid stored configuration (no WiFi SSID)");
+            Serial.println("[Config] Invalid stored configuration (no WiFi SSID and not Bluetooth mode)");
         }
     } else {
         Serial.println("[Config] No stored configuration found");

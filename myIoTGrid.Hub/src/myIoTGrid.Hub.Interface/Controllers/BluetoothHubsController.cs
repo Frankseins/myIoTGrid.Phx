@@ -16,10 +16,14 @@ namespace myIoTGrid.Hub.Interface.Controllers;
 public class BluetoothHubsController : ControllerBase
 {
     private readonly IBluetoothHubService _bluetoothHubService;
+    private readonly IBluetoothPairingService _pairingService;
 
-    public BluetoothHubsController(IBluetoothHubService bluetoothHubService)
+    public BluetoothHubsController(
+        IBluetoothHubService bluetoothHubService,
+        IBluetoothPairingService pairingService)
     {
         _bluetoothHubService = bluetoothHubService;
+        _pairingService = pairingService;
     }
 
     /// <summary>
@@ -281,5 +285,132 @@ public class BluetoothHubsController : ControllerBase
     {
         var bluetoothHub = await _bluetoothHubService.GetOrCreateDefaultAsync(ct);
         return Ok(bluetoothHub);
+    }
+
+    // =========================================================================
+    // Backend BLE Pairing Endpoints (Sprint BT-02)
+    // These endpoints are used when pairing in Bluetooth mode
+    // =========================================================================
+
+    /// <summary>
+    /// Scans for BLE devices with myIoTGrid prefix.
+    /// This runs bluetoothctl scan on the Raspberry Pi.
+    /// </summary>
+    /// <param name="timeoutSeconds">Scan timeout in seconds (default: 10)</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>List of discovered myIoTGrid BLE devices</returns>
+    /// <response code="200">Scan complete</response>
+    [HttpGet("scan")]
+    [ProducesResponseType(typeof(IEnumerable<ScannedBleDeviceDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ScanForDevices([FromQuery] int timeoutSeconds = 10, CancellationToken ct = default)
+    {
+        var devices = await _pairingService.ScanForDevicesAsync(timeoutSeconds, ct);
+        return Ok(devices);
+    }
+
+    /// <summary>
+    /// Pairs with a BLE device by MAC address.
+    /// This runs bluetoothctl pair/trust on the Raspberry Pi.
+    /// Used for Bluetooth sensor mode where pairing happens on the backend.
+    /// </summary>
+    /// <param name="dto">Pairing request with MAC address</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Pairing result</returns>
+    /// <response code="200">Pairing successful</response>
+    /// <response code="400">Pairing failed</response>
+    [HttpPost("pair")]
+    [ProducesResponseType(typeof(BlePairingResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BlePairingResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> PairDevice([FromBody] PairBleDeviceRequestDto dto, CancellationToken ct)
+    {
+        var result = await _pairingService.PairDeviceAsync(dto.MacAddress, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        // If NodeId was provided, register the device with the BluetoothHub
+        if (!string.IsNullOrEmpty(dto.NodeId))
+        {
+            var registerDto = new RegisterBleDeviceDto(
+                dto.NodeId,
+                result.DeviceName ?? dto.MacAddress,
+                dto.MacAddress
+            );
+            await _bluetoothHubService.RegisterBleDeviceFromFrontendAsync(registerDto, ct);
+        }
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Gets the list of paired BLE devices on the Raspberry Pi.
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>List of paired devices</returns>
+    /// <response code="200">Paired devices retrieved</response>
+    [HttpGet("paired-devices")]
+    [ProducesResponseType(typeof(IEnumerable<ScannedBleDeviceDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPairedDevices(CancellationToken ct)
+    {
+        var devices = await _pairingService.GetPairedDevicesAsync(ct);
+        return Ok(devices);
+    }
+
+    /// <summary>
+    /// Removes pairing for a BLE device.
+    /// </summary>
+    /// <param name="macAddress">MAC address of the device to unpair</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>No content</returns>
+    /// <response code="204">Device unpaired</response>
+    /// <response code="400">Unpairing failed</response>
+    [HttpDelete("pair/{macAddress}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> UnpairDevice(string macAddress, CancellationToken ct)
+    {
+        var success = await _pairingService.UnpairDeviceAsync(macAddress, ct);
+
+        if (!success)
+            return BadRequest(new { error = "Failed to unpair device" });
+
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Scans for devices and pairs with a specific device in one call.
+    /// Convenience endpoint for the frontend wizard.
+    /// </summary>
+    /// <param name="dto">Pairing request with MAC address and optional NodeId</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Pairing result with registration info</returns>
+    /// <response code="200">Scan and pair successful</response>
+    /// <response code="400">Failed</response>
+    [HttpPost("scan-and-pair")]
+    [ProducesResponseType(typeof(BlePairingResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BlePairingResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> ScanAndPair([FromBody] PairBleDeviceRequestDto dto, CancellationToken ct)
+    {
+        // First scan to make sure device is discoverable
+        await _pairingService.ScanForDevicesAsync(5, ct);
+
+        // Then pair
+        var result = await _pairingService.PairDeviceAsync(dto.MacAddress, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        // Register with BluetoothHub if NodeId provided
+        if (!string.IsNullOrEmpty(dto.NodeId))
+        {
+            var registerDto = new RegisterBleDeviceDto(
+                dto.NodeId,
+                result.DeviceName ?? dto.MacAddress,
+                dto.MacAddress
+            );
+            await _bluetoothHubService.RegisterBleDeviceFromFrontendAsync(registerDto, ct);
+        }
+
+        return Ok(result);
     }
 }

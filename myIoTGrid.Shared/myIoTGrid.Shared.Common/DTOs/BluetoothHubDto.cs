@@ -54,3 +54,32 @@ public record BleDeviceRegistrationResultDto(
     Guid? BluetoothHubId,
     string Message
 );
+
+/// <summary>
+/// DTO for scanned BLE devices (from backend bluetoothctl scan)
+/// Sprint BT-02: Backend Bluetooth Pairing
+/// </summary>
+public record ScannedBleDeviceDto(
+    string MacAddress,
+    string Name
+);
+
+/// <summary>
+/// DTO for BLE pairing result
+/// Sprint BT-02: Backend Bluetooth Pairing
+/// </summary>
+public record BlePairingResultDto(
+    bool Success,
+    string MacAddress,
+    string? DeviceName,
+    string Message
+);
+
+/// <summary>
+/// DTO for requesting backend BLE pairing
+/// Sprint BT-02: Backend Bluetooth Pairing
+/// </summary>
+public record PairBleDeviceRequestDto(
+    string MacAddress,
+    string? NodeId = null
+);
