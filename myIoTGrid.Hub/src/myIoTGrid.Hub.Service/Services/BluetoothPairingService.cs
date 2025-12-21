@@ -36,12 +36,13 @@ public class BluetoothPairingService : IBluetoothPairingService
             _logger.LogInformation("Starting BLE scan using hcitool lescan for {Timeout} seconds...", timeoutSeconds);
 
             // Use hcitool lescan which works better for BLE devices
+            // Note: In Docker container we run as root, so no sudo needed
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "sudo",
-                    Arguments = "hcitool lescan",
+                    FileName = "hcitool",
+                    Arguments = "lescan",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -127,12 +128,13 @@ public class BluetoothPairingService : IBluetoothPairingService
 
         try
         {
+            // Note: In Docker container we run as root, so no sudo needed
             var process = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "sudo",
-                    Arguments = "btmgmt find",
+                    FileName = "btmgmt",
+                    Arguments = "find",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
@@ -194,13 +196,14 @@ public class BluetoothPairingService : IBluetoothPairingService
             // 2. Use bluetoothctl to pair/trust
 
             // Step 1: Quick scan to register device with BlueZ
+            // Note: In Docker container we run as root, so no sudo needed
             _logger.LogDebug("Running quick BLE scan to register device...");
             var scanProcess = new Process
             {
                 StartInfo = new ProcessStartInfo
                 {
-                    FileName = "sudo",
-                    Arguments = "timeout 5 hcitool lescan",
+                    FileName = "timeout",
+                    Arguments = "5 hcitool lescan",
                     UseShellExecute = false,
                     RedirectStandardOutput = true,
                     RedirectStandardError = true,
