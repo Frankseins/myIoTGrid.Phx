@@ -155,15 +155,19 @@ public class BleScannerHostedService : BackgroundService
     {
         try
         {
+            _logger.LogInformation("Attempting GATT connection to {DeviceName} ({DeviceId})...", device.Name, device.Id);
+
             // Connect briefly to read sensor data characteristic
             var gatt = device.Gatt;
             await gatt.ConnectAsync();
 
             if (!gatt.IsConnected)
             {
-                _logger.LogDebug("Could not connect to {DeviceName} for data read", device.Name);
+                _logger.LogWarning("Could not connect to {DeviceName} for data read", device.Name);
                 return;
             }
+
+            _logger.LogInformation("Connected to {DeviceName}, discovering services...", device.Name);
 
             // Try to get the Config Service (Beacon Mode uses different UUIDs!)
             // CONFIG_SERVICE_UUID = "4d494f54-4752-4944-434f-4e4649470000"
@@ -234,7 +238,7 @@ public class BleScannerHostedService : BackgroundService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Error reading beacon data from {DeviceName}: {Message}", device.Name, ex.Message);
+            _logger.LogWarning(ex, "Error reading beacon data from {DeviceName}: {Message}", device.Name, ex.Message);
         }
     }
 
