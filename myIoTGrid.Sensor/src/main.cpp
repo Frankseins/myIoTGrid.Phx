@@ -45,6 +45,7 @@
 #ifdef PLATFORM_ESP32
 #include "ble_service.h"
 #include "bluetooth_sensor_mode.h"
+#include "ble_beacon_mode.h"  // BLE Beacon Mode - no connection required!
 #include "wps_manager.h"
 #include <esp_mac.h>
 #include <WiFi.h>
@@ -76,7 +77,8 @@ bool offlineStorageEnabled = false;
 
 #ifdef PLATFORM_ESP32
 BLEProvisioningService bleService;
-BluetoothSensorMode bluetoothSensorMode;  // BLE Sensor Mode for transmitting data via BLE
+BluetoothSensorMode bluetoothSensorMode;  // BLE GATT Mode (has connection issues with BlueZ)
+BleBeaconMode bleBeaconMode;              // BLE Beacon Mode - NO CONNECTION REQUIRED!
 WPSManager wpsManager;
 
 // RE_PAIRING Configuration (Story 4)
@@ -1998,8 +2000,9 @@ static unsigned long bleSensorPollIntervalMs = 60000;  // Will be set to GCD of 
 
 /**
  * Handle BLE_SENSOR_MODE state
- * In this state, the ESP32 transmits sensor data via BLE to the BluetoothHub.
- * No WiFi connection is needed - all communication is via Bluetooth.
+ * Uses BLE BEACON MODE - broadcasts sensor data in advertising packets.
+ * NO CONNECTION REQUIRED! The Raspberry Pi just scans and reads the data.
+ * This bypasses the BlueZ/NimBLE GATT connection compatibility issues.
  *
  * Events that can exit this state:
  * - RESET_REQUESTED: Factory reset
@@ -2009,101 +2012,89 @@ void handleBleSensorModeState() {
 #ifdef PLATFORM_ESP32
     unsigned long now = millis();
 
-    // Initialize BLE Sensor Mode if not already active
+    // Initialize BLE Beacon Mode if not already active
     if (!bleSensorModeActive) {
         Serial.println("[Main] ========================================");
-        Serial.println("[Main] ENTERING BLE_SENSOR_MODE");
+        Serial.println("[Main] ENTERING BLE BEACON MODE");
         Serial.println("[Main] ========================================");
-        Serial.println("[Main] - Transmitting sensor data via BLE");
-        Serial.println("[Main] - No WiFi connection (Bluetooth only)");
-        Serial.println("[Main] - LED: Fast blink pattern");
+        Serial.println("[Main] - Broadcasting sensor data via BLE advertising");
+        Serial.println("[Main] - NO CONNECTION REQUIRED!");
+        Serial.println("[Main] - Pi just scans and reads advertising data");
+        Serial.println("[Main] - LED: Slow blink pattern");
 
         // Load stored config to get nodeId
         StoredConfig config = configManager.loadConfig();
 
-        // Initialize BluetoothSensorMode with nodeId
-        if (bluetoothSensorMode.init(config.nodeId)) {
-            Serial.println("[Main] BluetoothSensorMode initialized");
-
-            // Set up callbacks
-            bluetoothSensorMode.setConnectedCallback([]() {
-                Serial.println("[Main] BluetoothHub connected!");
-                ledController.setPattern(LEDPattern::SLOW_BLINK);
-            });
-
-            bluetoothSensorMode.setDisconnectedCallback([]() {
-                Serial.println("[Main] BluetoothHub disconnected - advertising...");
-                ledController.setPattern(LEDPattern::FAST_BLINK);
-            });
-
-            bluetoothSensorMode.setTransmitCallback([](bool success) {
-                if (success) {
-                    Serial.println("[Main] Sensor data transmitted via BLE");
-                } else {
-                    Serial.println("[Main] BLE transmission failed");
-                }
-            });
+        // Initialize BLE Beacon Mode with nodeId
+        if (bleBeaconMode.init(config.nodeId)) {
+            Serial.println("[Main] BLE Beacon Mode initialized");
 
             // Initialize sensors for BLE mode (auto-detect without Hub config)
             int sensorCount = sensorReader.initializeDetectedSensors();
-            Serial.printf("[Main] Initialized %d sensor readings for BLE mode\n", sensorCount);
+            Serial.printf("[Main] Initialized %d sensor readings for BLE Beacon mode\n", sensorCount);
 
             // Calculate GCD-based poll interval (like HTTP mode)
             int gcdSeconds = sensorReader.calculateBleIntervalGCD();
             bleSensorPollIntervalMs = (unsigned long)gcdSeconds * 1000UL;
-            Serial.printf("[Main] BLE poll interval: %d seconds (GCD of all sensor intervals)\n", gcdSeconds);
+            Serial.printf("[Main] Beacon update interval: %d seconds\n", gcdSeconds);
 
-            // Start advertising
-            bluetoothSensorMode.startAdvertising();
-            Serial.println("[Main] BLE advertising started - waiting for BluetoothHub");
+            // Read initial sensor values and start advertising
+            std::vector<SensorReader::SimpleSensorReading> initialReadings = sensorReader.readDueSensors(now);
+            float temp = 0, humidity = 0, pressure = 0;
+            for (const auto& r : initialReadings) {
+                if (r.type == "temperature") temp = r.value;
+                else if (r.type == "humidity") humidity = r.value;
+                else if (r.type == "pressure") pressure = r.value;
+            }
+
+            // Update beacon with initial values and start
+            bleBeaconMode.updateSensorData(temp, humidity, pressure, 3300);
+            bleBeaconMode.startAdvertising();
+
+            Serial.println("[Main] BLE Beacon advertising started!");
+            Serial.printf("[Main] Device name: %s\n", bleBeaconMode.getDeviceName().c_str());
 
         } else {
-            Serial.println("[Main] Failed to initialize BluetoothSensorMode!");
+            Serial.println("[Main] Failed to initialize BLE Beacon Mode!");
             stateMachine.processEvent(StateEvent::ERROR_OCCURRED);
             return;
         }
 
-        // Set LED pattern for BLE Sensor Mode (advertising)
-        ledController.setPattern(LEDPattern::FAST_BLINK);
+        // Set LED pattern for Beacon Mode (always broadcasting)
+        ledController.setPattern(LEDPattern::SLOW_BLINK);
 
         bleSensorModeActive = true;
         lastBleSensorPoll = now;
     }
 
-    // Process BLE events
-    bluetoothSensorMode.loop();
-
-    // Poll sensors at GCD interval (only read sensors that are due)
-    if (bluetoothSensorMode.isConnected() &&
-        (now - lastBleSensorPoll >= bleSensorPollIntervalMs)) {
+    // Update beacon with new sensor values at poll interval
+    if (now - lastBleSensorPoll >= bleSensorPollIntervalMs) {
         lastBleSensorPoll = now;
 
-        // Read only sensors that are due based on their individual intervals
-        // This works exactly like HTTP mode - each sensor has its own interval
-        #ifdef PLATFORM_ESP32
+        // Read sensors that are due
         std::vector<SensorReader::SimpleSensorReading> dueReadings = sensorReader.readDueSensors(now);
 
-        // Convert to BLE format and send if we have any readings
-        if (!dueReadings.empty()) {
-            std::vector<BleSensorReading> bleReadings;
-            for (const auto& sr : dueReadings) {
-                bleReadings.push_back(BleSensorReading(sr.type, sr.value, sr.unit));
-            }
-
-            if (bluetoothSensorMode.sendSensorData(bleReadings, nullptr)) {
-                Serial.printf("[Main] Sent %d readings via BLE\n", bleReadings.size());
-            } else {
-                Serial.println("[Main] Failed to send sensor data via BLE");
-            }
+        // Extract values for beacon update
+        float temp = 0, humidity = 0, pressure = 0;
+        for (const auto& r : dueReadings) {
+            if (r.type == "temperature") temp = r.value;
+            else if (r.type == "humidity") humidity = r.value;
+            else if (r.type == "pressure") pressure = r.value;
         }
-        #endif
+
+        // Update beacon advertising data with new values
+        if (!dueReadings.empty()) {
+            bleBeaconMode.updateSensorData(temp, humidity, pressure, 3300);
+            Serial.printf("[Main] Beacon updated: T=%.1f°C H=%.1f%% P=%.0fhPa\n",
+                          temp, humidity, pressure);
+        }
     }
 
     // Update LED pattern
     ledController.update();
 
 #else
-    // Native platform - BLE Sensor Mode not supported
+    // Native platform - BLE Beacon Mode not supported
     Serial.println("[Main] BLE_SENSOR_MODE not supported on native platform");
     delay(5000);
 #endif

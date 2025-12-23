@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.16.0"  // BLE Sensor Mode: interval-based reading like HTTP mode
+#define FIRMWARE_VERSION "1.21.0"  // BLE App-Level Auth: Hub authenticates with node ID hash
 #endif
 
 // Hardware Type
@@ -31,7 +31,8 @@ constexpr const char* CLOUD_API_PROTOCOL = "https";
 // Target Modes
 constexpr const char* TARGET_MODE_LOCAL = "local";
 constexpr const char* TARGET_MODE_CLOUD = "cloud";
-constexpr const char* TARGET_MODE_BLUETOOTH = "bluetooth";  // BLE Sensor Mode (Sprint BT-01)
+constexpr const char* TARGET_MODE_BLUETOOTH = "bluetooth";  // BLE GATT Mode (requires connection)
+constexpr const char* TARGET_MODE_BEACON = "beacon";        // BLE Beacon Mode (no connection needed!)
 
 // WiFi Configuration (ESP32 only)
 constexpr const char* DEFAULT_WIFI_SSID = "";

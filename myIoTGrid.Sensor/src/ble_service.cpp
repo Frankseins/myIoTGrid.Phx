@@ -46,7 +46,7 @@ bool BLEProvisioningService::init(const String& deviceName) {
     _isReProvisioning = false;
 
     NimBLEDevice::init(deviceName.c_str());
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+    NimBLEDevice::setPower(9);  // NimBLE 2.x: 9 dBm max power
 
     // IMPORTANT: WiFi must be initialized before reading MAC address!
     // Initialize WiFi in STA mode temporarily if not already done
@@ -105,11 +105,11 @@ bool BLEProvisioningService::init(const String& deviceName) {
     // Start service
     _nimbleService->start();
 
-    // Configure advertising
+    // Configure advertising (NimBLE 2.x API)
     _advertising = NimBLEDevice::getAdvertising();
     _advertising->addServiceUUID(SERVICE_UUID);
     _advertising->setAppearance(0x0540); // Generic Sensor
-    _advertising->setScanResponse(true);
+    _advertising->enableScanResponse(true);
 
     _initialized = true;
     Serial.println("[BLE] Initialized successfully");
@@ -217,7 +217,7 @@ bool BLEProvisioningService::startForReProvisioning() {
 
         // Reinitialize with new name
         NimBLEDevice::init(reProvisioningName.c_str());
-        NimBLEDevice::setPower(ESP_PWR_LVL_P9);
+        NimBLEDevice::setPower(9);  // NimBLE 2.x: 9 dBm max power
 
         // Recreate server
         _server = NimBLEDevice::createServer();
@@ -256,11 +256,11 @@ bool BLEProvisioningService::startForReProvisioning() {
         // Start service
         _nimbleService->start();
 
-        // Configure advertising
+        // Configure advertising (NimBLE 2.x API)
         _advertising = NimBLEDevice::getAdvertising();
         _advertising->addServiceUUID(SERVICE_UUID);
         _advertising->setAppearance(0x0540); // Generic Sensor
-        _advertising->setScanResponse(true);
+        _advertising->enableScanResponse(true);
     } else {
         // Not initialized yet - initialize with -SETUP suffix
         String reProvisioningName = "myIoTGrid-SETUP";
@@ -600,8 +600,9 @@ void BLEProvisioningService::finalizeWifiOnlyConfig() {
 
 #ifdef PLATFORM_ESP32
 
-void BLEProvisioningService::ServerCallbacks::onConnect(NimBLEServer* server) {
+void BLEProvisioningService::ServerCallbacks::onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) {
     Serial.println("[BLE] Client connected");
+    Serial.printf("[BLE] Peer address: %s\n", connInfo.getAddress().toString().c_str());
     _parent->_connected = true;
     _parent->_advertising_active = false;
 
@@ -614,8 +615,9 @@ void BLEProvisioningService::ServerCallbacks::onConnect(NimBLEServer* server) {
     }
 }
 
-void BLEProvisioningService::ServerCallbacks::onDisconnect(NimBLEServer* server) {
+void BLEProvisioningService::ServerCallbacks::onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) {
     Serial.println("[BLE] Client disconnected");
+    Serial.printf("[BLE] Disconnect reason: 0x%02X\n", reason);
     _parent->_connected = false;
 
     // Restart advertising if not configured
@@ -625,7 +627,7 @@ void BLEProvisioningService::ServerCallbacks::onDisconnect(NimBLEServer* server)
     }
 }
 
-void BLEProvisioningService::CharacteristicCallbacks::onWrite(NimBLECharacteristic* characteristic) {
+void BLEProvisioningService::CharacteristicCallbacks::onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo& connInfo) {
     String uuid = characteristic->getUUID().toString().c_str();
     String value = characteristic->getValue().c_str();
 

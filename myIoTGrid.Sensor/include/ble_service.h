@@ -225,24 +225,24 @@ private:
 
 #ifdef PLATFORM_ESP32
     /**
-     * Server callbacks (NimBLE 1.4.x signatures)
+     * Server callbacks (NimBLE 2.x API)
      */
     class ServerCallbacks : public NimBLEServerCallbacks {
     public:
         ServerCallbacks(BLEProvisioningService* parent) : _parent(parent) {}
-        void onConnect(NimBLEServer* server) override;
-        void onDisconnect(NimBLEServer* server) override;
+        void onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) override;
+        void onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) override;
     private:
         BLEProvisioningService* _parent;
     };
 
     /**
-     * Characteristic callbacks (NimBLE 1.4.x signatures)
+     * Characteristic callbacks (NimBLE 2.x API)
      */
     class CharacteristicCallbacks : public NimBLECharacteristicCallbacks {
     public:
         CharacteristicCallbacks(BLEProvisioningService* parent) : _parent(parent) {}
-        void onWrite(NimBLECharacteristic* characteristic) override;
+        void onWrite(NimBLECharacteristic* characteristic, NimBLEConnInfo& connInfo) override;
     private:
         BLEProvisioningService* _parent;
     };

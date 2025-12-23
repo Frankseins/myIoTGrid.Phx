@@ -133,6 +133,7 @@ try
     builder.Services.AddScoped<IExpeditionService, ExpeditionService>();
     builder.Services.AddScoped<IBluetoothHubService, BluetoothHubService>();
     builder.Services.AddScoped<IBluetoothPairingService, BluetoothPairingService>();
+    builder.Services.AddSingleton<IBleGattClientService, BleGattClientService>();
 
     // Memory Cache for Sensors
     builder.Services.AddMemoryCache();

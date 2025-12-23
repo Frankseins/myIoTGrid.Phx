@@ -17,13 +17,16 @@ public class BluetoothHubsController : ControllerBase
 {
     private readonly IBluetoothHubService _bluetoothHubService;
     private readonly IBluetoothPairingService _pairingService;
+    private readonly IBleGattClientService _gattClientService;
 
     public BluetoothHubsController(
         IBluetoothHubService bluetoothHubService,
-        IBluetoothPairingService pairingService)
+        IBluetoothPairingService pairingService,
+        IBleGattClientService gattClientService)
     {
         _bluetoothHubService = bluetoothHubService;
         _pairingService = pairingService;
+        _gattClientService = gattClientService;
     }
 
     /// <summary>
@@ -410,6 +413,225 @@ public class BluetoothHubsController : ControllerBase
             );
             await _bluetoothHubService.RegisterBleDeviceFromFrontendAsync(registerDto, ct);
         }
+
+        return Ok(result);
+    }
+
+    // =========================================================================
+    // BLE GATT Client Endpoints (Sprint BT-01)
+    // For bidirectional communication with ESP32 sensors via GATT
+    // =========================================================================
+
+    /// <summary>
+    /// Connects to an ESP32 sensor via BLE GATT and reads device info.
+    /// </summary>
+    /// <param name="macAddress">MAC address of the ESP32 (format: AA:BB:CC:DD:EE:FF)</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Connection result with device info</returns>
+    /// <response code="200">Connected successfully</response>
+    /// <response code="400">Connection failed</response>
+    [HttpPost("gatt/connect/{macAddress}")]
+    [ProducesResponseType(typeof(BleConnectionResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleConnectionResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattConnect(string macAddress, CancellationToken ct)
+    {
+        var result = await _gattClientService.ConnectAsync(macAddress, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Disconnects from the currently connected ESP32.
+    /// </summary>
+    /// <returns>No content</returns>
+    /// <response code="204">Disconnected</response>
+    [HttpPost("gatt/disconnect")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    public async Task<IActionResult> GattDisconnect()
+    {
+        await _gattClientService.DisconnectAsync();
+        return NoContent();
+    }
+
+    /// <summary>
+    /// Gets the current GATT connection status.
+    /// </summary>
+    /// <returns>Connection status</returns>
+    /// <response code="200">Status returned</response>
+    [HttpGet("gatt/status")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public IActionResult GattStatus()
+    {
+        return Ok(new
+        {
+            IsConnected = _gattClientService.IsConnected,
+            ConnectedDeviceMac = _gattClientService.ConnectedDeviceMac,
+            IsAuthenticated = _gattClientService.IsAuthenticated
+        });
+    }
+
+    /// <summary>
+    /// Authenticates with the connected ESP32 using a node ID.
+    /// The node ID is hashed and compared with the device's hash.
+    /// </summary>
+    /// <param name="nodeId">Node ID to authenticate with</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Authentication result</returns>
+    /// <response code="200">Authentication successful</response>
+    /// <response code="400">Authentication failed</response>
+    [HttpPost("gatt/authenticate")]
+    [ProducesResponseType(typeof(BleAuthResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleAuthResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattAuthenticate([FromBody] string nodeId, CancellationToken ct)
+    {
+        var hash = _gattClientService.ComputeNodeIdHash(nodeId);
+        var result = await _gattClientService.AuthenticateAsync(hash, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Reads current sensor data from the connected ESP32.
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Current sensor readings</returns>
+    /// <response code="200">Sensor data retrieved</response>
+    /// <response code="400">Failed to read sensor data</response>
+    [HttpGet("gatt/sensor-data")]
+    [ProducesResponseType(typeof(BleSensorDataDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattReadSensorData(CancellationToken ct)
+    {
+        var data = await _gattClientService.ReadSensorDataAsync(ct);
+
+        if (data == null)
+            return BadRequest(new { error = "Failed to read sensor data. Is device connected?" });
+
+        return Ok(data);
+    }
+
+    /// <summary>
+    /// Reads device info from the connected ESP32.
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Device info</returns>
+    /// <response code="200">Device info retrieved</response>
+    /// <response code="400">Failed to read device info</response>
+    [HttpGet("gatt/device-info")]
+    [ProducesResponseType(typeof(BleDeviceInfoDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattReadDeviceInfo(CancellationToken ct)
+    {
+        var info = await _gattClientService.ReadDeviceInfoAsync(ct);
+
+        if (info == null)
+            return BadRequest(new { error = "Failed to read device info. Is device connected?" });
+
+        return Ok(info);
+    }
+
+    /// <summary>
+    /// Sends WiFi credentials to the connected ESP32.
+    /// Requires authentication first.
+    /// </summary>
+    /// <param name="config">WiFi configuration</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Config result</returns>
+    /// <response code="200">WiFi config sent</response>
+    /// <response code="400">Failed to send config</response>
+    [HttpPost("gatt/config/wifi")]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattSetWifi([FromBody] BleWifiConfigDto config, CancellationToken ct)
+    {
+        var result = await _gattClientService.SetWifiAsync(config, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Sends Hub URL configuration to the connected ESP32.
+    /// Requires authentication first.
+    /// </summary>
+    /// <param name="config">Hub URL configuration</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Config result</returns>
+    /// <response code="200">Hub URL config sent</response>
+    /// <response code="400">Failed to send config</response>
+    [HttpPost("gatt/config/hub-url")]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattSetHubUrl([FromBody] BleHubUrlConfigDto config, CancellationToken ct)
+    {
+        var result = await _gattClientService.SetHubUrlAsync(config, ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// Reboots the connected ESP32 to apply new settings.
+    /// Requires authentication first.
+    /// </summary>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Reboot result</returns>
+    /// <response code="200">Reboot command sent</response>
+    /// <response code="400">Failed to send reboot</response>
+    [HttpPost("gatt/reboot")]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattReboot(CancellationToken ct)
+    {
+        var result = await _gattClientService.RebootAsync(ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    /// <summary>
+    /// High-level provisioning: Connects, authenticates, and configures an ESP32 in one call.
+    /// </summary>
+    /// <param name="request">Provisioning request with all configuration</param>
+    /// <param name="ct">Cancellation Token</param>
+    /// <returns>Provisioning result</returns>
+    /// <response code="200">Provisioning successful</response>
+    /// <response code="400">Provisioning failed</response>
+    [HttpPost("gatt/provision")]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(BleConfigResultDto), StatusCodes.Status400BadRequest)]
+    public async Task<IActionResult> GattProvision([FromBody] BleProvisioningRequestDto request, CancellationToken ct)
+    {
+        var result = await _gattClientService.ProvisionDeviceAsync(
+            request.MacAddress,
+            request.NodeId,
+            request.WifiConfig,
+            request.HubUrlConfig,
+            request.IntervalSeconds,
+            ct);
+
+        if (!result.Success)
+            return BadRequest(result);
+
+        // If provisioning successful, register the device with BluetoothHub
+        var registerDto = new RegisterBleDeviceDto(
+            request.NodeId,
+            $"myIoTGrid-{request.MacAddress[^5..].Replace(":", "")}",
+            request.MacAddress
+        );
+        await _bluetoothHubService.RegisterBleDeviceFromFrontendAsync(registerDto, ct);
 
         return Ok(result);
     }

@@ -10,6 +10,8 @@
 
 #ifdef PLATFORM_ESP32
 #include <WiFi.h>
+#include <esp_mac.h>
+#include <esp_bt.h>
 #endif
 
 BluetoothSensorMode::BluetoothSensorMode()
@@ -41,11 +43,11 @@ bool BluetoothSensorMode::init(const String& nodeId) {
 #ifdef PLATFORM_ESP32
     _nodeId = nodeId;
 
-    // Get MAC address first (use WiFi MAC for consistency)
-    WiFi.mode(WIFI_STA);
-    delay(10);
+    // Get base MAC address using ESP-IDF API (no WiFi needed)
+    // This is the base MAC, WiFi MAC = base, BLE MAC = base + 2
     uint8_t mac[6];
-    WiFi.macAddress(mac);
+    esp_read_mac(mac, ESP_MAC_WIFI_STA);  // Get base station MAC
+
     char macBuf[18];
     snprintf(macBuf, sizeof(macBuf), "%02X:%02X:%02X:%02X:%02X:%02X",
              mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
@@ -64,7 +66,10 @@ bool BluetoothSensorMode::init(const String& nodeId) {
 
     // Initialize NimBLE with the device name
     NimBLEDevice::init(_deviceName.c_str());
-    NimBLEDevice::setPower(ESP_PWR_LVL_P9);  // Max power for better range
+    NimBLEDevice::setPower(9);  // Max power (9 dBm) for better range
+
+    // NimBLE 2.x: Security is disabled by default, no need for explicit calls
+    Serial.println("[BLE-Sensor] NimBLE 2.x initialized - security disabled by default");
 
     // Create server
     _server = NimBLEDevice::createServer();
@@ -94,12 +99,13 @@ bool BluetoothSensorMode::init(const String& nodeId) {
     // Start service
     _service->start();
 
-    // Configure advertising
+    // Configure advertising (NimBLE 2.x API)
     _advertising = NimBLEDevice::getAdvertising();
     _advertising->addServiceUUID(config::ble_sensor::SERVICE_UUID);
-    _advertising->setScanResponse(true);
-    _advertising->setMinPreferred(0x06);  // Functions that help with iPhone connections
-    _advertising->setMaxPreferred(0x12);
+    _advertising->enableScanResponse(true);
+    // NimBLE 2.x: Set connection interval to match what Linux/BlueZ prefers (30-50ms)
+    // Values are in units of 1.25ms: 0x18 = 30ms, 0x28 = 50ms
+    _advertising->setPreferredParams(0x18, 0x28);  // 30-50ms - matches BlueZ default
 
     _initialized = true;
     Serial.println("[BLE-Sensor] Initialization complete");
@@ -161,7 +167,22 @@ void BluetoothSensorMode::stop() {
 void BluetoothSensorMode::loop() {
 #ifdef PLATFORM_ESP32
     // NimBLE handles events internally via FreeRTOS tasks
-    // Nothing special needed here, but we can add reconnect logic
+    // Debug: Log state periodically
+    static unsigned long lastDebug = 0;
+    int clientCount = _server ? _server->getConnectedCount() : -1;
+
+    if (millis() - lastDebug > 10000) {  // Every 10 seconds
+        lastDebug = millis();
+        Serial.printf("[BLE-Sensor] State: init=%d, conn=%d, adv=%d, clients=%d\n",
+                      _initialized, _connected, _advertising_active, clientCount);
+    }
+
+    // Detect if client connected but our flag not set (callback missed)
+    if (clientCount > 0 && !_connected) {
+        Serial.println("[BLE-Sensor] !!! Client connected but callback missed - syncing state !!!");
+        _connected = true;
+        _advertising_active = false;
+    }
 
     if (!_connected && _initialized && !_advertising_active) {
         // Restart advertising if disconnected and not already advertising
@@ -259,8 +280,17 @@ String BluetoothSensorMode::buildDeviceInfoJson() {
 }
 
 #ifdef PLATFORM_ESP32
-void BluetoothSensorMode::ServerCallbacks::onConnect(NimBLEServer* server) {
-    Serial.println("[BLE-Sensor] BluetoothHub connected!");
+void BluetoothSensorMode::ServerCallbacks::onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) {
+    Serial.println("========================================");
+    Serial.println("[BLE-Sensor] >>> CONNECTION ESTABLISHED <<<");
+    Serial.printf("[BLE-Sensor] Connected clients: %d\n", server->getConnectedCount());
+
+    // Get peer info from connInfo parameter (NimBLE 2.x)
+    Serial.printf("[BLE-Sensor] Peer address: %s\n", connInfo.getAddress().toString().c_str());
+    Serial.printf("[BLE-Sensor] Connection handle: %d\n", connInfo.getConnHandle());
+    Serial.printf("[BLE-Sensor] MTU: %d\n", connInfo.getMTU());
+    Serial.println("========================================");
+
     _parent->_connected = true;
     _parent->_advertising_active = false;
     _parent->_connectionCount++;
@@ -270,8 +300,12 @@ void BluetoothSensorMode::ServerCallbacks::onConnect(NimBLEServer* server) {
     }
 }
 
-void BluetoothSensorMode::ServerCallbacks::onDisconnect(NimBLEServer* server) {
-    Serial.println("[BLE-Sensor] BluetoothHub disconnected");
+void BluetoothSensorMode::ServerCallbacks::onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) {
+    Serial.println("========================================");
+    Serial.println("[BLE-Sensor] >>> DISCONNECTED <<<");
+    Serial.printf("[BLE-Sensor] Remaining clients: %d\n", server->getConnectedCount());
+    Serial.printf("[BLE-Sensor] Disconnect reason: 0x%02X\n", reason);
+    Serial.println("========================================");
     _parent->_connected = false;
 
     if (_parent->_onDisconnected) {

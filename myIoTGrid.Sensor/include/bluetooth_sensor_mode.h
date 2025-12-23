@@ -186,13 +186,13 @@ private:
 
 #ifdef PLATFORM_ESP32
     /**
-     * Server callbacks (NimBLE)
+     * Server callbacks (NimBLE 2.x API)
      */
     class ServerCallbacks : public NimBLEServerCallbacks {
     public:
         ServerCallbacks(BluetoothSensorMode* parent) : _parent(parent) {}
-        void onConnect(NimBLEServer* server) override;
-        void onDisconnect(NimBLEServer* server) override;
+        void onConnect(NimBLEServer* server, NimBLEConnInfo& connInfo) override;
+        void onDisconnect(NimBLEServer* server, NimBLEConnInfo& connInfo, int reason) override;
     private:
         BluetoothSensorMode* _parent;
     };

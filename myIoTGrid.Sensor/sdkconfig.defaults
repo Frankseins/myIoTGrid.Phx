@@ -1,6 +1,57 @@
 # myIoTGrid Sensor - ESP-IDF Configuration
 # This file enables the certificate bundle for HTTPS connections
 
+# =============================================================================
+# NimBLE Bluetooth Configuration (Sprint BT-01)
+# Fix for "LE Read Remote Used Features" failure with BlueZ on Raspberry Pi
+# =============================================================================
+
+# Enable BLE and NimBLE
+CONFIG_BT_ENABLED=y
+CONFIG_BT_NIMBLE_ENABLED=y
+CONFIG_BTDM_CTRL_MODE_BLE_ONLY=y
+
+# NimBLE role configuration (peripheral only for sensor mode)
+CONFIG_BT_NIMBLE_ROLE_PERIPHERAL=y
+CONFIG_BT_NIMBLE_ROLE_CENTRAL=n
+CONFIG_BT_NIMBLE_ROLE_OBSERVER=n
+CONFIG_BT_NIMBLE_ROLE_BROADCASTER=y
+
+# Connection parameters
+CONFIG_BT_NIMBLE_MAX_CONNECTIONS=1
+CONFIG_BT_NIMBLE_MAX_BONDS=0
+CONFIG_BT_NIMBLE_MAX_CCCDS=4
+
+# Disable security/bonding (no pairing required)
+CONFIG_BT_NIMBLE_SM_LEGACY=n
+CONFIG_BT_NIMBLE_SM_SC=n
+CONFIG_BT_NIMBLE_SMP_ENABLE=n
+
+# Link Layer features - CRITICAL for LE Read Remote Used Features
+CONFIG_BT_NIMBLE_LL_CFG_FEAT_LE_ENCRYPTION=y
+CONFIG_BT_NIMBLE_LL_CFG_FEAT_CONN_PARAM_REQ=y
+CONFIG_BT_NIMBLE_LL_CFG_FEAT_LE_PING=y
+CONFIG_BT_NIMBLE_LL_CFG_FEAT_DATA_LEN_EXT=y
+CONFIG_BT_NIMBLE_LL_CFG_FEAT_LE_2M_PHY=y
+
+# Increase stack size for stability
+CONFIG_BT_NIMBLE_TASK_STACK_SIZE=8192
+
+# Advertising configuration
+CONFIG_BT_NIMBLE_ADV_INSTANCE_COUNT=1
+
+# ATT/GATT configuration
+CONFIG_BT_NIMBLE_ATT_PREFERRED_MTU=256
+CONFIG_BT_NIMBLE_GAP_DEVICE_NAME_MAX_LEN=31
+
+# Debugging (optional - can be disabled in production)
+CONFIG_BT_NIMBLE_DEBUG=n
+CONFIG_BT_NIMBLE_LOG_LEVEL_WARNING=y
+
+# =============================================================================
+# mbedTLS Configuration
+# =============================================================================
+
 # Enable mbedTLS certificate bundle
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE=y
 CONFIG_MBEDTLS_CERTIFICATE_BUNDLE_DEFAULT_FULL=y
