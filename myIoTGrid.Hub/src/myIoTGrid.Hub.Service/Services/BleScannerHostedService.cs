@@ -109,7 +109,7 @@ public class BleScannerHostedService : BackgroundService
 
     /// <summary>
     /// Scans for BLE Beacons and reads sensor data from advertising packets.
-    /// No connection required - just reads manufacturer data from advertising.
+    /// Uses AdvertisementReceived event to get manufacturer data without connecting.
     /// </summary>
     private async Task ScanForBeaconsAsync(CancellationToken stoppingToken)
     {
@@ -117,27 +117,82 @@ public class BleScannerHostedService : BackgroundService
 
         try
         {
-            // Scan for 10 seconds
-            var scanDuration = TimeSpan.FromSeconds(10);
-            var foundDevices = new HashSet<string>();
+            var foundDevices = new Dictionary<string, bool>();
+            var scanComplete = new TaskCompletionSource<bool>();
 
-            var scannedDevices = await Bluetooth.ScanForDevicesAsync();
-
-            foreach (var device in scannedDevices)
+            // Subscribe to advertisement received events
+            void OnAdvertisementReceived(object? sender, BluetoothAdvertisingEvent e)
             {
-                if (stoppingToken.IsCancellationRequested) break;
+                try
+                {
+                    if (!IsMyIoTGridDevice(e.Name)) return;
+                    if (foundDevices.ContainsKey(e.Device.Id)) return;
+                    foundDevices[e.Device.Id] = true;
 
-                // Check if this is a myIoTGrid device
-                if (!IsMyIoTGridDevice(device.Name)) continue;
+                    _logger.LogInformation("Found myIoTGrid beacon: {Name} ({Id})", e.Name, e.Device.Id);
 
-                if (foundDevices.Contains(device.Id)) continue;
-                foundDevices.Add(device.Id);
+                    // Try to read manufacturer data from advertising packet
+                    if (e.ManufacturerData != null && e.ManufacturerData.Count > 0)
+                    {
+                        foreach (var mfgData in e.ManufacturerData)
+                        {
+                            _logger.LogInformation("Manufacturer data from {Name}: CompanyId=0x{CompanyId:X4}, {Length} bytes",
+                                e.Name, mfgData.Key, mfgData.Value.Length);
 
-                _logger.LogInformation("Found myIoTGrid beacon: {Name} ({Id})", device.Name, device.Id);
+                            // Parse sensor data from manufacturer data
+                            // Format: [temp:2][humidity:2][pressure:2][battery:2] = 8 bytes
+                            if (mfgData.Value.Length >= 8)
+                            {
+                                var data = mfgData.Value;
+                                var temp = BitConverter.ToInt16(data, 0) / 100.0;
+                                var humidity = BitConverter.ToUInt16(data, 2) / 100.0;
+                                var pressureRaw = BitConverter.ToUInt16(data, 4);
+                                var pressure = (pressureRaw + 50000) / 100.0;
+                                var battery = BitConverter.ToUInt16(data, 6);
 
-                // Try to read advertising data via GATT connection
-                // (InTheHand.BLE doesn't expose raw advertising data directly)
-                await TryReadBeaconDataAsync(device, stoppingToken);
+                                _logger.LogInformation("Beacon sensor data from {Name}: T={Temp:F1}°C H={Humidity:F0}% P={Pressure:F0}hPa Bat={Battery}mV",
+                                    e.Name, temp, humidity, pressure, battery);
+
+                                // Process the sensor data
+                                _ = ProcessBeaconManufacturerDataAsync(e.Name ?? e.Device.Id, temp, humidity, pressure);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        _logger.LogDebug("No manufacturer data in advertising from {Name}", e.Name);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Error processing advertisement from {Name}", e.Name);
+                }
+            }
+
+            Bluetooth.AdvertisementReceived += OnAdvertisementReceived;
+
+            try
+            {
+                // Start scanning
+                var cts = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
+                cts.CancelAfter(TimeSpan.FromSeconds(15));
+
+                // Request scan - this triggers AdvertisementReceived events
+                await Bluetooth.RequestLEScanAsync(new BluetoothLEScanOptions
+                {
+                    AcceptAllAdvertisements = true
+                });
+
+                // Wait for scan duration
+                await Task.Delay(TimeSpan.FromSeconds(12), cts.Token);
+            }
+            catch (OperationCanceledException) when (!stoppingToken.IsCancellationRequested)
+            {
+                // Scan timeout - normal
+            }
+            finally
+            {
+                Bluetooth.AdvertisementReceived -= OnAdvertisementReceived;
             }
 
             _logger.LogDebug("Beacon scan complete. Found {Count} myIoTGrid devices", foundDevices.Count);
@@ -149,21 +204,103 @@ public class BleScannerHostedService : BackgroundService
     }
 
     /// <summary>
-    /// Reads sensor data from a beacon device via quick GATT connection.
+    /// Processes sensor data from beacon manufacturer data
     /// </summary>
-    private async Task TryReadBeaconDataAsync(BluetoothDevice device, CancellationToken stoppingToken)
+    private async Task ProcessBeaconManufacturerDataAsync(string deviceName, double temperature, double humidity, double pressure)
     {
         try
         {
-            _logger.LogInformation("Attempting GATT connection to {DeviceName} ({DeviceId})...", device.Name, device.Id);
+            // Extract node ID from device name (e.g., "myIoTGrid-92CC" -> use as identifier)
+            var nodeId = deviceName;
 
-            // Connect briefly to read sensor data characteristic
+            using var scope = _scopeFactory.CreateScope();
+            var readingService = scope.ServiceProvider.GetRequiredService<IReadingService>();
+
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Create readings for each sensor value (skip zeros)
+            if (temperature != 0)
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "temperature",
+                    Value: temperature,
+                    Unit: "°C",
+                    Timestamp: timestamp
+                ));
+            }
+
+            if (humidity != 0)
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "humidity",
+                    Value: humidity,
+                    Unit: "%",
+                    Timestamp: timestamp
+                ));
+            }
+
+            if (pressure != 0 && pressure > 800 && pressure < 1200)  // Valid pressure range
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "pressure",
+                    Value: pressure,
+                    Unit: "hPa",
+                    Timestamp: timestamp
+                ));
+            }
+
+            _logger.LogInformation("Processed beacon data from {NodeId}: T={Temp:F1}°C H={Humidity:F0}% P={Pressure:F0}hPa",
+                nodeId, temperature, humidity, pressure);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing beacon manufacturer data from {DeviceName}", deviceName);
+        }
+    }
+
+    /// <summary>
+    /// Reads sensor data from a beacon device via quick GATT connection.
+    /// Includes retry logic for BlueZ connection timeouts.
+    /// </summary>
+    private async Task TryReadBeaconDataAsync(BluetoothDevice device, CancellationToken stoppingToken)
+    {
+        const int maxRetries = 3;
+        const int retryDelayMs = 1500;
+
+        try
+        {
             var gatt = device.Gatt;
-            await gatt.ConnectAsync();
+
+            // Retry loop for GATT connection
+            for (int attempt = 1; attempt <= maxRetries; attempt++)
+            {
+                try
+                {
+                    _logger.LogInformation("GATT connection attempt {Attempt}/{Max} to {DeviceName}...",
+                        attempt, maxRetries, device.Name);
+
+                    await gatt.ConnectAsync();
+
+                    if (gatt.IsConnected)
+                    {
+                        _logger.LogInformation("Connected to {DeviceName} on attempt {Attempt}", device.Name, attempt);
+                        break;
+                    }
+                }
+                catch (Exception ex) when (attempt < maxRetries)
+                {
+                    _logger.LogWarning("Connection attempt {Attempt} failed: {Message}. Retrying in {Delay}ms...",
+                        attempt, ex.Message, retryDelayMs);
+                    await Task.Delay(retryDelayMs, stoppingToken);
+                }
+            }
 
             if (!gatt.IsConnected)
             {
-                _logger.LogWarning("Could not connect to {DeviceName} for data read", device.Name);
+                _logger.LogWarning("Could not connect to {DeviceName} after {Retries} attempts", device.Name, maxRetries);
                 return;
             }
 

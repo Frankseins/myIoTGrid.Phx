@@ -47,6 +47,9 @@ public class BleGattClientService : IBleGattClientService, IDisposable
     public string? ConnectedDeviceMac => _connectedMac;
     public bool IsAuthenticated => _isAuthenticated && IsConnected;
 
+    private const int MaxConnectionRetries = 3;
+    private const int RetryDelayMs = 2000;
+
     public async Task<BleConnectionResultDto> ConnectAsync(string macAddress, CancellationToken ct = default)
     {
         try
@@ -70,15 +73,45 @@ public class BleGattClientService : IBleGattClientService, IDisposable
             _connectedMac = macAddress;
             var deviceName = _device.Name ?? $"myIoTGrid-{macAddress[^2..]}";
 
-            // Connect to GATT server
+            // Connect to GATT server with retry logic
             _logger.LogDebug("Connecting to GATT server...");
             _gattServer = _device.Gatt;
-            await _gattServer.ConnectAsync();
+
+            Exception? lastException = null;
+            for (int attempt = 1; attempt <= MaxConnectionRetries; attempt++)
+            {
+                try
+                {
+                    _logger.LogInformation("GATT connection attempt {Attempt}/{Max} to {Device}...",
+                        attempt, MaxConnectionRetries, deviceName);
+
+                    await _gattServer.ConnectAsync();
+
+                    if (_gattServer.IsConnected)
+                    {
+                        _logger.LogInformation("GATT connection successful on attempt {Attempt}", attempt);
+                        break;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    lastException = ex;
+                    _logger.LogWarning("GATT connection attempt {Attempt} failed: {Message}",
+                        attempt, ex.Message);
+
+                    if (attempt < MaxConnectionRetries)
+                    {
+                        _logger.LogDebug("Waiting {Delay}ms before retry...", RetryDelayMs);
+                        await Task.Delay(RetryDelayMs, ct);
+                    }
+                }
+            }
 
             if (!_gattServer.IsConnected)
             {
+                var errorMsg = lastException?.Message ?? "Connection failed after retries";
                 return new BleConnectionResultDto(false, macAddress, deviceName, null,
-                    "Failed to connect to GATT server");
+                    $"Failed to connect to GATT server: {errorMsg}");
             }
 
             _logger.LogDebug("Connected to GATT server. Discovering services...");
