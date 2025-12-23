@@ -420,7 +420,9 @@ void BleBeaconMode::updateSensorData(float temperature, float humidity, float pr
     // Convert to packed format
     _sensorData.temperature = (int16_t)(temperature * 100);  // 21.50°C -> 2150
     _sensorData.humidity = (uint16_t)(humidity * 100);       // 65.00% -> 6500
-    _sensorData.pressure = (uint16_t)(pressure - 50000);     // 101325 -> 51325
+    // Pressure input is in hPa, convert to Pa then offset for uint16_t storage
+    // 1010.81 hPa * 100 = 101081 Pa, 101081 - 50000 = 51081
+    _sensorData.pressure = (uint16_t)(pressure * 100 - 50000);
     _sensorData.battery = batteryMv;
 
     Serial.printf("[BLE-Hybrid] Updating: T=%.2f°C, H=%.1f%%, P=%.0f hPa, Bat=%dmV\n",

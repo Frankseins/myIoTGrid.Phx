@@ -49,11 +49,12 @@ public class BleScannerHostedService : BackgroundService
         _enabled = bleConfig.GetValue("Enabled", false);
         _scanIntervalMs = bleConfig.GetValue("ScanIntervalMs", 30000);
 
-        // UUIDs from config or defaults (must match ESP32 firmware config.h ble_sensor namespace!)
-        // ESP32 BLE Sensor Mode UUIDs (Sprint BT-01)
-        var serviceUuidStr = bleConfig.GetValue("ServiceUuid", "12345678-1234-5678-1234-56789abcdef0");
-        var sensorDataUuidStr = bleConfig.GetValue("SensorDataUuid", "12345678-1234-5678-1234-56789abcdef1");
-        var deviceInfoUuidStr = bleConfig.GetValue("DeviceInfoUuid", "12345678-1234-5678-1234-56789abcdef2");
+        // UUIDs from config or defaults (must match ESP32 firmware ble_beacon_mode.h!)
+        // ESP32 BLE Beacon/Hybrid Mode UUIDs (Sprint BT-01)
+        // ASCII hex: "MIOT" = 4d494f54, "GRID" = 47524944, "CONF" = 434f4e46, "IG" = 4947
+        var serviceUuidStr = bleConfig.GetValue("ServiceUuid", "4d494f54-4752-4944-434f-4e4649470000");
+        var sensorDataUuidStr = bleConfig.GetValue("SensorDataUuid", "4d494f54-4752-4944-434f-4e4649470003");
+        var deviceInfoUuidStr = bleConfig.GetValue("DeviceInfoUuid", "4d494f54-4752-4944-434f-4e4649470002");
 
         _serviceUuid = Guid.Parse(serviceUuidStr!);
         _sensorDataUuid = Guid.Parse(sensorDataUuidStr!);

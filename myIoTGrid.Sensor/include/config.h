@@ -5,7 +5,7 @@
 
 // Firmware Version
 #ifndef FIRMWARE_VERSION
-#define FIRMWARE_VERSION "1.21.0"  // BLE App-Level Auth: Hub authenticates with node ID hash
+#define FIRMWARE_VERSION "1.22.1"  // Fix: pressure calculation (hPa * 100 - 50000)
 #endif
 
 // Hardware Type

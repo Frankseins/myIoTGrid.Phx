@@ -2025,6 +2025,13 @@ void handleBleSensorModeState() {
         // Load stored config to get nodeId
         StoredConfig config = configManager.loadConfig();
 
+        // IMPORTANT: Fully deinitialize NimBLE to remove old pairing service
+        // The old bleService.stop() only stops advertising but leaves GATT services registered
+        // This causes the beacon mode services to be hidden by the old pairing services
+        Serial.println("[Main] Deinitializing NimBLE to clear old services...");
+        NimBLEDevice::deinit(true);
+        delay(100);  // Give BLE stack time to clean up
+
         // Initialize BLE Beacon Mode with nodeId
         if (bleBeaconMode.init(config.nodeId)) {
             Serial.println("[Main] BLE Beacon Mode initialized");
