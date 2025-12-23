@@ -69,7 +69,6 @@ public class BleScannerHostedService : BackgroundService
         }
 
         _logger.LogInformation("BLE Scanner starting...");
-        _logger.LogInformation("Service UUID: {ServiceUuid}", _serviceUuid);
         _logger.LogInformation("Scan interval: {Interval}ms", _scanIntervalMs);
 
         // Wait for application to fully start
@@ -83,13 +82,14 @@ public class BleScannerHostedService : BackgroundService
             return;
         }
 
-        _logger.LogInformation("Bluetooth is available. Starting scan loop...");
+        _logger.LogInformation("Bluetooth is available. Starting BEACON scan loop...");
 
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                await ScanAndConnectAsync(stoppingToken);
+                // Scan for BLE Beacons (Advertising data - no connection needed!)
+                await ScanForBeaconsAsync(stoppingToken);
             }
             catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
@@ -97,7 +97,7 @@ public class BleScannerHostedService : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in BLE scan loop");
+                _logger.LogError(ex, "Error in BLE beacon scan loop");
             }
 
             await Task.Delay(_scanIntervalMs, stoppingToken);
@@ -105,6 +105,195 @@ public class BleScannerHostedService : BackgroundService
 
         _logger.LogInformation("BLE Scanner stopping...");
         DisconnectAllDevices();
+    }
+
+    /// <summary>
+    /// Scans for BLE Beacons and reads sensor data from advertising packets.
+    /// No connection required - just reads manufacturer data from advertising.
+    /// </summary>
+    private async Task ScanForBeaconsAsync(CancellationToken stoppingToken)
+    {
+        _logger.LogDebug("Starting beacon scan for myIoTGrid devices...");
+
+        try
+        {
+            // Scan for 10 seconds
+            var scanDuration = TimeSpan.FromSeconds(10);
+            var foundDevices = new HashSet<string>();
+
+            var scannedDevices = await Bluetooth.ScanForDevicesAsync();
+
+            foreach (var device in scannedDevices)
+            {
+                if (stoppingToken.IsCancellationRequested) break;
+
+                // Check if this is a myIoTGrid device
+                if (!IsMyIoTGridDevice(device.Name)) continue;
+
+                if (foundDevices.Contains(device.Id)) continue;
+                foundDevices.Add(device.Id);
+
+                _logger.LogInformation("Found myIoTGrid beacon: {Name} ({Id})", device.Name, device.Id);
+
+                // Try to read advertising data via GATT connection
+                // (InTheHand.BLE doesn't expose raw advertising data directly)
+                await TryReadBeaconDataAsync(device, stoppingToken);
+            }
+
+            _logger.LogDebug("Beacon scan complete. Found {Count} myIoTGrid devices", foundDevices.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during beacon scan");
+        }
+    }
+
+    /// <summary>
+    /// Reads sensor data from a beacon device via quick GATT connection.
+    /// </summary>
+    private async Task TryReadBeaconDataAsync(BluetoothDevice device, CancellationToken stoppingToken)
+    {
+        try
+        {
+            // Connect briefly to read sensor data characteristic
+            var gatt = device.Gatt;
+            await gatt.ConnectAsync();
+
+            if (!gatt.IsConnected)
+            {
+                _logger.LogDebug("Could not connect to {DeviceName} for data read", device.Name);
+                return;
+            }
+
+            // Try to get the Config Service (Beacon Mode uses different UUIDs!)
+            // CONFIG_SERVICE_UUID = "4d494f54-4752-4944-434f-4e4649470000"
+            var beaconServiceUuid = Guid.Parse("4d494f54-4752-4944-434f-4e4649470000");
+            var sensorDataCharUuid = Guid.Parse("4d494f54-4752-4944-434f-4e4649470003");
+            var configReadCharUuid = Guid.Parse("4d494f54-4752-4944-434f-4e4649470002");
+
+            var service = await gatt.GetPrimaryServiceAsync(BluetoothUuid.FromGuid(beaconServiceUuid));
+            if (service == null)
+            {
+                _logger.LogDebug("Beacon service not found on {DeviceName}, trying legacy service", device.Name);
+                // Try legacy service UUID
+                service = await gatt.GetPrimaryServiceAsync(BluetoothUuid.FromGuid(_serviceUuid));
+            }
+
+            if (service == null)
+            {
+                _logger.LogWarning("No compatible BLE service found on {DeviceName}", device.Name);
+                gatt.Disconnect();
+                return;
+            }
+
+            // Read device info to get Node ID
+            string nodeId = device.Name ?? "Unknown";
+            var configReadChar = await service.GetCharacteristicAsync(BluetoothUuid.FromGuid(configReadCharUuid));
+            if (configReadChar != null)
+            {
+                var deviceInfoData = await configReadChar.ReadValueAsync();
+                if (deviceInfoData != null && deviceInfoData.Length > 0)
+                {
+                    var deviceInfoJson = Encoding.UTF8.GetString(deviceInfoData);
+                    _logger.LogDebug("Device info: {Json}", deviceInfoJson);
+
+                    try
+                    {
+                        var deviceInfo = JsonSerializer.Deserialize<BeaconDeviceInfo>(deviceInfoJson);
+                        if (deviceInfo?.NodeId != null)
+                        {
+                            nodeId = deviceInfo.NodeId;
+                        }
+                    }
+                    catch { /* Ignore parse errors */ }
+                }
+            }
+
+            // Read sensor data
+            var sensorDataChar = await service.GetCharacteristicAsync(BluetoothUuid.FromGuid(sensorDataCharUuid));
+            if (sensorDataChar == null)
+            {
+                // Try legacy UUID
+                sensorDataChar = await service.GetCharacteristicAsync(BluetoothUuid.FromGuid(_sensorDataUuid));
+            }
+
+            if (sensorDataChar != null)
+            {
+                var sensorData = await sensorDataChar.ReadValueAsync();
+                if (sensorData != null && sensorData.Length > 0)
+                {
+                    var sensorJson = Encoding.UTF8.GetString(sensorData);
+                    _logger.LogInformation("Sensor data from {NodeId}: {Json}", nodeId, sensorJson);
+
+                    // Parse JSON format: {"t":21.50,"h":65.0,"p":1013.0,"b":3300,"f":0}
+                    await ProcessBeaconSensorDataAsync(nodeId, sensorJson);
+                }
+            }
+
+            gatt.Disconnect();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug("Error reading beacon data from {DeviceName}: {Message}", device.Name, ex.Message);
+        }
+    }
+
+    /// <summary>
+    /// Processes sensor data from beacon JSON format
+    /// </summary>
+    private async Task ProcessBeaconSensorDataAsync(string nodeId, string jsonData)
+    {
+        try
+        {
+            var data = JsonSerializer.Deserialize<BeaconSensorData>(jsonData);
+            if (data == null) return;
+
+            using var scope = _scopeFactory.CreateScope();
+            var readingService = scope.ServiceProvider.GetRequiredService<IReadingService>();
+
+            var timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
+
+            // Create readings for each sensor value
+            if (data.Temperature.HasValue && data.Temperature != 0)
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "temperature",
+                    Value: data.Temperature.Value,
+                    Unit: "°C",
+                    Timestamp: timestamp
+                ));
+            }
+
+            if (data.Humidity.HasValue && data.Humidity != 0)
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "humidity",
+                    Value: data.Humidity.Value,
+                    Unit: "%",
+                    Timestamp: timestamp
+                ));
+            }
+
+            if (data.Pressure.HasValue && data.Pressure != 0)
+            {
+                await readingService.CreateFromSensorAsync(new CreateSensorReadingDto(
+                    DeviceId: nodeId,
+                    Type: "pressure",
+                    Value: data.Pressure.Value,
+                    Unit: "hPa",
+                    Timestamp: timestamp
+                ));
+            }
+
+            _logger.LogInformation("Processed beacon data from {NodeId}: T={Temp}°C H={Hum}% P={Press}hPa",
+                nodeId, data.Temperature, data.Humidity, data.Pressure);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error processing beacon sensor data");
+        }
     }
 
     private async Task<bool> CheckBluetoothAvailabilityAsync()
@@ -473,4 +662,45 @@ internal class RegisteredBleDevice
     public string NodeId { get; set; } = string.Empty;
     public string? BleDeviceName { get; set; }
     public string? BleMacAddress { get; set; }
+}
+
+/// <summary>
+/// Beacon device info (from CONFIG_READ characteristic)
+/// JSON format: {"nodeId":"...","deviceName":"...","firmware":"...","hash":"..."}
+/// </summary>
+internal class BeaconDeviceInfo
+{
+    [System.Text.Json.Serialization.JsonPropertyName("nodeId")]
+    public string? NodeId { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("deviceName")]
+    public string? DeviceName { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("firmware")]
+    public string? Firmware { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("hash")]
+    public string? Hash { get; set; }
+}
+
+/// <summary>
+/// Beacon sensor data (from SENSOR_DATA characteristic)
+/// JSON format: {"t":21.50,"h":65.0,"p":1013.0,"b":3300,"f":0}
+/// </summary>
+internal class BeaconSensorData
+{
+    [System.Text.Json.Serialization.JsonPropertyName("t")]
+    public double? Temperature { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("h")]
+    public double? Humidity { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("p")]
+    public double? Pressure { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("b")]
+    public int? Battery { get; set; }
+
+    [System.Text.Json.Serialization.JsonPropertyName("f")]
+    public int? Flags { get; set; }
 }
